@@ -1,0 +1,10 @@
+# OS에서 생성한 파일들
+.DS_Store    # macOS에서 생성되는 파일
+Thumbs.db    # Windows에서 생성되는 파일
+
+# 빌드 파일들
+/SSL/
+*.log        # 모든 .log 파일
+
+# 환경설정 파일들
+.env
