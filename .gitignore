@@ -8,3 +8,4 @@ Thumbs.db    # Windows에서 생성되는 파일
 
 # 환경설정 파일들
 .env
+/vendor/

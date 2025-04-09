@@ -1,0 +1,13 @@
+# 민감한 파일 접근 차단 (.env, config.php 등)
+<FilesMatch "^.*(\.env|config\.php|database\.php|session\.php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# URL 재작성 시작
+RewriteEngine On
+
+# index.php, .htaccess 파일은 제외하고, 실제 파일/디렉토리 아닌 경우만 rewrite
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
