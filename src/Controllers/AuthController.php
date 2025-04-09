@@ -3,7 +3,8 @@ namespace App\Controllers;
 
 class AuthController {
     public function showLoginForm() {
-        require __DIR__ . '/../../views/login.php';
+        //require __DIR__ . '/../../views/login.php';
+        view_path_require('login');
     }
 
     public function login() {
