@@ -21,6 +21,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($users as $user) {
     echo $user['name'] . "<br>";
+    echo "test";
 }
 
 ?>
