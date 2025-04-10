@@ -14,4 +14,11 @@ require_once __DIR__ . '/../routes/web.php';
 // 4. 라우팅 디스패치
 $router->dispatch($_SERVER['REQUEST_URI']);
 
+$loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/../views');
+$twig = new \Twig\Environment($loader);
+
+echo $twig->render('index.html.twig', [
+    // 전달할 데이터가 있다면 여기에 작성
+]);
+
 ?>

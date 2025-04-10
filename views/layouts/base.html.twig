@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include 'partials/_header.html.twig' %}
+</head>
+<body>
+    {% include 'partials/_navbar.html.twig' %}
+    
+    {% block body %}{% endblock %}
+    
+    {% include 'partials/_footer.html.twig' %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/scripts.js"></script>
+</body>
+</html>
