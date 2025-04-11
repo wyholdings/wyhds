@@ -1,9 +1,80 @@
-<section class="py-5 bg-light">
-    <div class="container px-5 my-5">
-        <div class="text-center">
+<section class="bg-light py-5" id="contact_section">
+    <div class="container px-5 my-5 px-5">
+        <div class="text-center mb-5">
+            <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3"><i class="bi bi-envelope"></i></div>
             <h2 class="fw-bolder">문의하기</h2>
-            <p class="lead">언제든지 연락 주세요. 빠르게 답변드리겠습니다.</p>
-            <a class="btn btn-primary btn-lg" href="mailto:help@wyhds.com">이메일 보내기</a>
+            <p class="lead mb-0">문의채널은 24시간 열려있습니다. 언제든 문의주세요!</p>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-6">
+                <!-- * * * * * * * * * * * * * * *-->
+                <!-- * * SB Forms Contact Form * *-->
+                <!-- * * * * * * * * * * * * * * *-->
+                <!-- This form is pre-integrated with SB Forms.-->
+                <!-- To make this form functional, sign up at-->
+                <!-- https://startbootstrap.com/solution/contact-forms-->
+                <!-- to get an API token!-->
+                <form id="contactForm" method="post" action="/contact/submit">
+                    <!-- Company input-->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="company" name="company" type="text" placeholder="상호를 입력하세요." data-sb-validations="required" data-sb-can-submit="no">
+                        <label for="company">상호</label>
+                        <div class="invalid-feedback" data-sb-feedback="company:required">상호을 입력하세요.</div>
+                    </div>
+                    <!-- Name input-->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="name" name="name" type="text" placeholder="성함을 입력하세요." data-sb-validations="required" data-sb-can-submit="no">
+                        <label for="name">성함</label>
+                        <div class="invalid-feedback" data-sb-feedback="name:required">성함을 입력하세요.</div>
+                    </div>
+                    <!-- Email address input-->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="email" name="email" type="email" placeholder="name@example.com" data-sb-validations="required,email" data-sb-can-submit="no">
+                        <label for="email">이메일</label>
+                        <div class="invalid-feedback" data-sb-feedback="email:required">이메일을 입력하세요.</div>
+                        <div class="invalid-feedback" data-sb-feedback="email:email">이메일 형식이 잘 못 되었습니다.</div>
+                    </div>
+                    <!-- Phone number input-->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="phone" name="phone" type="tel" placeholder="010-0000-0000" data-sb-validations="required" data-sb-can-submit="no">
+                        <label for="phone">전화번호</label>
+                        <div class="invalid-feedback" data-sb-feedback="phone:required">전화번호를 입력하세요.</div>
+                    </div>
+                    <!-- 예산 input-->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="money" name="money" type="number" placeholder="예산을 입력하세요." data-sb-validations="required" data-sb-can-submit="no">
+                        <label for="money">예산 (단위 : 만원)</label>
+                        <div class="invalid-feedback" data-sb-feedback="money:required">예산을 입력하세요.</div>
+                    </div>
+                    <!-- Message input-->
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" id="message" name="message" type="text" placeholder="여기에 내용을 입력하세요." style="height: 10rem" data-sb-validations="required" data-sb-can-submit="no"></textarea>
+                        <label for="message">내용</label>
+                        <div class="invalid-feedback" data-sb-feedback="message:required">내용을 입력하세요.</div>
+                    </div>
+                    <!-- Submit success message-->
+                    <!---->
+                    <!-- This is what your users will see when the form-->
+                    <!-- has successfully submitted-->
+                    <div class="d-none" id="formMessage">
+                        <div class="text-center mb-3">
+                            <div class="fw-bolder">Form submission successful!</div>
+                            To activate this form, sign up at
+                            <br>
+                            <a href="https://startbootstrap.com/solution/contact-forms">https://startbootstrap.com/solution/contact-forms</a>
+                        </div>
+                    </div>
+                    <!-- Submit error message-->
+                    <!---->
+                    <!-- This is what your users will see when there is-->
+                    <!-- an error submitting the form-->
+                    <div class="d-none" id="submitErrorMessage"><div class="text-center text-danger mb-3">Error sending message!</div></div>
+                    <!-- Submit Button-->
+                    <div class="d-grid"><button class="btn btn-primary btn-lg" id="submitButton" type="submit">Submit</button></div>
+                </form>
+            </div>
         </div>
     </div>
 </section>
+
+<script src="/assets/js/contact.js"></script>

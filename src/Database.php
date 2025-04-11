@@ -6,15 +6,15 @@ use PDOException;
 
 class Database
 {
-    private static $instance = null;
-    private $connection;
+    private static ?Database $instance = null;
+    private PDO $connection;
 
     private function __construct()
     {
-        $host = $_ENV['DB_HOST'];
-        $db   = $_ENV['DB_NAME'];
-        $user = $_ENV['DB_USER'];
-        $pass = $_ENV['DB_PASS'];
+        $host = $_ENV['DB_HOST'] ?? 'localhost';
+        $db   = $_ENV['DB_NAME'] ?? 'test';
+        $user = $_ENV['DB_USER'] ?? 'root';
+        $pass = $_ENV['DB_PASS'] ?? '';
         $port = $_ENV['DB_PORT'] ?? 3306;
 
         try {
@@ -26,10 +26,10 @@ class Database
         }
     }
 
-    public static function getInstance(): Database
+    public static function getInstance(): self
     {
         if (self::$instance === null) {
-            self::$instance = new Database();
+            self::$instance = new self();
         }
         return self::$instance;
     }
@@ -39,4 +39,3 @@ class Database
         return $this->connection;
     }
 }
-?>
