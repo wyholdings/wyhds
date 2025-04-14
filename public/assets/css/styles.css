@@ -8854,7 +8854,11 @@ textarea.form-control-lg {
     text-align: center !important;
   }
 }
+@media (max-width: 640px) {
+  .main_nav_img{width: 190px !important; }
+}
 @media (min-width: 768px) {
+  
   .float-md-start {
     float: left !important;
   }
@@ -10892,3 +10896,5 @@ textarea.form-control-lg {
   width: 4rem;
   font-size: 2rem;
 }
+
+.main_nav_img{width: 290px;}
