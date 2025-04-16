@@ -1,0 +1,37 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<h1>문의 목록</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>상호</th>
+            <th>성함</th>
+            <th>이메일</th>
+            <th>전화번호</th>
+            <th>등록일</th>
+            <th>관리</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for inquiry in inquiries %}
+        <tr>
+            <td>{{ inquiry.id }}</td>
+            <td>{{ inquiry.company }}</td>
+            <td>{{ inquiry.name }}</td>
+            <td>{{ inquiry.email }}</td>
+            <td>{{ inquiry.phone }}</td>
+            <td>{{ inquiry.created_at|date('Y-m-d') }}</td>
+            <td>
+                <a href="/admin/inquiry/{{ inquiry.id }}/view" class="btn btn-sm btn-info">보기</a>
+                <a href="/admin/inquiry/{{ inquiry.id }}/delete" class="btn btn-sm btn-danger" onclick="return confirm('삭제할까요?')">삭제</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">등록된 문의가 없습니다.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

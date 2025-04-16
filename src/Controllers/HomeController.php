@@ -1,9 +1,21 @@
 <?php
+
 namespace App\Controllers;
 
-class HomeController {
-    public function index() {
-        //echo "홈 화면입니다.";
+use Twig\Environment;
+
+class HomeController
+{
+    private Environment $twig;
+
+    public function __construct(Environment $twig)
+    {
+        $this->twig = $twig;
+    }
+
+    public function index(): void
+    {
+        echo $this->twig->render('index.html.twig');
     }
 }
 

@@ -1,0 +1,73 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<h1>{% if company %}업체 수정{% else %}업체 등록{% endif %}</h1>
+
+<form method="post" action="{{ company ? '/admin/company/' ~ company.id ~ '/edit' : '/admin/company/add' }}">
+    <div class="form-group">
+        <label>업체명</label>
+        <input type="text" name="name" class="form-control" value="{{ company.name ?? '' }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label>사업자등록번호</label>
+        <input type="text" name="business_number" class="form-control" value="{{ company.business_number ?? '' }}">
+    </div>
+    
+    <div class="form-group">
+        <label>업체 타입</label>
+        <select name="type" class="form-control">
+            <option value="client" {% if company.type == 'client' %}selected{% endif %}>고객사</option>
+            <option value="partner" {% if company.type == 'partner' %}selected{% endif %}>협력사</option>
+            <option value="internal" {% if company.type == 'internal' %}selected{% endif %}>내부</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>계약 시작일</label>
+        <input type="date" name="contract_start" class="form-control" value="{{ company.contract_start ?? '' }}">
+    </div>
+
+    <div class="form-group">
+        <label>계약 종료일</label>
+        <input type="date" name="contract_end" class="form-control" value="{{ company.contract_end ?? '' }}">
+    </div>
+
+    <div class="form-group">
+        <label>담당자</label>
+        <input type="text" name="manager" class="form-control" value="{{ company.manager ?? '' }}">
+    </div>
+
+    <div class="form-group">
+        <label>전화번호</label>
+        <input type="text" name="phone" class="form-control" value="{{ company.phone ?? '' }}">
+    </div>
+
+    <div class="form-group">
+        <label>이메일</label>
+        <input type="email" name="email" class="form-control" value="{{ company.email ?? '' }}">
+    </div>
+
+    <div class="form-group">
+        <label>주소</label>
+        <input type="text" name="address" class="form-control" value="{{ company.address ?? '' }}">
+    </div>
+
+    <div class="form-group">
+        <label>상태</label>
+        <select name="status" class="form-control">
+            <option value="active" {% if company.status == 'active' %}selected{% endif %}>활성</option>
+            <option value="inactive" {% if company.status == 'inactive' %}selected{% endif %}>비활성</option>
+            <option value="hold" {% if company.status == 'hold' %}selected{% endif %}>보류</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>메모</label>
+        <textarea name="memo" class="form-control" rows="3">{{ company.memo ?? '' }}</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">{% if company %}수정{% else %}등록{% endif %}</button>
+    <a href="/admin/company/list" class="btn btn-secondary">목록</a>
+</form>
+{% endblock %}

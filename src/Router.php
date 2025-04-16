@@ -1,34 +1,45 @@
 <?php
 namespace App;
 
+use Twig\Environment;
+
 class Router {
-    protected $routes = [];
+    protected array $routes = [];
+    protected Environment $twig;
 
-    public function get($uri, $action) {
-        $this->routes['GET'][$uri] = $action;
+    public function __construct(Environment $twig)
+    {
+        $this->twig = $twig;
     }
 
-    public function post($uri, $action) {
-        $this->routes['POST'][$uri] = $action;
+    public function get(string $uri, array $action) {
+        $this->routes['GET'][] = ['uri' => $uri, 'action' => $action];
     }
 
-    public function dispatch($uri) {
+    public function post(string $uri, array $action) {
+        $this->routes['POST'][] = ['uri' => $uri, 'action' => $action];
+    }
+
+    public function dispatch(string $uri) {
         $method = $_SERVER['REQUEST_METHOD'];
         $path = parse_url($uri, PHP_URL_PATH);
 
-        if (isset($this->routes[$method][$path])) {
-            [$class, $method] = $this->routes[$method][$path];
-            $controller = new $class;
-            return call_user_func([$controller, $method]);
+        foreach ($this->routes[$method] ?? [] as $route) {
+            $pattern = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\}#', '(\d+)', $route['uri']);
+            $pattern = "#^" . $pattern . "$#";
+
+            if (preg_match($pattern, $path, $matches)) {
+                array_shift($matches); // 첫 번째는 전체 매칭된 문자열이니까 제거
+                [$class, $methodName] = $route['action'];
+                $controller = new $class($this->twig);
+                return call_user_func_array([$controller, $methodName], $matches);
+            }
         }
 
         http_response_code(404);
-
-        $loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/../views');
-        $twig = new \Twig\Environment($loader);
-
-        echo $twig->render('errors/404.html.twig');
+        echo $this->twig->render('errors/404.html.twig');
         exit;
     }
 }
+
 ?>
