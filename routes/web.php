@@ -34,4 +34,5 @@ $router->get('/admin/inquiry/list', [App\Controllers\InquiryController::class, '
 $router->get('/admin/inquiry/{id}/view', [App\Controllers\InquiryController::class, 'view']);
 //견적 문의 삭제
 $router->get('/admin/inquiry/{id}/delete', [App\Controllers\InquiryController::class, 'delete']);
+
 ?>
