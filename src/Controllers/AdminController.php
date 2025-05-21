@@ -30,8 +30,8 @@ class AdminController
 
     //로그인
     public function login() {
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $username = str_replace(' ', '', $_POST['username'] ?? '');
+        $password = str_replace(' ', '', $_POST['password'] ?? '');
 
         $adminModel = new AdminModel();
         $admin = $adminModel->getByUsername($username);
