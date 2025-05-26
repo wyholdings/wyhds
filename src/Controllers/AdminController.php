@@ -35,11 +35,14 @@ class AdminController
 
         $adminModel = new AdminModel();
         $admin = $adminModel->getByUsername($username);
-        echo "<pre>";
+        echo "<br>";
         echo $password;
+        echo "<br>";
         echo $admin['password'];
-        echo password_verify($password, $admin['password']);
-        echo $admin;
+        echo "<br>";
+        var_dump(password_verify($password, $admin['password']));
+        echo "<br>";
+        var_dump($admin);
         exit;
         //로그인 성공 시
         if ($admin && password_verify($password, $admin['password'])) {
