@@ -1,11 +1,37 @@
 /* public/assets/css/styles.css */
+@charset "UTF-8";
 
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
 }
+.video-background {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
 
+.video-background video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    object-fit: cover;
+}
+
+.video-background .content {
+    position: relative;
+    z-index: 1;
+    color: white;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+}
 header {
     display: flex;
     align-items: center;
@@ -33,14 +59,16 @@ footer {
 }
 
 .navbar {
-    background-color: #333;
+    background-color: transparent;
 }
+
+.bg-dark{background-color:transparent}
 
 .navbar ul {
     margin: 0;
     padding: 0;
     list-style: none;
-    display: flex;
+    /* display: flex; */
 }
 
 .navbar li {
@@ -50,15 +78,33 @@ footer {
 .navbar a {
     display: block;
     padding: 1rem;
-    color: white;
+   color: #fff;
     text-decoration: none;
 }
 
 .navbar a:hover {
-    background-color: #555;
+    /* background-color: #555; */
 }
 
-@charset "UTF-8";
+/* 호버 시 드롭다운 열리기 */
+.nav-item.dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0; /* 튕김 방지 */
+}
+
+/* optional: 드롭다운이 열릴 때 부드럽게 보이게 하기 */
+.dropdown-menu {
+    transition: all 0.2s ease;
+}
+
+.nav-link.dropdown-toggle::after {
+    display: none;
+}
+
+
+
+
+
 /*!
 * Start Bootstrap - Business Frontpage v5.0.9 (https://startbootstrap.com/template/business-frontpage)
 * Copyright 2013-2023 Start Bootstrap
@@ -2735,13 +2781,13 @@ textarea.form-control-lg {
   z-index: 3;
 }
 
-.invalid-feedback {
+/* .invalid-feedback {
   display: none;
   width: 100%;
   margin-top: 0.25rem;
   font-size: 0.875em;
   color: #dc3545;
-}
+} */
 
 .invalid-tooltip {
   position: absolute;
@@ -3275,7 +3321,7 @@ textarea.form-control-lg {
 }
 
 .dropdown-menu {
-  --bs-dropdown-zindex: 1000;
+  /* --bs-dropdown-zindex: 1000;
   --bs-dropdown-min-width: 10rem;
   --bs-dropdown-padding-x: 0;
   --bs-dropdown-padding-y: 0.5rem;
@@ -3314,7 +3360,7 @@ textarea.form-control-lg {
   background-color: var(--bs-dropdown-bg);
   background-clip: padding-box;
   border: var(--bs-dropdown-border-width) solid var(--bs-dropdown-border-color);
-  border-radius: var(--bs-dropdown-border-radius);
+  border-radius: var(--bs-dropdown-border-radius); */
 }
 .dropdown-menu[data-bs-popper] {
   top: 100%;
@@ -3502,7 +3548,7 @@ textarea.form-control-lg {
   opacity: 1;
 }
 
-.dropdown-item {
+/* .dropdown-item {
   display: block;
   width: 100%;
   padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
@@ -3514,7 +3560,7 @@ textarea.form-control-lg {
   white-space: nowrap;
   background-color: transparent;
   border: 0;
-}
+} 
 .dropdown-item:hover, .dropdown-item:focus {
   color: var(--bs-dropdown-link-hover-color);
   background-color: var(--bs-dropdown-link-hover-bg);
@@ -3529,7 +3575,7 @@ textarea.form-control-lg {
   pointer-events: none;
   background-color: transparent;
 }
-
+*/
 .dropdown-menu.show {
   display: block;
 }
@@ -3543,11 +3589,11 @@ textarea.form-control-lg {
   white-space: nowrap;
 }
 
-.dropdown-item-text {
+/* .dropdown-item-text {
   display: block;
   padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
   color: var(--bs-dropdown-link-color);
-}
+} */
 
 .dropdown-menu-dark {
   --bs-dropdown-color: #dee2e6;

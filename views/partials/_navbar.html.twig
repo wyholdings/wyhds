@@ -1,4 +1,106 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+ <script>
+    $(function () {
+        function bindPcNavHover() {
+            const isPc = $(window).width() >= 960;
+
+            if (isPc) {
+                $('.nav_1depth')
+                .off('.pcNav') // 중복 바인딩 방지
+                .on('mouseenter.pcNav', function () {
+                    $(this).children('.nav_2depth').stop(true, true).slideDown(200);
+                })
+                .on('mouseleave.pcNav', function () {
+                    $(this).children('.nav_2depth').stop(true, true).slideUp(200);
+                });
+            } else {
+                $('.nav_1depth').off('.pcNav');
+                $('.nav_2depth').removeAttr('style'); // 열려있던 메뉴 초기화
+            }
+        }
+
+        // 최초 실행
+        bindPcNavHover();
+
+        // 화면 크기 변경 시 다시 적용
+        $(window).on('resize', bindPcNavHover);
+
+        $('body').removeClass('no-scroll');
+        $('.nav_open').click(function () {
+            $(this).toggleClass('active');
+            $('nav > ul').toggleClass('open');
+
+            if ($(this).hasClass('active')) {
+                $('body').addClass('no-scroll');
+            } else {
+                $('body').removeClass('no-scroll');
+            }
+        });
+
+    });
+</script>
+
+<header>
+	<div>
+		<h1 class="logo">
+			<a href="/"><img src="/images/logo_width.png" alt="Logo"></a>
+		</h1>
+		<nav>
+			<ul>
+				<!-- About -->
+				<li class="nav_1depth">
+					<a href="#features">About</a>
+					{# <ul class="nav_2depth">
+						<li>
+							<a href="#features">About</a>
+						</li>
+					</ul> #}
+				</li>
+
+				<!-- Program -->
+				<li class="nav_1depth">
+					<a href="#pricing2">Services</a>
+					{# <ul class="nav_2depth">
+						<li>
+							<a href="#pricing2">Services</a>
+						</li>
+					</ul> #}
+				</li>
+
+				<!-- Registration -->
+				<li class="nav_1depth">
+					<a href="#contact_section">Contact</a>
+					{# <ul class="nav_2depth">
+						<li>
+							<a href="#contact_section">Contact</a>
+						</li>
+					</ul> #}
+				</li>
+
+				<!-- Notice -->
+				{# <li class="nav_1depth">
+					<a href="/notice">Notice</a>
+					<ul class="nav_2depth">
+						<li>
+							<a href="/notice">Notice</a>
+						</li>
+					</ul>
+				</li> #}
+			</ul>
+			<div class="nav_mobile_wrap">
+				<div class="nav_open">
+					<span></span>
+					<span></span>
+					<span></span>
+				</div>
+				<div class="nav_mobile_bg"></div>
+			</div>
+		</nav>
+	</div>
+</header>
+
+
+{# <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container px-5">
         <a class="navbar-brand" href="/"><img class="main_nav_img" src="/images/logo.jpg"></img></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -15,4 +117,4 @@
             </ul>
         </div>
     </div>
-</nav>
+</nav> #}

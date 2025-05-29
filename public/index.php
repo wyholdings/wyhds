@@ -18,6 +18,10 @@ $dotenv->load();
 $loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/../views');
 $twig = new \Twig\Environment($loader);
 
+//twig globals
+$twig->addGlobal('site_title', 'WY Holdings');
+$twig->addGlobal('event_date', 'We make Your Holding dreams');
+
 $router = new App\Router($twig);
 
 require_once __DIR__ . '/../routes/web.php';
