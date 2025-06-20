@@ -1,0 +1,176 @@
+{% extends 'layout/base.html.twig' %}
+
+{% block body %}
+
+<style>
+    body { font-family: 'Pretendard', sans-serif; margin: 0; background: #f9f9f9; color: #333; }
+    header { background: url(/images/mainvisual4.jpg) center no-repeat; color: #fff; padding: 50px 20px; text-align: center; position: relative;}
+    header h1 { font-size: 2.5em; margin-bottom: 10px; }
+    header p { font-size: 1.2em; }
+    .container { max-width: 1200px; margin: auto; padding: 50px 20px; }
+    .section-title { font-size: 1.8em; margin-bottom: 20px; color: #0a3d62; }
+    .services, .projects, .tech, .process, .contact { margin-bottom: 60px; }
+    .service-item, .project-item, .tech-item, .process-item { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .service-item h3, .process-item h3 { margin-top: 0; }
+    .tech-list { display: flex; flex-wrap: wrap; gap: 15px; }
+    .tech-item { flex: 1 1 150px; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+    .contact form { display: flex; flex-direction: column; gap: 15px; }
+    .contact input, .contact textarea { padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+    .contact button { padding: 15px; background: #0a3d62; color: #fff; border: none; border-radius: 5px; font-size: 1.1em; cursor: pointer; }
+    .portfolio-gallery { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .portfolio-item { flex: 1 1 250px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); overflow: hidden; text-align: center; }
+    .portfolio-item img { width: 100%; height: auto; display: block; }
+    .portfolio-item h4 { padding: 10px; font-size: 1.1em; color: #0a3d62; }
+    .portfolio-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+    }
+
+    .portfolio-item {
+        width: 200px;
+        text-align: center;
+    }
+
+    .portfolio-item img {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    }
+
+    .caption {
+        margin-top: 10px;
+    }
+
+    .caption h4 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+</style>
+
+<div class="container">
+
+    <section class="services">
+        <div class="section-title">제공 서비스</div>
+
+        <div class="service-item">
+            <img src="/images/conference_banner.jpg" alt="학회 홈페이지 제작" style="width:100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <h3>학회/협회 홈페이지 제작</h3>
+            <p>소개페이지, 회원가입, 행사 등록, 초록 제출 등 통합 시스템 제공</p>
+        </div>
+
+        <div class="service-item">
+            <img src="/images/registration_banner.jpg" alt="행사 등록 시스템 구축" style="width:100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <h3>행사 등록 시스템 구축</h3>
+            <p>온라인 등록, 카드결제, 관리자 통계 및 리포트 제공</p>
+        </div>
+
+        <div class="service-item">
+            <img src="/images/dashboard_banner.jpg" alt="관리자 대시보드 및 통계 리포트" style="width:100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <h3>관리자 대시보드 및 통계 리포트</h3>
+            <p>실시간 등록 현황, 통계 분석, 엑셀 다운로드 지원</p>
+        </div>
+
+        <div class="service-item">
+            <img src="/images/server_banner.jpg" alt="서버 운영 및 유지보수" style="width:100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <h3>서버 운영 및 유지보수</h3>
+            <p>안정적인 서버 운영과 신속한 유지보수 지원</p>
+        </div>
+    </section>
+
+
+    <section class="projects">
+        <div class="section-title">주요 프로젝트</div>
+        <div class="project-item">대한방사선방어학회 웹사이트</div>
+        <div class="project-item">대한비뇨학회 학술행사 (KUA2021)</div>
+        <div class="project-item">iADH2024 (대한장애인치과학회 학술행사)</div>
+        <div class="project-item">PDAA2024 학술대회</div>
+        <div class="project-item">세계항공컨퍼런스 행사</div>
+        <div class="project-item">기타 다수 학술대회, 협회 사이트 구축 경험 보유</div>
+    </section>
+
+    <section class="portfolio">
+        <div class="section-title">포트폴리오 캡처</div>
+        <div class="portfolio-gallery">
+            <div class="portfolio-item">
+                <img src="/images/snu.png" alt="서울대 학생지원과">
+                <div class="caption"><h4>서울대 학생지원과</h4></div>
+            </div>
+            <div class="portfolio-item">
+                <img src="/images/karp.png" alt="대한방사선방어학회">
+                <div class="caption"><h4>대한방사선방어학회</h4></div>
+            </div>
+            <div class="portfolio-item">
+                <img src="/images/iadh2024.png" alt="iADH2024">
+                <div class="caption"><h4>iADH2024</h4></div>
+            </div>
+            <div class="portfolio-item">
+                <img src="/images/mt.png" alt="mt">
+                <div class="caption"><h4>MOMENTUM Meeting</h4></div>
+            </div>
+            <div class="portfolio-item">
+                <img src="/images/kua.png" alt="대한비뇨학회">
+                <div class="caption"><h4>대한비뇨학회 학술행사</h4></div>
+            </div>
+            <div class="portfolio-item">
+                <img src="/images/iss.png" alt="세계항공컨퍼런스">
+                <div class="caption"><h4>세계항공컨퍼런스</h4></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="tech" style="margin-top:50px;">
+        <div class="section-title">개발 기술 스택</div>
+        <div class="tech-list">
+            <div class="tech-item">
+                <img src="/images/php.png" alt="PHP" style="width:50px;"><br>
+                PHP<br>(OOP, MVC)
+            </div>
+            <div class="tech-item">
+                <img src="/images/mysql.png" alt="MySQL" style="width:50px;"><br>
+                MySQL
+            </div>
+            {# <div class="tech-item">
+                <img src="/images/twig.jpg" alt="Twig" style="width:50px;"><br>
+                Twig
+            </div> #}
+            <div class="tech-item">
+                <img src="/images/bootstrap.jpg" alt="Bootstrap" style="width:50px;"><br>
+                Bootstrap
+            </div>
+            <div class="tech-item">
+                <img src="/images/javascript.png" alt="JavaScript" style="width:50px;"><br>
+                JavaScript
+            </div>
+            <div class="tech-item">
+                <img src="/images/linux.jpg" alt="Linux 서버" style="width:50px;"><br>
+                Linux 서버
+            </div>
+            <div class="tech-item">
+                <img src="/images/seo.png" alt="SEO 최적화" style="width:50px;"><br>
+                SEO 최적화
+            </div>
+            <div class="tech-item">
+                <img src="/images/payment.png" alt="결제 연동" style="width:50px;"><br>
+                결제 연동
+            </div>
+        </div>
+    </section>
+
+
+    <section class="process">
+        <div class="section-title">진행 프로세스</div>
+        <div class="process-item"><h3>1단계 상담</h3><p>요구사항 파악 및 초기 컨설팅</p></div>
+        <div class="process-item"><h3>2단계 기획 및 견적</h3><p>구체적 사양 정리 및 견적 확정</p></div>
+        <div class="process-item"><h3>3단계 시안 제공</h3><p>디자인 및 기능 시안 제공</p></div>
+        <div class="process-item"><h3>4단계 개발 진행</h3><p>주기적 보고와 개발 진행</p></div>
+        <div class="process-item"><h3>5단계 테스트 및 오픈</h3><p>최종 검수 후 정식 오픈</p></div>
+        <div class="process-item"><h3>6단계 유지보수</h3><p>장기적 안정적 운영 지원</p></div>
+    </section>
+
+    {% include 'partials/_contact.html.twig' %}
+
+</div>
+{% endblock %}

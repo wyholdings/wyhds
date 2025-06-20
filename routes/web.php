@@ -5,6 +5,9 @@ $router->get('/login', [App\Controllers\AuthController::class, 'showLoginForm'])
 $router->post('/login', [App\Controllers\AuthController::class, 'login']);
 $router->get('/logout', [App\Controllers\AuthController::class, 'logout']);
 
+//portfolio
+$router->get('/portfolio', [App\Controllers\HomeController::class, 'portfolio']);
+
 // 견적 문의
 $router->post('/contact/submit', [App\Controllers\ContactController::class, 'submit']);
 
