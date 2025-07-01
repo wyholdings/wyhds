@@ -39,4 +39,8 @@ $router->get('/admin/inquiry/{id}/view', [App\Controllers\InquiryController::cla
 //견적 문의 삭제
 $router->get('/admin/inquiry/{id}/delete', [App\Controllers\InquiryController::class, 'delete']);
 
+//수입/지출
+$router->get('/admin/money/list', [App\Controllers\MoneyController::class, 'list']);
+$router->post('/admin/money/add', [App\Controllers\MoneyController::class, 'add']);
+$router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'delete']);
 ?>

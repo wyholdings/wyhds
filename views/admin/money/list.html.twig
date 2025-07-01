@@ -1,0 +1,155 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<style>
+select.form-select-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  height: auto;
+}
+</style>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>{{ member_name_text }} {{ type }} 내역</h3>
+    <form method="get" class="ms-2">
+        <input type="hidden" name="member_name" value="{{ member_name }}">
+        <input type="hidden" name="type" value="{{ type }}">
+        <select name="year" class="form-select form-select-sm" style="min-width: 100px;" onchange="this.form.submit()">
+        {% for y in years %}
+            <option value="{{ y }}" {{ y == year ? 'selected' : '' }}>{{ y }}년</option>
+        {% endfor %}
+        </select>
+    </form>
+    <div class="d-flex gap-2 align-items-center">
+        <div class="btn-group">
+            <a href="?member_name={{ member_name }}&type=수입&year={{ year }}" class="btn btn-outline-primary {{ type == '수입' ? 'active' : '' }}">수입</a>
+            <a href="?member_name={{ member_name }}&type=지출&year={{ year }}" class="btn btn-outline-danger {{ type == '지출' ? 'active' : '' }}">지출</a>
+        </div>
+    </div>
+</div>
+
+<button class="btn btn-success mb-3" id="toggle-form-btn">+ 항목 추가</button>
+
+{# 입력 폼 영역 (ajax + hidden) #}
+<div id="entry-form" class="card p-3 mb-4" style="display:none;">
+    <form id="account-form">
+    <input type="hidden" name="member_name" value="{{ member_name }}">
+    <input type="hidden" name="type" value="{{ type }}">
+    <div class="row g-2">
+        <div class="col-md-2">
+        <input type="number" name="amount" class="form-control" placeholder="금액" required>
+        </div>
+        <div class="col-md-2">
+        <input type="number" name="vat" class="form-control" placeholder="부가세" value="0">
+        </div>
+        <div class="col-md-2">
+        <input type="date" name="date" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+        <input type="text" name="company" class="form-control" placeholder="업체명">
+        </div>
+        <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">저장</button>
+        </div>
+    </div>
+    </form>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-light">
+    <tr>
+        <th>날짜</th><th>금액</th><th>부가세</th><th>총금액</th><th>업체</th><th>삭제</th>
+    </tr>
+    </thead>
+    <tbody id="account-list">
+    {% for item in monies %}
+        <tr data-id="{{ item.id }}">
+        <td>{{ item.date }}</td>
+        <td>{{ item.amount|number_format }}</td>
+        <td>{{ item.vat|number_format }}</td>
+        <td>{{ item.total|number_format }}</td>
+        <td>{{ item.company }}</td>
+        <td>
+            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ item.id }}">삭제</button>
+        </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot class="table-warning">
+    <tr>
+        <td><strong>총합계</strong></td>
+        <td><strong>{{ total_money.amount_sum|number_format }}</strong></td>
+        <td><strong>{{ total_money.vat_sum|number_format }}</strong></td>
+        <td><strong>{{ total_money.total_sum|number_format }}</strong></td>
+        <td></td>
+        <td></td>
+    </tr>
+    </tfoot>
+</table>
+</div>
+
+<script>
+document.getElementById('toggle-form-btn').addEventListener('click', () => {
+    const form = document.getElementById('entry-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('account-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    const response = await fetch('/admin/money/add', {
+        method: 'POST',
+        body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+        const newRow = `
+        <tr>
+            <td>${result.data.date}</td>
+            <td>${Number(result.data.amount).toLocaleString()}</td>
+            <td>${Number(result.data.vat).toLocaleString()}</td>
+            <td>${Number(result.data.total).toLocaleString()}</td>
+            <td>${result.data.company}</td>
+            <td>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="${result.data.id}">삭제</button>
+            </td>
+        </tr>`;
+        document.getElementById('account-list').insertAdjacentHTML('afterbegin', newRow);
+        this.reset();
+        location.reload();
+    } else {
+        alert('저장 실패: ' + result.message);
+    }
+});
+
+document.querySelectorAll('.delete-btn').forEach(button => {
+  button.addEventListener('click', async function () {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    const id = this.dataset.id;
+
+    const response = await fetch('/admin/money/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `id=${id}`
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      document.querySelector(`tr[data-id="${id}"]`).remove();
+    } else {
+      alert('삭제 실패: ' + result.message);
+    }
+  });
+});
+</script>
+
+
+{% endblock %}
