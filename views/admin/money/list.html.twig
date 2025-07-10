@@ -8,7 +8,7 @@ select.form-select-sm {
   height: auto;
 }
 </style>
-<div class="container mt-5">
+<div class="container-fluid w-75 mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
     <h3>{{ member_name_text }} {{ type }} 내역</h3>
     <form method="get" class="ms-2">
@@ -45,8 +45,11 @@ select.form-select-sm {
         <div class="col-md-2">
         <input type="date" name="date" class="form-control" required>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-2">
         <input type="text" name="company" class="form-control" placeholder="업체명">
+        </div>
+        <div class="col-md-2">
+        <input type="text" name="product" class="form-control" placeholder="품목명">
         </div>
         <div class="col-md-2">
         <button type="submit" class="btn btn-primary w-100">저장</button>
@@ -58,7 +61,7 @@ select.form-select-sm {
 <table class="table table-bordered table-striped">
     <thead class="table-light">
     <tr>
-        <th>날짜</th><th>금액</th><th>부가세</th><th>총금액</th><th>업체</th><th>삭제</th>
+        <th>날짜</th><th>금액</th><th>부가세</th><th>총금액</th><th>업체</th><th>품목</th><th>삭제</th>
     </tr>
     </thead>
     <tbody id="account-list">
@@ -69,6 +72,7 @@ select.form-select-sm {
         <td>{{ item.vat|number_format }}</td>
         <td>{{ item.total|number_format }}</td>
         <td>{{ item.company }}</td>
+        <td>{{ item.product }}</td>
         <td>
             <button class="btn btn-sm btn-danger delete-btn" data-id="{{ item.id }}">삭제</button>
         </td>
@@ -81,6 +85,7 @@ select.form-select-sm {
         <td><strong>{{ total_money.amount_sum|number_format }}</strong></td>
         <td><strong>{{ total_money.vat_sum|number_format }}</strong></td>
         <td><strong>{{ total_money.total_sum|number_format }}</strong></td>
+        <td></td>
         <td></td>
         <td></td>
     </tr>
@@ -114,6 +119,7 @@ document.getElementById('toggle-form-btn').addEventListener('click', () => {
             <td>${Number(result.data.vat).toLocaleString()}</td>
             <td>${Number(result.data.total).toLocaleString()}</td>
             <td>${result.data.company}</td>
+            <td>${result.data.product}</td>
             <td>
                 <button class="btn btn-sm btn-danger delete-btn" data-id="${result.data.id}">삭제</button>
             </td>

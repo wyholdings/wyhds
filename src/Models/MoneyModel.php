@@ -34,16 +34,16 @@ class MoneyModel
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function add($type, $amount, $vat, $date, $company, $member_name) 
+    public function add($type, $amount, $vat, $date, $company, $product, $member_name) 
     {
         $db = Database::getInstance()->getConnection();
         
         $stmt = $db->prepare("
-            INSERT INTO account_book (member_name, type, amount, vat, date, company) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO account_book (member_name, type, amount, vat, date, company, product) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
 
-        if ($stmt->execute([$member_name, $type, $amount, $vat, $date, $company])) {
+        if ($stmt->execute([$member_name, $type, $amount, $vat, $date, $company, $product])) {
             return $db->lastInsertId();  // ← 여기서 삽입된 ID 반환
         }
 

@@ -50,13 +50,14 @@ class MoneyController
         $vat = intval($_POST['vat'] ?? 0);
         $date = $_POST['date'] ?? '';
         $company = $_POST['company'] ?? '';
+        $product = $_POST['product'] ?? '';
 
         if (!$type || !$amount || !$date) {
             return $this->jsonResponse(false, '필수 항목 누락');
         }
 
         $moneyModel = new MoneyModel();
-        $id = $moneyModel->add($type, $amount, $vat, $date, $company, $member_name);
+        $id = $moneyModel->add($type, $amount, $vat, $date, $company, $product, $member_name);
 
         if ($id) {
             $this->jsonResponse(true, '', [
@@ -67,6 +68,7 @@ class MoneyController
                 'total' => $amount + $vat,
                 'date' => $date,
                 'company' => $company,
+                'product' => $product
             ]);
         } else {
             $this->jsonResponse(false, 'DB 저장 실패');
