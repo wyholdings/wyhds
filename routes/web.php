@@ -43,4 +43,8 @@ $router->get('/admin/inquiry/{id}/delete', [App\Controllers\InquiryController::c
 $router->get('/admin/money/list', [App\Controllers\MoneyController::class, 'list']);
 $router->post('/admin/money/add', [App\Controllers\MoneyController::class, 'add']);
 $router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'delete']);
+
+//ebook 빌드
+$router->get('/admin/ebook/list', [App\Controllers\EbookController::class, 'list']);
+$router->post('/admin/ebook/upload', [App\Controllers\EbookController::class, 'upload']);
 ?>
