@@ -77,7 +77,7 @@ class EbookController
             // ZIP 압축
             $zipPath = $uploadBase . $ebookId . '.zip';
             $zip = new \ZipArchive();
-            if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+            if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
                 $files = scandir($outputDir);
                 foreach ($files as $file) {
                     if ($file !== '.' && $file !== '..') {
