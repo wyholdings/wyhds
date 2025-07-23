@@ -58,137 +58,169 @@ class EbookController
 
             // index.html 생성
             $html = "<!DOCTYPE html>
-                    <html lang='ko'>
-                    <head>
-                    <meta charset='UTF-8'>
-                    <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
-                    <title>eBook</title>
-                    <style>
-                        * { box-sizing: border-box; }
-                        body {
-                        margin: 0;
-                        background: #f4f4f4;
-                        overflow: hidden;
-                        font-family: sans-serif;
-                        }
-                        #viewer {
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        transition: all 0.4s ease;
-                        }
-                        .page {
-                        width: 45%;
-                        height: auto;
-                        max-height: 90vh;
-                        margin: 0 1%;
-                        box-shadow: 0 0 10px rgba(0,0,0,0.2);
-                        transition: transform 0.3s ease;
-                        }
-                        .single {
-                        width: 80%;
-                        }
-                        button {
-                        position: fixed;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        font-size: 2rem;
-                        background: rgba(255,255,255,0.8);
-                        border: 1px solid #ccc;
-                        cursor: pointer;
-                        z-index: 1000;
-                        padding: 10px 15px;
-                        }
-                        .prev-btn { left: 10px; }
-                        .next-btn { right: 10px; }
+            <html lang='ko'>
+            <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
+            <title>eBook</title>
+            <style>
+                * { box-sizing: border-box; }
+                body {
+                margin: 0;
+                background: #f9f9f9;
+                overflow: hidden;
+                font-family: sans-serif;
+                }
+                #viewer {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 85vh;
+                transition: all 0.4s ease;
+                }
+                .page {
+                width: 45%;
+                height: auto;
+                max-height: 90vh;
+                margin: 0 1%;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                transition: transform 0.3s ease;
+                }
+                .single {
+                width: 80%;
+                }
+                #controls {
+                position: fixed;
+                bottom: 10px;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                z-index: 1000;
+                }
+                button {
+                font-size: 1rem;
+                padding: 10px 15px;
+                background: #fff;
+                border: 1px solid #ccc;
+                cursor: pointer;
+                border-radius: 5px;
+                }
+                #page-info {
+                margin-top: 5px;
+                font-size: 0.9rem;
+                color: #333;
+                }
+                @media (max-width: 768px) {
+                .page {
+                    width: 90%;
+                }
+                }
+            </style>
+            </head>
+            <body>
+            <div id='viewer'></div>
 
-                        @media (max-width: 768px) {
-                        .page {
-                            width: 90%;
-                            margin: 0;
-                        }
-                        }
-                    </style>
-                    </head>
-                    <body>
-                    <button class='prev-btn' onclick='go(-1)'>◀</button>
-                    <div id='viewer'></div>
-                    <button class='next-btn' onclick='go(1)'>▶</button>
+            <div id='controls'>
+                <button onclick='goToFirst()'>⏮ 처음</button>
+                <button onclick='go(-1)'>◀ 이전</button>
+                <button onclick='go(1)'>다음 ▶</button>
+                <button onclick='goToLast()'>끝 ⏭</button>
+                <div id='page-info'></div>
+            </div>
 
-                    <script>
-                        let page = 1;
-                        const total = {$i};
+            <script>
+                let page = 1;
+                const total = {$i};
 
-                        function render() {
-                        const viewer = document.getElementById('viewer');
-                        viewer.innerHTML = '';
+                function render() {
+                const viewer = document.getElementById('viewer');
+                viewer.innerHTML = '';
 
-                        if (page === 1) {
-                            const img = document.createElement('img');
-                            img.src = '1.png';
-                            img.className = 'page single';
-                            viewer.appendChild(img);
-                        } else {
-                            const left = document.createElement('img');
-                            const right = document.createElement('img');
+                const info = document.getElementById('page-info');
 
-                            if (page <= total) {
-                            left.src = page + '.png';
-                            left.className = 'page';
-                            viewer.appendChild(left);
-                            }
+                if (page === 1) {
+                    const img = document.createElement('img');
+                    img.src = '1.png';
+                    img.className = 'page single';
+                    viewer.appendChild(img);
+                    info.innerText = '표지';
+                } else {
+                    const left = document.createElement('img');
+                    left.src = page + '.png';
+                    left.className = 'page';
+                    viewer.appendChild(left);
 
-                            if (page + 1 <= total) {
-                            right.src = (page + 1) + '.png';
-                            right.className = 'page';
-                            viewer.appendChild(right);
-                            }
-                        }
-                        }
+                    const rightPage = page + 1;
+                    if (rightPage <= total) {
+                    const right = document.createElement('img');
+                    right.src = rightPage + '.png';
+                    right.className = 'page';
+                    viewer.appendChild(right);
+                    info.innerText = `${page}-${rightPage} 페이지`;
+                    } else {
+                    info.innerText = `${page} 페이지`;
+                    }
+                }
+                }
 
-                        function go(n) {
-                        if (page === 1 && n === -1) return;
-                        if (page === 1 && n === 1) {
-                            page = 2;
-                        } else {
-                            const next = page + n * 2;
-                            if (next >= 2 && next <= total) {
-                            page = next;
-                            }
-                        }
-                        render();
-                        }
+                function go(n) {
+                if (page === 1 && n === -1) return;
+                if (page === 1 && n === 1) {
+                    page = 2;
+                } else {
+                    const next = page + n * 2;
+                    if (next < 1) page = 1;
+                    else if (next > total) {
+                    if (total % 2 === 0) page = total - 1;
+                    else page = total;
+                    } else {
+                    page = next;
+                    }
+                }
+                render();
+                }
 
-                        // 마우스 휠 이벤트
-                        let scrollDebounce = false;
-                        window.addEventListener('wheel', function(e) {
-                        if (scrollDebounce) return;
-                        scrollDebounce = true;
-                        setTimeout(() => scrollDebounce = false, 400);
+                function goToFirst() {
+                page = 1;
+                render();
+                }
 
-                        if (e.deltaY > 0) go(1);
-                        else go(-1);
-                        });
+                function goToLast() {
+                if (total <= 1) return;
+                page = total % 2 === 0 ? total - 1 : total;
+                render();
+                }
 
-                        // 모바일 스와이프
-                        let touchStartX = 0;
-                        window.addEventListener('touchstart', e => {
-                        touchStartX = e.changedTouches[0].screenX;
-                        });
-                        window.addEventListener('touchend', e => {
-                        const dx = e.changedTouches[0].screenX - touchStartX;
-                        if (Math.abs(dx) > 50) {
-                            if (dx < 0) go(1);
-                            else go(-1);
-                        }
-                        });
+                // 마우스 휠 이벤트
+                let scrollDebounce = false;
+                window.addEventListener('wheel', function(e) {
+                if (scrollDebounce) return;
+                scrollDebounce = true;
+                setTimeout(() => scrollDebounce = false, 400);
 
-                        window.onload = render;
-                    </script>
-                    </body>
-                    </html>";
+                if (e.deltaY > 0) go(1);
+                else go(-1);
+                });
 
+                // 모바일 터치 스와이프
+                let touchStartX = 0;
+                window.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+                });
+                window.addEventListener('touchend', e => {
+                const dx = e.changedTouches[0].screenX - touchStartX;
+                if (Math.abs(dx) > 50) {
+                    if (dx < 0) go(1);
+                    else go(-1);
+                }
+                });
+
+                window.onload = render;
+            </script>
+            </body>
+            </html>";
 
             file_put_contents($outputDir . 'index.html', $html);
 
