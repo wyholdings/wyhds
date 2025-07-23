@@ -123,6 +123,24 @@ class EbookController
                 margin-top: 10px;
                 font-size: 0.9rem;
                 }
+
+                @media (max-width: 768px) {
+                #flipbook {
+                    width: 100vw !important;
+                    height: 100vh !important;
+                }
+
+                #flipbook .page {
+                    width: 100vw !important;
+                    height: 100vh !important;
+                }
+
+                #flipbook .page img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                }
+                }
             </style>
 
             <script src='https://code.jquery.com/jquery-3.6.0.min.js'></script>
@@ -148,41 +166,57 @@ class EbookController
 
             <script>
             $(function () {
-                $('#flipbook').turn({
-                width: '50vw',
-                height: '80vh',
-                autoCenter: true,
-                display: 'double',
-                gradients: true,
-                elevation: 50,
-                pages: 10,
-                when: {
-                    turned: function (event, page, view) {
-                    const info = document.getElementById('page-info');
-                    const flipbook = document.getElementById('flipbook');
+                const isMobile = window.innerWidth <= 768;
 
-                    if(page == 1 || event == 'previous'){
-                        flipbook.style.right = '12%';
+                $('#flipbook').turn({
+                    width: isMobile ? '100vw' : '50vw',
+                    height: isMobile ? '100vh' : '80vh',
+                    autoCenter: true,
+                    display: isMobile ? 'single' : 'double',
+                    gradients: true,
+                    elevation: 50,
+                    pages: 10,
+                    when: {
+                    turned: function (event, page, view) {
+                        const info = document.getElementById('page-info');
+                        const flipbook = document.getElementById('flipbook');
+
+                        if (page == 1 || event == 'previous') {
+                        flipbook.style.right = isMobile ? '' : '12%';
                         flipbook.style.left = '';
                         info.innerText = '';
-                    }else{
+                        } else {
                         flipbook.style.right = '';
                         flipbook.style.left = '';
-                    }
+                        }
 
-                    // 페이지 번호 표시
-                    if (view[0] && view[1]) {
+                        if (view[0] && view[1]) {
                         info.innerText = `\${view[0]}-\${view[1]}`;
                         flipbook.classList.remove('single-page');
-                    } else if (view[0]) {
+                        } else if (view[0]) {
                         info.innerText = `\${view[0]}`;
                         flipbook.classList.add('single-page');
-                        flipbook.style.left = '12%';
+                        flipbook.style.left = isMobile ? '' : '12%';
+                        }
                     }
                     }
+                });
+
+                if (!isMobile) {
+                    let scrollDebounce = false;
+                    window.addEventListener('wheel', function (e) {
+                    if (scrollDebounce) return;
+                    scrollDebounce = true;
+                    setTimeout(() => scrollDebounce = false, 400);
+
+                    if (e.deltaY > 0) {
+                        $('#flipbook').turn('next');
+                    } else {
+                        $('#flipbook').turn('previous');
+                    }
+                    });
                 }
                 });
-            });
             </script>
 
             </body>
