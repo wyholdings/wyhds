@@ -91,25 +91,6 @@ class EbookController
                 width: 90%;
                 height: 90%;
                 }
-
-                #flipbook.single-page {
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                }
-
-                #flipbook.single-page .page {
-                width: 100% !important;
-                height: 100% !important;
-                }
-
-                #flipbook.single-page .page img {
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: contain;
-                }
                 
                 #flipbook .page {
                 background: white;
@@ -174,11 +155,20 @@ class EbookController
                 display: 'double',
                 gradients: true,
                 elevation: 50,
-                pages: {$totalPages},
+                pages: 10,
                 when: {
                     turned: function (event, page, view) {
                     const info = document.getElementById('page-info');
                     const flipbook = document.getElementById('flipbook');
+
+                    if(page == 1 || event == 'previous'){
+                        flipbook.style.right = '12%';
+                        flipbook.style.left = '';
+                        info.innerText = '';
+                    }else{
+                        flipbook.style.right = '';
+                        flipbook.style.left = '';
+                    }
 
                     // 페이지 번호 표시
                     if (view[0] && view[1]) {
@@ -187,6 +177,7 @@ class EbookController
                     } else if (view[0]) {
                         info.innerText = `\${view[0]}`;
                         flipbook.classList.add('single-page');
+                        flipbook.style.left = '12%';
                     }
                     }
                 }
