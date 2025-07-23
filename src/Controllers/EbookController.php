@@ -127,12 +127,12 @@ class EbookController
                 @media (max-width: 768px) {
                 #flipbook {
                     width: 100vw !important;
-                    height: 100vh !important;
+                    height: 80vh !important;
                 }
 
                 #flipbook .page {
                     width: 100vw !important;
-                    height: 100vh !important;
+                    height: 80vh !important;
                 }
 
                 #flipbook .page img {
@@ -170,7 +170,7 @@ class EbookController
 
                 $('#flipbook').turn({
                     width: isMobile ? '100vw' : '50vw',
-                    height: isMobile ? '100vh' : '80vh',
+                    height: isMobile ? '80vh' : '80vh',
                     autoCenter: true,
                     display: isMobile ? 'single' : 'double',
                     gradients: true,
