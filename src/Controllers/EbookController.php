@@ -27,6 +27,9 @@ class EbookController
 
     public function upload()
     {
+        error_reporting(E_ALL);
+        ini_set("display_errors", 1);
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // 업로드된 파일 처리
