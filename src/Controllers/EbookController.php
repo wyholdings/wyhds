@@ -57,6 +57,12 @@ class EbookController
             $imagick->destroy();
 
             // index.html 생성
+            // 예: $outputDir = '/ebook_path'; PNG가 이미 존재한다는 전제
+
+            $files = glob($outputDir . '/*.png');
+            $totalPages = count($files);
+
+            // index.html 생성
             $html = "<!DOCTYPE html>
             <html lang='ko'>
             <head>
@@ -125,20 +131,19 @@ class EbookController
             <div id='controls'>
                 <button onclick='goToFirst()'>⏮ 처음</button>
                 <button onclick='go(-1)'>◀ 이전</button>
+                <div id='page-info'></div>
                 <button onclick='go(1)'>다음 ▶</button>
                 <button onclick='goToLast()'>끝 ⏭</button>
-                <div id='page-info'></div>
             </div>
 
             <script>
                 let page = 1;
-                const total = {$i};
+                const total = {$totalPages};
 
                 function render() {
                 const viewer = document.getElementById('viewer');
-                viewer.innerHTML = '';
-
                 const info = document.getElementById('page-info');
+                viewer.innerHTML = '';
 
                 if (page === 1) {
                     const img = document.createElement('img');
@@ -158,9 +163,9 @@ class EbookController
                     right.src = rightPage + '.png';
                     right.className = 'page';
                     viewer.appendChild(right);
-                    info.innerText = `${page}-${rightPage} 페이지`;
+                    info.innerText = `\${page}-\${rightPage} 페이지`;
                     } else {
-                    info.innerText = `${page} 페이지`;
+                    info.innerText = `\${page} 페이지`;
                     }
                 }
                 }
@@ -173,8 +178,7 @@ class EbookController
                     const next = page + n * 2;
                     if (next < 1) page = 1;
                     else if (next > total) {
-                    if (total % 2 === 0) page = total - 1;
-                    else page = total;
+                    page = (total % 2 === 0) ? total - 1 : total;
                     } else {
                     page = next;
                     }
@@ -188,12 +192,11 @@ class EbookController
                 }
 
                 function goToLast() {
-                if (total <= 1) return;
-                page = total % 2 === 0 ? total - 1 : total;
+                page = (total % 2 === 0) ? total - 1 : total;
                 render();
                 }
 
-                // 마우스 휠 이벤트
+                // 마우스 휠
                 let scrollDebounce = false;
                 window.addEventListener('wheel', function(e) {
                 if (scrollDebounce) return;
@@ -204,7 +207,7 @@ class EbookController
                 else go(-1);
                 });
 
-                // 모바일 터치 스와이프
+                // 터치 스와이프
                 let touchStartX = 0;
                 window.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
@@ -221,6 +224,10 @@ class EbookController
             </script>
             </body>
             </html>";
+
+            // index.html 저장
+            file_put_contents($dir . '/index.html', $html);
+
 
             file_put_contents($outputDir . 'index.html', $html);
 
