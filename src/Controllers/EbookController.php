@@ -71,24 +71,33 @@ class EbookController
             <style>
                 body {
                 margin: 0;
-                padding: 0;
                 background: #f4f4f4;
+                overflow: hidden;
                 font-family: sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
                 }
+
                 #flipbook {
-                width: 90%;
-                max-width: 1000px;
-                height: 90vh;
-                margin: 50px auto;
+                width: 100vw;
+                height: 100vh;
+                position: relative;
                 }
+
                 #flipbook .page {
-                width: 100%;
-                height: 100%;
                 background: white;
-                box-shadow: 0 0 5px rgba(0,0,0,0.3);
+                box-shadow: 0 0 15px rgba(0,0,0,0.3);
+                overflow: hidden;
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                }
+
+                #flipbook .page img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
                 }
                 #controls {
                 text-align: center;
@@ -110,7 +119,7 @@ class EbookController
             </style>
 
             <script src='https://code.jquery.com/jquery-3.6.0.min.js'></script>
-            <script src='https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js'></script>
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js'></script>
             </head>
             <body>
 
@@ -123,10 +132,10 @@ class EbookController
             $html .= "</div>
 
             <div id='controls'>
-                <button onclick='$(\"#flipbook\").turn(\"page\", 1)'>⏮ 처음</button>
-                <button onclick='$(\"#flipbook\").turn(\"previous\")'>◀ 이전</button>
-                <button onclick='$(\"#flipbook\").turn(\"next\")'>다음 ▶</button>
-                <button onclick='$(\"#flipbook\").turn(\"page\", {$totalPages})'>끝 ⏭</button>
+                <button onclick='$(\"#flipbook\").turn(\"page\", 1)'>⏮</button>
+                <button onclick='$(\"#flipbook\").turn(\"previous\")'>◀</button>
+                <button onclick='$(\"#flipbook\").turn(\"next\")'>▶</button>
+                <button onclick='$(\"#flipbook\").turn(\"page\", {$totalPages})'>⏭</button>
                 <div id='page-info'></div>
             </div>
 
@@ -142,15 +151,22 @@ class EbookController
                 });
 
                 $('#flipbook').bind('turned', function(event, page, view) {
-                    let info = document.getElementById('page-info');
-                    if (view[0] && view[1]) {
-                    info.innerText = `\${view[0]}-\${view[1]} 페이지`;
-                    } else if (view[0]) {
-                    info.innerText = `\${view[0]} 페이지`;
+                    const flipbook = document.getElementById('flipbook');
+                    const info = document.getElementById('page-info');
+
+                    if (view[0] && !view[1]) {
+                        // 단일 페이지 (예: 1 또는 마지막)
+                        flipbook.style.justifyContent = 'center';
                     } else {
-                    info.innerText = '';
+                        flipbook.style.justifyContent = 'space-between';
                     }
-                });
+
+                    if (view[0] && view[1]) {
+                        info.innerText = `${view[0]}-${view[1]} 페이지`;
+                    } else if (view[0]) {
+                        info.innerText = `${view[0]} 페이지`;
+                    }
+                    });
                 });
             </script>
             </body>
