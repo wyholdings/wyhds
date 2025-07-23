@@ -79,10 +79,17 @@ class EbookController
                 align-items: center;
                 }
 
-                #flipbook {
+                #flipbook-wrapper {
+                display: flex;
+                justify-content: center;   /* 중앙 정렬 */
+                align-items: center;
                 width: 100vw;
                 height: 100vh;
-                position: relative;
+                background: #f4f4f4;
+                }
+                #flipbook {
+                width: 90%;
+                height: 90%;
                 }
 
                 #flipbook .page {
@@ -150,23 +157,22 @@ class EbookController
                     pages: {$totalPages}
                 });
 
-                $('#flipbook').bind('turned', function(event, page, view) {
-                    const flipbook = document.getElementById('flipbook');
+                $('#flipbook').turn({
+                width: 1000,
+                height: 700,
+                autoCenter: true,
+                display: 'double',  // 기본값
+                when: {
+                    turned: function (event, page, view) {
                     const info = document.getElementById('page-info');
-
-                    if (view[0] && !view[1]) {
-                        // 단일 페이지 (예: 1 또는 마지막)
-                        flipbook.style.justifyContent = 'center';
-                    } else {
-                        flipbook.style.justifyContent = 'space-between';
-                    }
-
                     if (view[0] && view[1]) {
-                        info.innerText = `\${view[0]}-\${view[1]} 페이지`;
+                        info.innerText = `\${view[0]}-\${view[1]}`;
                     } else if (view[0]) {
-                        info.innerText = `\${view[0]} 페이지`;
+                        info.innerText = `\${view[0]}`;
                     }
-                    });
+                    }
+                }
+                });
                 });
             </script>
             </body>
