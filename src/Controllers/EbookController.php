@@ -17,8 +17,6 @@ class EbookController
     //문의 목록
     public function list()
     {   
-        phpinfo();
-
         $ebookModel = new EbookModel();
         $ebooks = $ebookModel->getAll();
 
