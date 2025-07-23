@@ -92,6 +92,25 @@ class EbookController
                 height: 90%;
                 }
 
+                #flipbook.single-page {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                }
+
+                #flipbook.single-page .page {
+                width: 100% !important;
+                height: 100% !important;
+                }
+
+                #flipbook.single-page .page img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain;
+                }
+                
                 #flipbook .page {
                 background: white;
                 box-shadow: 0 0 15px rgba(0,0,0,0.3);
@@ -159,10 +178,19 @@ class EbookController
                 when: {
                     turned: function (event, page, view) {
                     const info = document.getElementById('page-info');
+                    const flipbook = document.getElementById('flipbook');
+
+                    // 페이지 번호 출력
                     if (view[0] && view[1]) {
                         info.innerText = `\${view[0]}-\${view[1]}`;
                     } else if (view[0]) {
                         info.innerText = `\${view[0]}`;
+                    }
+
+                    if (view[0] && !view[1]) {
+                        flipbook.classList.add('single-page');
+                    } else {
+                        flipbook.classList.remove('single-page');
                     }
                     }
                 }
