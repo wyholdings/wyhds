@@ -162,9 +162,9 @@ class EbookController
                     }
 
                     if (view[0] && view[1]) {
-                        info.innerText = `${view[0]}-${view[1]} 페이지`;
+                        info.innerText = `\${view[0]}-\${view[1]} 페이지`;
                     } else if (view[0]) {
-                        info.innerText = `${view[0]} 페이지`;
+                        info.innerText = `\${view[0]} 페이지`;
                     }
                     });
                 });
