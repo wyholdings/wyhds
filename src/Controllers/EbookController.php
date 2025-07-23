@@ -62,7 +62,6 @@ class EbookController
             $files = glob($outputDir . '/*.png');
             $totalPages = count($files);
 
-            // index.html 생성
             $html = "<!DOCTYPE html>
             <html lang='ko'>
             <head>
@@ -70,171 +69,93 @@ class EbookController
             <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
             <title>eBook</title>
             <style>
-                * { box-sizing: border-box; }
                 body {
                 margin: 0;
-                margin-top: 50px;
-                background: #f9f9f9;
-                overflow: hidden;
+                padding: 0;
+                background: #f4f4f4;
                 font-family: sans-serif;
                 }
-                #viewer {
+                #flipbook {
+                width: 90%;
+                max-width: 1000px;
+                height: 90vh;
+                margin: 50px auto;
+                }
+                #flipbook .page {
+                width: 100%;
+                height: 100%;
+                background: white;
+                box-shadow: 0 0 5px rgba(0,0,0,0.3);
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 85vh;
-                transition: all 0.4s ease;
-                }
-                .page {
-                width: 45%;
-                max-width: 800px;
-                height: auto;
-                max-height: 90vh;
-                margin: 0 1%;
-                box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                transition: transform 0.3s ease;
-                }
-                .single {
-                width: 80%;
-                max-width: 800px;
                 }
                 #controls {
-                position: fixed;
-                bottom: 10px;
-                width: 100%;
-                display: flex;
-                justify-content: center;
-                gap: 10px;
-                flex-wrap: wrap;
-                z-index: 1000;
+                text-align: center;
+                margin-top: 10px;
                 }
                 button {
                 font-size: 1rem;
-                padding: 10px 15px;
-                background: #fff;
+                padding: 8px 14px;
+                margin: 0 5px;
                 border: 1px solid #ccc;
+                background: #fff;
                 cursor: pointer;
                 border-radius: 5px;
                 }
                 #page-info {
-                margin-top: 5px;
+                margin-top: 10px;
                 font-size: 0.9rem;
-                color: #333;
-                }
-                @media (max-width: 768px) {
-                .page {
-                    width: 90%;
-                }
                 }
             </style>
+
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js'></script>
+            <script src='https://code.jquery.com/jquery-3.6.0.min.js'></script>
             </head>
             <body>
-            <div id='viewer'></div>
+
+            <div id='flipbook'>";
+
+            for ($p = 1; $p <= $totalPages; $p++) {
+                $html .= "<div class='page'><img src='{$p}.png' style='max-width:100%; max-height:100%;'></div>";
+            }
+
+            $html .= "</div>
 
             <div id='controls'>
-                <button onclick='goToFirst()'>⏮ 처음</button>
-                <button onclick='go(-1)'>◀ 이전</button>
+                <button onclick='$(\"#flipbook\").turn(\"page\", 1)'>⏮ 처음</button>
+                <button onclick='$(\"#flipbook\").turn(\"previous\")'>◀ 이전</button>
+                <button onclick='$(\"#flipbook\").turn(\"next\")'>다음 ▶</button>
+                <button onclick='$(\"#flipbook\").turn(\"page\", {$totalPages})'>끝 ⏭</button>
                 <div id='page-info'></div>
-                <button onclick='go(1)'>다음 ▶</button>
-                <button onclick='goToLast()'>끝 ⏭</button>
             </div>
 
             <script>
-                let page = 1;
-                const total = {$totalPages};
+                $(function() {
+                $('#flipbook').turn({
+                    width: 1000,
+                    height: 700,
+                    autoCenter: true,
+                    gradients: true,
+                    elevation: 50,
+                    pages: {$totalPages}
+                });
 
-                function render() {
-                const viewer = document.getElementById('viewer');
-                const info = document.getElementById('page-info');
-                viewer.innerHTML = '';
-
-                if (page === 1) {
-                    const img = document.createElement('img');
-                    img.src = '1.png';
-                    img.className = 'page single';
-                    viewer.appendChild(img);
-                    info.innerText = '표지';
-                } else {
-                    const left = document.createElement('img');
-                    left.src = page + '.png';
-                    left.className = 'page';
-                    viewer.appendChild(left);
-
-                    const rightPage = page + 1;
-                    if (rightPage <= total) {
-                    const right = document.createElement('img');
-                    right.src = rightPage + '.png';
-                    right.className = 'page';
-                    viewer.appendChild(right);
-                    info.innerText = `\${page}-\${rightPage}`;
+                $('#flipbook').bind('turned', function(event, page, view) {
+                    let info = document.getElementById('page-info');
+                    if (view[0] && view[1]) {
+                    info.innerText = `\${view[0]}-\${view[1]} 페이지`;
+                    } else if (view[0]) {
+                    info.innerText = `\${view[0]} 페이지`;
                     } else {
-                    info.innerText = `\${page}`;
+                    info.innerText = '';
                     }
-                }
-                }
-
-                function go(n) {
-                if (page === 1 && n === -1) return;
-
-                if (page === 1 && n === 1) {
-                    if (total >= 2) page = 2;
-                } else {
-                    const next = page + n * 2;
-
-                    const maxPage = (total % 2 === 0) ? total - 1 : total;
-
-                    if (next > maxPage) return;
-                    if (next < 1) page = 1;
-                    else page = next;
-                }
-
-                render();
-                }
-
-                function goToFirst() {
-                page = 1;
-                render();
-                }
-
-                function goToLast() {
-                if (total === 1) {
-                    page = 1;
-                } else if (total % 2 === 0) {
-                    page = total - 1; // 마지막 쌍 (예: 9-10)
-                } else {
-                    page = total; // 마지막 단독 (예: 9)
-                }
-                render();
-                }
-
-                // 마우스 휠
-                let scrollDebounce = false;
-                window.addEventListener('wheel', function(e) {
-                if (scrollDebounce) return;
-                scrollDebounce = true;
-                setTimeout(() => scrollDebounce = false, 400);
-
-                if (e.deltaY > 0) go(1);
-                else go(-1);
                 });
-
-                // 터치 스와이프
-                let touchStartX = 0;
-                window.addEventListener('touchstart', e => {
-                touchStartX = e.changedTouches[0].screenX;
                 });
-                window.addEventListener('touchend', e => {
-                const dx = e.changedTouches[0].screenX - touchStartX;
-                if (Math.abs(dx) > 50) {
-                    if (dx < 0) go(1);
-                    else go(-1);
-                }
-                });
-
-                window.onload = render;
             </script>
             </body>
             </html>";
+
 
             file_put_contents($outputDir . 'index.html', $html);
 
