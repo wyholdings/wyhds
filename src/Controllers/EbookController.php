@@ -84,7 +84,7 @@ class EbookController
                 justify-content: center;   /* 중앙 정렬 */
                 align-items: center;
                 width: 100vw;
-                height: 100vh;
+                height: 90vh;
                 background: #f4f4f4;
                 }
                 #flipbook {
@@ -168,8 +168,8 @@ class EbookController
             <script>
             $(function () {
                 $('#flipbook').turn({
-                width: 1000,
-                height: 700,
+                width: '50vw',
+                height: '80vh',
                 autoCenter: true,
                 display: 'double',
                 gradients: true,
@@ -180,17 +180,13 @@ class EbookController
                     const info = document.getElementById('page-info');
                     const flipbook = document.getElementById('flipbook');
 
-                    // 페이지 번호 출력
+                    // 페이지 번호 표시
                     if (view[0] && view[1]) {
                         info.innerText = `\${view[0]}-\${view[1]}`;
+                        flipbook.classList.remove('single-page');
                     } else if (view[0]) {
                         info.innerText = `\${view[0]}`;
-                    }
-
-                    if (view[0] && !view[1]) {
                         flipbook.classList.add('single-page');
-                    } else {
-                        flipbook.classList.remove('single-page');
                     }
                     }
                 }
