@@ -151,7 +151,11 @@ class EbookController
             <div id='flipbook'>";
 
             for ($p = 1; $p <= $totalPages; $p++) {
-                $html .= "<div class='page'><img src='{$p}.png' style='max-width:100%; max-height:100%;'></div>";
+                if($p == 1){
+                    $html .= "<div class='page'><img src='{$p}.png' style='max-width:100%; max-height:100%;'></div>";
+                }else{
+                    $html .= "<div class='page'><img src='{$p}.png' style='max-height:100%;'></div>";
+                }
             }
 
             $html .= "</div></div>
