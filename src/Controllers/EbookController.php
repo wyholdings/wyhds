@@ -86,6 +86,7 @@ class EbookController
                 }
                 .page {
                 width: 45%;
+                max-width: 800px;
                 height: auto;
                 max-height: 90vh;
                 margin: 0 1%;
@@ -94,6 +95,7 @@ class EbookController
                 }
                 .single {
                 width: 80%;
+                max-width: 800px;
                 }
                 #controls {
                 position: fixed;
@@ -163,25 +165,24 @@ class EbookController
                     right.src = rightPage + '.png';
                     right.className = 'page';
                     viewer.appendChild(right);
-                    info.innerText = `\${page}-\${rightPage} 페이지`;
+                    info.innerText = `\${page}-\${rightPage}`;
                     } else {
-                    info.innerText = `\${page} 페이지`;
+                    info.innerText = `\${page}`;
                     }
                 }
                 }
 
                 function go(n) {
                 if (page === 1 && n === -1) return;
+
                 if (page === 1 && n === 1) {
-                    page = 2;
+                    if (total >= 2) page = 2;
                 } else {
                     const next = page + n * 2;
+
+                    if (next > total) return;
                     if (next < 1) page = 1;
-                    else if (next > total) {
-                    page = (total % 2 === 0) ? total - 1 : total;
-                    } else {
-                    page = next;
-                    }
+                    else page = next;
                 }
                 render();
                 }
@@ -192,7 +193,11 @@ class EbookController
                 }
 
                 function goToLast() {
-                page = (total % 2 === 0) ? total - 1 : total;
+                if (total % 2 === 0) {
+                    page = total - 1; // 예: 10 → 9-10 페이지
+                } else {
+                    page = total;     // 예: 9 → 9 페이지만 표시
+                }
                 render();
                 }
 
@@ -224,10 +229,6 @@ class EbookController
             </script>
             </body>
             </html>";
-
-            // index.html 저장
-            file_put_contents($dir . '/index.html', $html);
-
 
             file_put_contents($outputDir . 'index.html', $html);
 
