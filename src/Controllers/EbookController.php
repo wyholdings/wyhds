@@ -73,6 +73,7 @@ class EbookController
                 * { box-sizing: border-box; }
                 body {
                 margin: 0;
+                margin-top: 50px;
                 background: #f9f9f9;
                 overflow: hidden;
                 font-family: sans-serif;
@@ -180,10 +181,13 @@ class EbookController
                 } else {
                     const next = page + n * 2;
 
-                    if (next > total) return;
+                    const maxPage = (total % 2 === 0) ? total - 1 : total;
+
+                    if (next > maxPage) return;
                     if (next < 1) page = 1;
                     else page = next;
                 }
+
                 render();
                 }
 
@@ -193,10 +197,12 @@ class EbookController
                 }
 
                 function goToLast() {
-                if (total % 2 === 0) {
-                    page = total - 1; // 예: 10 → 9-10 페이지
+                if (total === 1) {
+                    page = 1;
+                } else if (total % 2 === 0) {
+                    page = total - 1; // 마지막 쌍 (예: 9-10)
                 } else {
-                    page = total;     // 예: 9 → 9 페이지만 표시
+                    page = total; // 마지막 단독 (예: 9)
                 }
                 render();
                 }
