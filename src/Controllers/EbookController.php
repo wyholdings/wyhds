@@ -79,19 +79,7 @@ class EbookController
                 align-items: center;
                 }
 
-                #flipbook-wrapper {
-                display: flex;
-                justify-content: center;   /* 중앙 정렬 */
-                align-items: center;
-                width: 100vw;
-                height: 100vh;
-                background: #f4f4f4;
-                }
-                #flipbook {
-                width: 90%;
-                height: 90%;
-                }
-
+                /* 공통 페이지 */
                 #flipbook .page {
                 background: white;
                 box-shadow: 0 0 15px rgba(0,0,0,0.3);
@@ -101,11 +89,23 @@ class EbookController
                 align-items: center;
                 }
 
+                /* 이미지 */
                 #flipbook .page img {
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
                 }
+
+                #flipbook.single-page {
+                justify-content: center !important;
+                align-items: center !important;
+                }
+
+                #flipbook.single-page .page {
+                width: 100% !important;
+                height: 100% !important;
+                }
+
                 #controls {
                 text-align: center;
                 margin-top: 10px;
@@ -149,23 +149,32 @@ class EbookController
             <script>
             $(function () {
                 $('#flipbook').turn({
-                width: 1000,
-                height: 700,
-                autoCenter: true,
-                display: 'double',
-                gradients: true,
-                elevation: 50,
-                pages: {$totalPages},
-                when: {
-                    turned: function (event, page, view) {
-                    const info = document.getElementById('page-info');
-                    if (view[0] && view[1]) {
-                        info.innerText = `\${view[0]}-\${view[1]}`;
-                    } else if (view[0]) {
-                        info.innerText = `\${view[0]}`;
+                    width: 1000,
+                    height: 700,
+                    autoCenter: true,
+                    display: 'double',
+                    gradients: true,
+                    elevation: 50,
+                    pages: {$totalPages},
+                    when: {
+                        turned: function (event, page, view) {
+                        const info = document.getElementById('page-info');
+                        const flipbook = document.getElementById('flipbook');
+
+                        // 페이지 번호 표시
+                        if (view[0] && view[1]) {
+                            info.innerText = `\${view[0]}-\${view[1]}`;
+                        } else if (view[0]) {
+                            info.innerText = `\${view[0]}`;
+                        }
+
+                        if (view[0] && !view[1]) {
+                            flipbook.classList.add('single-page');
+                        } else {
+                            flipbook.classList.remove('single-page');
+                        }
+                        }
                     }
-                    }
-                }
                 });
             });
             </script>
