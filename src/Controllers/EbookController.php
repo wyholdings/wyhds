@@ -147,21 +147,15 @@ class EbookController
             </div>
 
             <script>
-                $(function() {
-                $('#flipbook').turn({
-                    width: 1000,
-                    height: 700,
-                    autoCenter: true,
-                    gradients: true,
-                    elevation: 50,
-                    pages: {$totalPages}
-                });
-
+            $(function () {
                 $('#flipbook').turn({
                 width: 1000,
                 height: 700,
                 autoCenter: true,
-                display: 'double',  // 기본값
+                display: 'double',
+                gradients: true,
+                elevation: 50,
+                pages: {$totalPages},
                 when: {
                     turned: function (event, page, view) {
                     const info = document.getElementById('page-info');
@@ -173,8 +167,9 @@ class EbookController
                     }
                 }
                 });
-                });
+            });
             </script>
+
             </body>
             </html>";
 
