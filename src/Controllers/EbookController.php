@@ -292,24 +292,24 @@ class EbookController
                 });
             }
 
-            (function () {
+            $(function () {
                 const isMobile = window.innerWidth <= 768;
 
                 function getFlipbookSize(){
                     const vw = window.innerWidth;
                     const vh = window.innerHeight;
                     return {
-                    width:  isMobile ? vw : Math.round(vw * 0.5),
-                    height: Math.round(vh * 0.8)
+                        width:  isMobile ? vw : Math.round(vw * 0.5),
+                        height: Math.round(vh * 0.8)
                     };
                 }
 
                 $('#flipbook .page').each(function(){
                     if (!this.querySelector('.page-canvas')) {
-                    const canvas = document.createElement('div');
-                    canvas.className = 'page-canvas';
-                    while (this.firstChild) canvas.appendChild(this.firstChild);
-                    this.appendChild(canvas);
+                        const canvas = document.createElement('div');
+                        canvas.className = 'page-canvas';
+                        while (this.firstChild) canvas.appendChild(this.firstChild);
+                        this.appendChild(canvas);
                     }
                 });
 
@@ -325,31 +325,31 @@ class EbookController
                     elevation: 50,
                     pages: totalPages,
                     when: {
-                    turning: function(){ /* 애니메이션 중에는 DOM 손대지 않음 */ },
-                    turned: function (event, page, view) {
-                        const info = document.getElementById('page-info');
-                        const flipbook = document.getElementById('flipbook');
+                        turning: function(){ /* 애니메이션 중에는 DOM 손대지 않음 */ },
+                        turned: function (event, page, view) {
+                            const info = document.getElementById('page-info');
+                            const flipbook = document.getElementById('flipbook');
 
-                        if (page == 1 || event == 'previous') {
-                        flipbook.style.right = isMobile ? '' : '12%';
-                        flipbook.style.left = '';
-                        info.innerText = '';
-                        } else {
-                        flipbook.style.right = '';
-                        flipbook.style.left = '';
+                            if (page == 1 || event == 'previous') {
+                            flipbook.style.right = isMobile ? '' : '12%';
+                            flipbook.style.left = '';
+                            info.innerText = '';
+                            } else {
+                            flipbook.style.right = '';
+                            flipbook.style.left = '';
+                            }
+
+                            if (view[0] && view[1]) {
+                            info.innerText = `\${view[0]}-\${view[1]}`;
+                            flipbook.classList.remove('single-page');
+                            } else if (view[0]) {
+                            info.innerText = `\${view[0]}`;
+                            flipbook.classList.add('single-page');
+                            flipbook.style.left = isMobile ? '' : '12%';
+                            }
+
+                            requestAnimationFrame(applyLinks);
                         }
-
-                        if (view[0] && view[1]) {
-                        info.innerText = `\${view[0]}-\${view[1]}`;
-                        flipbook.classList.remove('single-page');
-                        } else if (view[0]) {
-                        info.innerText = `\${view[0]}`;
-                        flipbook.classList.add('single-page');
-                        flipbook.style.left = isMobile ? '' : '12%';
-                        }
-
-                        requestAnimationFrame(applyLinks);
-                    }
                     }
                 });
 
