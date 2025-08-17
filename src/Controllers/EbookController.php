@@ -208,130 +208,131 @@ class EbookController
             </div>
 
             <script>
-            $('#flipbook .page').each(function(){
-                if (!this.querySelector('.page-canvas')) {
-                    const canvas = document.createElement('div');
-                    canvas.className = 'page-canvas';
-                    while (this.firstChild) canvas.appendChild(this.firstChild); // 자식들 이동
-                    this.appendChild(canvas);
-                }
-            });
-
-            function getVisiblePages(){
-                const v = $('#flipbook').turn('view') || [];
-                return v.filter(Boolean);
-            }
-
-            function applyLinks(){
-                if (!window.linkMap) return;
-
-                const \$pages = $('#flipbook .page');
-
-                getVisiblePages().forEach((page)=>{
-                    const areas = linkMap[page];
-                    if (!areas || !areas.length) return;
-
-                    const pageEl = \$pages.eq(page - 1)[0];
-                    if (!pageEl) return;
-
-                    const canvasEl = pageEl.querySelector('.page-canvas') || pageEl;
-                    const img = canvasEl.querySelector('img');
-                    if (!img) return;
-
-                    const tryCalc = () => {
-                    const cw = canvasEl.clientWidth;
-                    const ch = canvasEl.clientHeight;
-
-                    const meta = (window.imageMeta && (imageMeta[page] || imageMeta.default)) || {};
-                    const iw = img.naturalWidth  || meta.naturalWidth  || 0;
-                    const ih = img.naturalHeight || meta.naturalHeight || 0;
-
-                    if (!cw || !ch || !iw || !ih) {
-                        return requestAnimationFrame(tryCalc);
+                function getPageByNumber(page){
+                    const img = document.querySelector(`#flipbook img.link_area_\${page}`);
+                    if (img) {
+                        const pageEl   = img.closest('.page');
+                        const canvasEl = img.closest('.page-canvas') || pageEl;
+                        return { pageEl, canvasEl, img };
                     }
+                    const pageEl = $('#flipbook .page').get(page - 1) || null;
+                    const canvasEl = pageEl ? (pageEl.querySelector('.page-canvas') || pageEl) : null;
+                    const fallbackImg = canvasEl ? canvasEl.querySelector('img') : null;
+                    return { pageEl, canvasEl, img: fallbackImg };
+                }
 
-                    const scale = Math.min(cw / iw, ch / ih);
-                    const renderW = iw * scale;
-                    const renderH = ih * scale;
-                    const offsetLeft = (cw - renderW) / 2;
-                    const offsetTop  = (ch - renderH) / 2;
+                function getVisiblePages(){
+                    const v = $('#flipbook').turn('view') || [];
+                    return v.filter(Boolean);
+                }
 
-                    canvasEl.querySelectorAll('.link-area').forEach(a => a.remove());
+                function applyLinks(){
+                    if (!window.linkMap) return;
 
-                    areas.forEach(({ href, x, y, w, h, title }) => {
-                        if ([href,x,y,w,h].some(v => v === undefined)) return;
+                    const pagesEls = $('#flipbook .page');
+                    const visible  = getVisiblePages();
 
-                            const a = document.createElement('a');
-                            a.className = 'link-area';
-                            a.href = href;
-                            a.target = '_blank';
-                            a.rel = 'noopener';
-                            if (title) a.setAttribute('aria-label', title);
+                    visible.forEach(p => {
+                        const { canvasEl } = getPageByNumber(p);
+                        if (!canvasEl) return;
+                        canvasEl.querySelectorAll('.link-area').forEach(a => a.remove());
+                    });
 
-                            const left   = offsetLeft + x * scale;
-                            const top    = offsetTop  + y * scale;
-                            const width  = w * scale;
-                            const height = h * scale;
+                    visible.forEach(page => {
+                        const areas = linkMap[page];
+                        if (!areas || !areas.length) return;
 
-                            Object.assign(a.style, {
-                            left: left + 'px',
-                            top:  top  + 'px',
-                            width:  width  + 'px',
-                            height: height + 'px'
+                        const { pageEl, canvasEl, img } = getPageByNumber(page);
+                        if (!img) return;
+
+                        const tryCalc = () => {
+                        const cw = canvasEl.clientWidth;
+                        const ch = canvasEl.clientHeight;
+
+                        const meta = (window.imageMeta && (imageMeta[page] || imageMeta.default)) || {};
+                        const iw = img.naturalWidth  || meta.naturalWidth  || 0;
+                        const ih = img.naturalHeight || meta.naturalHeight || 0;
+
+                        if (!cw || !ch || !iw || !ih) return requestAnimationFrame(tryCalc);
+
+                        const scale = Math.min(cw / iw, ch / ih);
+                        const renderW = iw * scale, renderH = ih * scale;
+                        const offsetLeft = (cw - renderW) / 2;
+                        const offsetTop  = (ch - renderH) / 2;
+
+                        areas.forEach(({ href, x, y, w, h, title }) => {
+                            if ([href,x,y,w,h].some(v => v === undefined)) return;
+
+                                const a = document.createElement('a');
+                                a.className = 'link-area';
+                                a.href = href;
+                                a.target = '_blank';
+                                a.rel = 'noopener';
+                                if (title) a.setAttribute('aria-label', title);
+
+                                Object.assign(a.style, {
+                                position: 'absolute',
+                                zIndex:   5,
+                                left:     (offsetLeft + x * scale) + 'px',
+                                top:      (offsetTop  + y * scale) + 'px',
+                                width:    (w * scale) + 'px',
+                                height:   (h * scale) + 'px',
+                                cursor:   'pointer'
+                                });
+
+                                canvasEl.appendChild(a);
                             });
+                        };
 
-                            canvasEl.appendChild(a);
-                        });
-                    };
-
-                    if (!img.complete || !img.naturalWidth) {
-                        img.addEventListener('load', tryCalc, { once: true });
-                    } else {
-                        tryCalc();
-                    }
-                });
-            }
-
-            $(function () {
-                const isMobile = window.innerWidth <= 768;
-
-                function getFlipbookSize(){
-                    const vw = window.innerWidth;
-                    const vh = window.innerHeight;
-                    return {
-                        width:  isMobile ? vw : Math.round(vw * 0.5),
-                        height: Math.round(vh * 0.8)
-                    };
+                        if (!img.complete || !img.naturalWidth) {
+                            img.addEventListener('load', tryCalc, { once: true });
+                        } else {
+                            tryCalc();
+                        }
+                    });
                 }
 
-                $('#flipbook .page').each(function(){
-                    if (!this.querySelector('.page-canvas')) {
-                        const canvas = document.createElement('div');
-                        canvas.className = 'page-canvas';
-                        while (this.firstChild) canvas.appendChild(this.firstChild);
-                        this.appendChild(canvas);
+                $(function () {
+                    $('#flipbook .page').each(function(){
+                        if (!this.querySelector('.page-canvas')) {
+                            const canvas = document.createElement('div');
+                            canvas.className = 'page-canvas';
+                            while (this.firstChild) canvas.appendChild(this.firstChild);
+                            this.appendChild(canvas);
+                        }
+                    });
+
+                    const isNarrow = () => window.innerWidth <= 768;
+                    function getFlipbookSize(){
+                        const vw = window.innerWidth;
+                        const vh = window.innerHeight;
+                        return {
+                        width:  isNarrow() ? vw : Math.round(vw * 0.5),
+                        height: Math.round(vh * 0.8)
+                        };
                     }
-                });
 
-                const totalPages = $('#flipbook .page').length;
-                const { width, height } = getFlipbookSize();
+                    const totalPages = $('#flipbook .page').length;
+                    const { width, height } = getFlipbookSize();
 
-                $('#flipbook').turn({
-                    width,
-                    height,
-                    autoCenter: true,
-                    display: isMobile ? 'single' : 'double',
-                    gradients: true,
-                    elevation: 50,
-                    pages: totalPages,
-                    when: {
-                        turning: function(){ /* 애니메이션 중에는 DOM 손대지 않음 */ },
+                    $('#flipbook').turn({
+                        width,
+                        height,
+                        autoCenter: true,
+                        display: isNarrow() ? 'single' : 'double',
+                        gradients: true,
+                        elevation: 50,
+                        pages: totalPages,
+                        when: {
+                        turning: function(){ 
+                            $('#flipbook .page-canvas .link-area').remove();
+                        },
                         turned: function (event, page, view) {
                             const info = document.getElementById('page-info');
                             const flipbook = document.getElementById('flipbook');
 
                             if (page == 1 || event == 'previous') {
-                            flipbook.style.right = isMobile ? '' : '12%';
+                            flipbook.style.right = isNarrow() ? '' : '12%';
                             flipbook.style.left = '';
                             info.innerText = '';
                             } else {
@@ -345,36 +346,43 @@ class EbookController
                             } else if (view[0]) {
                             info.innerText = `\${view[0]}`;
                             flipbook.classList.add('single-page');
-                            flipbook.style.left = isMobile ? '' : '12%';
+                            flipbook.style.left = isNarrow() ? '' : '12%';
                             }
 
                             requestAnimationFrame(applyLinks);
                         }
+                        }
+                    });
+
+                    requestAnimationFrame(applyLinks);
+
+                    const reflow = () => {
+                        const { width, height } = getFlipbookSize();
+                        $('#flipbook').turn('size', width, height);
+
+                        const desiredDisplay = isNarrow() ? 'single' : 'double';
+                        const currentDisplay = $('#flipbook').turn('display');
+                        if (currentDisplay !== desiredDisplay) {
+                            $('#flipbook').turn('display', desiredDisplay);
+                        }
+
+                        setTimeout(() => requestAnimationFrame(applyLinks), 50);
+                    };
+                    window.addEventListener('resize', reflow);
+                    window.addEventListener('orientationchange', reflow);
+
+                    if (!isNarrow()) {
+                        let scrollDebounce = false;
+                        window.addEventListener('wheel', function (e) {
+                        if (scrollDebounce) return;
+                        scrollDebounce = true;
+                        setTimeout(() => (scrollDebounce = false), 400);
+                        if (e.deltaY > 0) $('#flipbook').turn('next');
+                        else $('#flipbook').turn('previous');
+                        });
                     }
                 });
-
-                requestAnimationFrame(applyLinks);
-
-                const reflow = () => {
-                    const { width, height } = getFlipbookSize();
-                    $('#flipbook').turn('size', width, height);
-                    setTimeout(() => requestAnimationFrame(applyLinks), 50);
-                };
-                window.addEventListener('resize', reflow);
-                window.addEventListener('orientationchange', reflow);
-
-                if (!isMobile) {
-                    let scrollDebounce = false;
-                    window.addEventListener('wheel', function (e) {
-                    if (scrollDebounce) return;
-                    scrollDebounce = true;
-                    setTimeout(() => (scrollDebounce = false), 400);
-                    if (e.deltaY > 0) $('#flipbook').turn('next');
-                    else $('#flipbook').turn('previous');
-                    });
-                }
-            });
-            </script>
+                </script>
 
             </body>
             </html>";
