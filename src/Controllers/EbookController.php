@@ -379,7 +379,6 @@ class EbookController
             </body>
             </html>";
 
-
             file_put_contents($outputDir . 'index.html', $html);
 
             // ZIP 압축
