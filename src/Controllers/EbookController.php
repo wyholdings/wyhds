@@ -175,11 +175,11 @@ class EbookController
             <script>
                 window.linkMap = {
                 1: [
-                    { href: 'https://conference.org', x: 0, y: 0, w: 420, h: 160, title: '학회 홈페이지' },
+                    { href: 'https://karp.or.kr', x: 380, y: 1534, w: 492, h: 169, title: '대한방사선방어학회 홈페이지' },
                 ],
                 2: [
                     { href: 'https://sponsor-a.com', x: 100,  y: 0, w: 520, h: 220, title: '스폰서 A' },
-                    { href: 'https://sponsor-b.com', x: 0, y: 0, w: 520, h: 220, title: '스폰서 B' },
+                    { goto: 10, x: 0, y: 0, w: 520, h: 220, title: '10페이지로 이동' },
                 ],
                 };
 
@@ -371,29 +371,45 @@ class EbookController
                         const offsetLeft = (cw - renderW) / 2;
                         const offsetTop  = (ch - renderH) / 2;
 
-                        areas.forEach(({ href, x, y, w, h, title }) => {
-                            if ([href,x,y,w,h].some(v => v === undefined)) return;
+                        areas.forEach(({ href, goto, x, y, w, h, title }) => {
+                            if ([x,y,w,h].some(v => v === undefined)) return;
 
-                                const a = document.createElement('a');
-                                a.className = 'link-area';
+                            const a = document.createElement('a');
+                            a.className = 'link-area';
+                            a.setAttribute('aria-label', title || '');
+
+                            Object.assign(a.style, {
+                                position: 'absolute',
+                                zIndex: 5,
+                                cursor: 'pointer',
+                                left:  (offsetLeft + x * scale) + 'px',
+                                top:   (offsetTop  + y * scale) + 'px',
+                                width: (w * scale) + 'px',
+                                height:(h * scale) + 'px'
+                            });
+
+                            if (typeof goto === 'number') {
+                                a.href = 'javascript:void(0)';
+                                a.role = 'button';
+                                a.tabIndex = 0;
+
+                                const jump = () => $('#flipbook').turn('page', goto);
+
+                                a.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); jump(); });
+                                a.addEventListener('keydown', (e) => {
+                                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(); }
+                                });
+                            } else if (href) {
                                 a.href = href;
                                 a.target = '_blank';
                                 a.rel = 'noopener';
-                                if (title) a.setAttribute('aria-label', title);
+                            } else {
+                                return;
+                            }
 
-                                Object.assign(a.style, {
-                                position: 'absolute',
-                                zIndex:   5,
-                                left:     (offsetLeft + x * scale) + 'px',
-                                top:      (offsetTop  + y * scale) + 'px',
-                                width:    (w * scale) + 'px',
-                                height:   (h * scale) + 'px',
-                                cursor:   'pointer'
-                                });
+                            canvasEl.appendChild(a);
+                        });
 
-                                canvasEl.appendChild(a);
-                            });
-                        };
 
                         if (!img.complete || !img.naturalWidth) {
                             img.addEventListener('load', tryCalc, { once: true });
