@@ -408,7 +408,8 @@ class EbookController
                             }
 
                             canvasEl.appendChild(a);
-                        });
+                            });
+                        };
 
 
                         if (!img.complete || !img.naturalWidth) {
