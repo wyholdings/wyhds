@@ -70,58 +70,58 @@ class EbookController
             <title>eBook</title>
             <style>
                 body {
-                margin: 0;
-                background: #f4f4f4;
-                overflow: hidden;
-                font-family: sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
+                    margin: 0;
+                    background: #f4f4f4;
+                    overflow: hidden;
+                    font-family: sans-serif;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
 
                 #flipbook-wrapper {
-                display: flex;
-                justify-content: center;   /* 중앙 정렬 */
-                align-items: center;
-                width: 100vw;
-                height: 90vh;
-                background: #f4f4f4;
+                    display: flex;
+                    justify-content: center;   /* 중앙 정렬 */
+                    align-items: center;
+                    width: 100vw;
+                    height: 90vh;
+                    background: #f4f4f4;
                 }
                 #flipbook {
-                width: 90%;
-                height: 90%;
+                    width: 90%;
+                    height: 90%;
                 }
                 
                 #flipbook .page {
-                background: white;
-                box-shadow: 0 0 15px rgba(0,0,0,0.3);
-                overflow: hidden;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                position: relative;
+                    background: white;
+                    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+                    overflow: hidden;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    position: relative;
                 }
 
                 #flipbook .page img {
-                height: 100%;
-                object-fit: contain;
+                    height: 100%;
+                    object-fit: contain;
                 }
                 #controls {
-                text-align: center;
-                margin-top: 10px;
+                    text-align: center;
+                    margin-top: 10px;
                 }
                 button {
-                font-size: 1rem;
-                padding: 8px 14px;
-                margin: 0 5px;
-                border: 1px solid #ccc;
-                background: #fff;
-                cursor: pointer;
-                border-radius: 5px;
+                    font-size: 1rem;
+                    padding: 8px 14px;
+                    margin: 0 5px;
+                    border: 1px solid #ccc;
+                    background: #fff;
+                    cursor: pointer;
+                    border-radius: 5px;
                 }
                 #page-info {
-                margin-top: 10px;
-                font-size: 0.9rem;
+                    margin-top: 10px;
+                    font-size: 0.9rem;
                 }
 
                 @media (max-width: 768px) {
@@ -143,27 +143,33 @@ class EbookController
                 }
 
                 #flipbook .page-canvas{
-                position: relative;
-                width: 100%;
-                height: 100%;
-                display: flex;            /* 이미지 중앙정렬 유지 */
-                align-items: center;
-                justify-content: center;
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;            /* 이미지 중앙정렬 유지 */
+                    align-items: center;
+                    justify-content: center;
                 }
                 #flipbook .page-canvas img{
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
                 }
                 .link-area{
-                position: absolute;
-                display: block;
-                z-index: 5;
+                    position: absolute;
+                    display: block;
+                    z-index: 5;
                 }
                 /* 디버그용 (완료 후 제거) */
                 html.show-link-boxes .link-area{
-                background: rgba(255,0,0,.2);
-                outline: 1px dashed red;
+                    background: rgba(255,0,0,.2);
+                    outline: 1px dashed red;
+                }
+                .picker-box{
+                    position:absolute; z-index:9;
+                    outline:1px dashed red;
+                    background:rgba(255,0,0,.2);
+                    pointer-events:none;
                 }
             </style>
             <script>
@@ -206,6 +212,111 @@ class EbookController
                 <button onclick='$(\"#flipbook\").turn(\"page\", {$totalPages})'>⏭</button>
                 <div id='page-info'></div>
             </div>
+
+            <script>
+                function getPageByNumber(page){
+                    const img = document.querySelector(`#flipbook img.link_area_\${page}`);
+                    if (!img) return {};
+                    const pageEl   = img.closest('.page');
+                    const canvasEl = img.closest('.page-canvas') || pageEl;
+                    return { pageEl, canvasEl, img };
+                }
+
+                function getContainMap(canvasEl, img){
+                    const rect = canvasEl.getBoundingClientRect();
+                    const cw = rect.width, ch = rect.height;
+                    const iw = img.naturalWidth, ih = img.naturalHeight;
+                    const scale = Math.min(cw/iw, ch/ih);
+                    const renderW = iw*scale, renderH = ih*scale;
+                    const offL = (cw - renderW)/2, offT = (ch - renderH)/2;
+                    return { rect, cw, ch, iw, ih, scale, offL, offT };
+                }
+
+                function clientToImagePx(map, clientX, clientY){
+                    const x = (clientX - map.rect.left - map.offL) / map.scale;
+                    const y = (clientY - map.rect.top  - map.offT ) / map.scale;
+                    return {
+                        x: Math.max(0, Math.min(map.iw, x)),
+                        y: Math.max(0, Math.min(map.ih, y)),
+                        inside: x>=0 && y>=0 && x<=map.iw && y<=map.ih
+                    };
+                }
+
+                (function enablePicker(){
+                    let dragging = false, start = null, box = null, ctx = null;
+
+                    function attachToVisible(){
+                        const view = ($('#flipbook').turn('view')||[]).filter(Boolean);
+                        view.forEach(p=>{
+                        const { canvasEl, img } = getPageByNumber(p);
+                        if (!canvasEl || !img) return;
+
+                        if (canvasEl.__pickerBound) return;
+                        canvasEl.__pickerBound = true;
+
+                        canvasEl.addEventListener('mousedown', (e)=>{
+                            if (e.button !== 0) return;
+                            const map = getContainMap(canvasEl, img);
+                            const pt = clientToImagePx(map, e.clientX, e.clientY);
+                            if (!pt.inside) return;
+
+                            dragging = true;
+                            ctx = { canvasEl, img, map };
+                            start = pt;
+
+                            box = document.createElement('div');
+                            box.className = 'picker-box';
+                            canvasEl.appendChild(box);
+                            e.preventDefault();
+                        });
+
+                        canvasEl.addEventListener('mousemove', (e)=>{
+                            if (!dragging || !ctx) return;
+                            const pt = clientToImagePx(ctx.map, e.clientX, e.clientY);
+                            const x0 = Math.min(start.x, pt.x), y0 = Math.min(start.y, pt.y);
+                            const w  = Math.abs(start.x - pt.x), h  = Math.abs(start.y - pt.y);
+
+                            const left = ctx.map.offL + x0 * ctx.map.scale;
+                            const top  = ctx.map.offT + y0 * ctx.map.scale;
+                            const ww   = Math.max(1, w * ctx.map.scale);
+                            const hh   = Math.max(1, h * ctx.map.scale);
+
+                            Object.assign(box.style, {
+                                left:  left + 'px', top: top + 'px',
+                                width: ww + 'px',  height: hh + 'px'
+                            });
+                        });
+
+                        window.addEventListener('mouseup', ()=>{
+                            if (!dragging || !ctx) return;
+                            dragging = false;
+
+                            const rect = box.getBoundingClientRect();
+                            const x0 = Math.round((rect.left - ctx.map.rect.left - ctx.map.offL) / ctx.map.scale);
+                            const y0 = Math.round((rect.top  - ctx.map.rect.top  - ctx.map.offT ) / ctx.map.scale);
+                            const w  = Math.round(rect.width  / ctx.map.scale);
+                            const h  = Math.round(rect.height / ctx.map.scale);
+
+                            const pageNum = (ctx.img.className.match(/link_area_(\d+)/)||[])[1] || '?';
+                            const snippet = `{ href: 'https://example.com', x: \${x0}, y: \${y0}, w: \${w}, h: \${h}, title: '' }`;
+
+                            console.log(`Page \${pageNum} →`, snippet);
+                            navigator.clipboard?.writeText(snippet).catch(()=>{});
+
+                            box.remove(); box = null; ctx = null;
+                        });
+                        });
+                    }
+
+                    $(function(){
+                        attachToVisible();
+                        $('#flipbook').on('turned', ()=>requestAnimationFrame(attachToVisible));
+                        window.addEventListener('resize', ()=>setTimeout(()=>requestAnimationFrame(attachToVisible), 50));
+                        window.addEventListener('orientationchange', ()=>setTimeout(()=>requestAnimationFrame(attachToVisible), 50));
+                    });
+                })();
+            </script>
+
 
             <script>
                 function getPageByNumber(page){
