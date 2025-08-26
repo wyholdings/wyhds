@@ -101,7 +101,7 @@ class EbookController
             }
 
             // index.html 생성
-            $html = buildIndexHtml($totalPages); // 아래 헬퍼 함수 예시 참고
+            $html = $this->buildIndexHtml($totalPages); // 아래 헬퍼 함수 예시 참고
             file_put_contents($outputDir.'index.html', $html);
 
             // ZIP 생성
