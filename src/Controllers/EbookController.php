@@ -587,7 +587,7 @@ class EbookController
                             const flipbook = document.getElementById('flipbook');
 
                             if (page == 1 || event == 'previous') {
-                            flipbook.style.right = isNarrow() ? '' : '12%';
+                            flipbook.style.right = isNarrow() ? '' : '15%';
                             flipbook.style.left = '';
                             info.innerText = '';
                             } else {
@@ -601,7 +601,7 @@ class EbookController
                             } else if (view[0]) {
                             info.innerText = `\${view[0]}`;
                             flipbook.classList.add('single-page');
-                            flipbook.style.left = isNarrow() ? '' : '12%';
+                            flipbook.style.left = isNarrow() ? '' : '14%';
                             }
 
                             requestAnimationFrame(applyLinks);
