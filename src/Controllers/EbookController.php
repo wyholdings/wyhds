@@ -541,23 +541,40 @@ class EbookController
                     });
 
                     const isNarrow = () => window.innerWidth <= 768;
-                    function getFlipbookSize(){
+
+                    const PAGE_RATIO = 210 / 297; // ≈ 0.707
+
+                    function getFlipbookSize() {
                         const vw = window.innerWidth;
                         const vh = window.innerHeight;
+
+                        // 여유있는 가용 영역(원하는 값으로 살짝 조절 가능)
+                        const availW = Math.floor(vw * 0.9);
+                        const availH = Math.floor(vh * 0.85);
+
+                        const single = isNarrow();         // <= 768px 이면 single
+                        const bookRatio = single ? PAGE_RATIO : (2 * PAGE_RATIO); // flipbook 전체 가로/세로 비율
+
+                        // 가용 영역에 '비율 유지'로 최대 크기 맞추기
+                        // width = min(availW, availH * bookRatio)
+                        const width  = Math.floor(Math.min(availW, availH * bookRatio));
+                        const height = Math.floor(width / bookRatio);
+
                         return {
-                        width:  isNarrow() ? vw : Math.round(vw * 0.5),
-                        height: Math.round(vh * 0.8)
+                            width,
+                            height,
+                            display: single ? 'single' : 'double'
                         };
                     }
 
                     const totalPages = $('#flipbook .page').length;
-                    const { width, height } = getFlipbookSize();
+                    const { width, height,display } = getFlipbookSize();
 
                     $('#flipbook').turn({
                         width,
                         height,
                         autoCenter: true,
-                        display: isNarrow() ? 'single' : 'double',
+                        display,
                         gradients: true,
                         elevation: 50,
                         pages: totalPages,
@@ -595,16 +612,15 @@ class EbookController
                     requestAnimationFrame(applyLinks);
 
                     const reflow = () => {
-                        const { width, height } = getFlipbookSize();
-                        $('#flipbook').turn('size', width, height);
+                    const { width, height, display } = getFlipbookSize();
+                    $('#flipbook').turn('size', width, height);
 
-                        const desiredDisplay = isNarrow() ? 'single' : 'double';
-                        const currentDisplay = $('#flipbook').turn('display');
-                        if (currentDisplay !== desiredDisplay) {
-                            $('#flipbook').turn('display', desiredDisplay);
-                        }
+                    const currentDisplay = $('#flipbook').turn('display');
+                    if (currentDisplay !== display) {
+                        $('#flipbook').turn('display', display);
+                    }
 
-                        setTimeout(() => requestAnimationFrame(applyLinks), 50);
+                    setTimeout(() => requestAnimationFrame(applyLinks), 50);
                     };
                     window.addEventListener('resize', reflow);
                     window.addEventListener('orientationchange', reflow);
@@ -691,8 +707,6 @@ class EbookController
                     background: #f4f4f4;
                 }
                 #flipbook {
-                    width: 90%;
-                    height: 90%;
                 }
                 
                 #flipbook .page {
@@ -703,9 +717,17 @@ class EbookController
                     justify-content: center;
                     align-items: center;
                     position: relative;
+                    width: 100%;
+                    height: 100%;
+                }
+
+                #flipbook .page-canvas {
+                    width: 100%;
+                    height: 100%;
                 }
 
                 #flipbook .page img {
+                    width: 100%;
                     height: 100%;
                     object-fit: contain;
                 }
@@ -1063,7 +1085,7 @@ class EbookController
                             const flipbook = document.getElementById('flipbook');
 
                             if (page == 1 || event == 'previous') {
-                            flipbook.style.right = isNarrow() ? '' : '12%';
+                            flipbook.style.right = isNarrow() ? '' : '15%';
                             flipbook.style.left = '';
                             info.innerText = '';
                             } else {
@@ -1077,7 +1099,7 @@ class EbookController
                             } else if (view[0]) {
                             info.innerText = `\${view[0]}`;
                             flipbook.classList.add('single-page');
-                            flipbook.style.left = isNarrow() ? '' : '12%';
+                            flipbook.style.left = isNarrow() ? '' : '14%';
                             }
 
                             requestAnimationFrame(applyLinks);
