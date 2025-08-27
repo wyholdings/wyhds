@@ -269,7 +269,7 @@ class EbookController
                     z-index: 5;
                 }
                 /* 디버그용 (완료 후 제거) */
-                html.show-link-boxes .link-area{
+                .link-area:hover{
                     background: rgba(255,0,0,.2);
                     outline: 1px dashed red;
                 }
