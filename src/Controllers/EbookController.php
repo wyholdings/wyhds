@@ -292,7 +292,7 @@ class EbookController
                 };
 
                 window.imageMeta = {
-                default: { naturalWidth: 640, naturalHeight: 1017 },
+                default: { naturalWidth: 763, naturalHeight: 1079 },
                 // 5: { naturalWidth: 2200, naturalHeight: 3300 }, // 페이지별로 다른 경우 예시
                 };
             </script>
