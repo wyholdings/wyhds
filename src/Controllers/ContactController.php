@@ -8,6 +8,24 @@ class ContactController
 {
     public function submit()
     {
+        // 허니팟(봇 차단)
+        if (!empty($_POST['contact_method'])) {
+            http_response_code(400);
+            die("Closed.");
+        }
+
+        // 요청 무결성 체크(필요 없으면 삭제해도 됨)
+        if (empty($_SERVER['HTTP_USER_AGENT']) || !isset($_SERVER['HTTP_REFERER'])) {
+            http_response_code(400);
+            die("Invalid request.");
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Content-Type: application/json; charset=UTF-8');
+            echo json_encode(['success' => false, 'message' => 'Wrong request.']);
+            exit;
+        }
+
         header('Content-Type: application/json');
 
         $company = $_POST['company'] ?? '';

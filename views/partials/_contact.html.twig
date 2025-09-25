@@ -15,6 +15,7 @@
                 <!-- https://startbootstrap.com/solution/contact-forms-->
                 <!-- to get an API token!-->
                 <form id="contactForm" method="post" action="/contact/submit">
+                    <input type="text" name="contact_method" style="display:none;" tabindex="-1" autocomplete="off">
                     <!-- Company input-->
                     <div class="form-floating mb-3">
                         <input class="form-control" id="company" name="company" type="text" placeholder="상호를 입력하세요." data-sb-validations="required" data-sb-can-submit="no">
