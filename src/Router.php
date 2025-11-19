@@ -25,7 +25,12 @@ class Router {
         $path = parse_url($uri, PHP_URL_PATH);
 
         foreach ($this->routes[$method] ?? [] as $route) {
-            $pattern = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\}#', '(\d+)', $route['uri']);
+            // 🔥 여기만 수정
+            $pattern = preg_replace(
+                '#\{[a-zA-Z_][a-zA-Z0-9_]*\}#',
+                '([^/]+)',      // 숫자뿐 아니라 ebook_... 같은 문자열도 허용
+                $route['uri']
+            );
             $pattern = "#^" . $pattern . "$#";
 
             if (preg_match($pattern, $path, $matches)) {
@@ -41,5 +46,4 @@ class Router {
         exit;
     }
 }
-
 ?>
