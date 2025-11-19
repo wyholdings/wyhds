@@ -287,6 +287,24 @@ class EbookController
                     background:rgba(255,0,0,.2);
                     pointer-events:none;
                 }
+                #admin-save-panel{
+                    position: fixed;
+                    right: 20px;
+                    bottom: 20px;
+                    background: rgba(0,0,0,0.7);
+                    color: #fff;
+                    padding: 10px 14px;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    display: none;
+                    z-index: 9999;
+                }
+                #admin-save-panel button{
+                    margin-left: 8px;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                    cursor: pointer;
+                }
             </style>
             <script>
                 window.linkMap = {$linkMapJson};
@@ -321,8 +339,82 @@ class EbookController
     <button onclick='$("#flipbook").turn("next")'>▶</button>
     <button onclick='$("#flipbook").turn("page", {$totalPages})'>⏭</button>
     <div id='page-info'></div>
+    <div id="admin-save-panel">
+        링크 좌표 편집 중
+        <button id="btn-save-links">DB 저장</button>
     </div>
+    </div>
+
     <script>
+        function getEbookIdFromPath() {
+            const parts = location.pathname.split('/').filter(Boolean);
+            const ebooksIdx = parts.indexOf('ebooks');
+            if (ebooksIdx === -1) return null;
+            return parts[ebooksIdx + 1] || null; // ebook_691d65b081a60
+        }
+        const EBOOK_ID = getEbookIdFromPath();
+
+        const EBOOK_ID = (function(){
+            const parts = location.pathname.split('/').filter(Boolean);
+            const ebooksIdx = parts.indexOf('ebooks');
+            if (ebooksIdx === -1) return null;
+            return parts[ebooksIdx + 1] || null;
+        })();
+
+        function enableAdminMode() {
+            if (adminMode) return;
+            adminMode = true;
+
+            alert("관리자 모드 활성화됨!");
+
+            document.documentElement.classList.add("show-link-boxes");
+
+            // admin 표시 패널
+            const panel = document.getElementById('admin-save-panel');
+            if (panel) panel.style.display = 'block';
+
+            if (typeof window.enablePickerMode === "function") {
+                window.enablePickerMode();
+            }
+        }
+
+        // 저장 버튼 이벤트
+        document.addEventListener('DOMContentLoaded', function(){
+            const btn = document.getElementById('btn-save-links');
+            if (!btn) return;
+
+            btn.addEventListener('click', function(){
+                if (!EBOOK_ID) {
+                    alert('ebookId를 찾을 수 없습니다.');
+                    return;
+                }
+                if (!window.linkMap) {
+                    alert('linkMap이 비어 있습니다.');
+                    return;
+                }
+
+                if (!confirm('현재 linkMap을 DB에 저장할까요?')) return;
+
+                fetch('/admin/ebook/' + EBOOK_ID + '/links', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(window.linkMap),
+                })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.ok) {
+                        alert('저장 완료!');
+                    } else {
+                        alert('저장 실패: ' + (json.error || 'unknown error'));
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('저장 중 오류 발생');
+                });
+            });
+        });
+
         // ====== 관리자 모드 진입 키워드 ======
         let adminBuffer = "";
         let adminMode = false;
@@ -438,6 +530,7 @@ class EbookController
                             width: ww + 'px',  height: hh + 'px'
                         });
                     });
+                    window.linkMap = window.linkMap || {};
 
                     window.addEventListener('mouseup', ()=>{
                         if (!dragging || !ctx) return;
@@ -449,11 +542,30 @@ class EbookController
                         const w  = Math.round(rect.width  / ctx.map.scale);
                         const h  = Math.round(rect.height / ctx.map.scale);
 
-                        const pageNum = (ctx.img.className.match(/link_area_(\d+)/)||[])[1] || '?';
-                        const snippet = `{ href: 'https://example.com', x: \${x0}, y: \${y0}, w: \${w}, h: \${h}, title: '' }`;
+                        const pageNum = parseInt((ctx.img.className.match(/link_area_(\d+)/)||[])[1] || '0', 10);
 
-                        console.log(`Page \${pageNum} →`, snippet);
-                        navigator.clipboard?.writeText(snippet).catch(()=>{});
+                        // 간단하게 URL만 입력 받는 버전 (추후 UI로 대체 가능)
+                        const href = prompt('링크 URL (없으면 취소)', 'https://');
+                        let gotoPage = null;
+                        if (!href) {
+                            const gotoStr = prompt('이동할 페이지 번호 (없으면 취소)', '');
+                            if (gotoStr) gotoPage = parseInt(gotoStr, 10) || null;
+                        }
+                        const title = prompt('툴팁/설명 (옵션)', '') || '';
+
+                        // linkMap에 반영
+                        if (!window.linkMap[pageNum]) window.linkMap[pageNum] = [];
+                        window.linkMap[pageNum].push({
+                            href: href || null,
+                            goto: gotoPage,
+                            x: x0,
+                            y: y0,
+                            w: w,
+                            h: h,
+                            title: title,
+                        });
+
+                        console.log('현재 linkMap', window.linkMap);
 
                         box.remove(); box = null; ctx = null;
                     });
@@ -800,5 +912,25 @@ class EbookController
 
         readfile($zipPath);
     }
+
+    public function saveLinks(string $ebookId)
+    {
+        // JSON 받아오기
+        $raw = file_get_contents('php://input');
+        $data = json_decode($raw, true);
+
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'invalid json']);
+            return;
+        }
+
+        $ebookModel = new EbookModel();
+        $ok = $ebookModel->replaceLinks($ebookId, $data);
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => $ok]);
+    }
+
 
 }
