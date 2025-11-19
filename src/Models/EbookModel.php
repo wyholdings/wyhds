@@ -74,22 +74,25 @@ class EbookModel
      */
     public function replaceLinks(string $ebookId, array $linkMap): bool
     {
-        if (!$this->pdo instanceof PDO) {
+
+        $db = Database::getInstance()->getConnection();
+
+        if (!$db instanceof PDO) {
             error_log('EbookModel::replaceLinks - PDO is null');
             return false;
         }
 
         try {
-            $this->pdo->beginTransaction();
+            $db->beginTransaction();
 
             // 1) 기존 링크 싹 지우고
-            $stmtDel = $this->pdo->prepare(
+            $stmtDel = $db->prepare(
                 'DELETE FROM ebook_links WHERE ebook_id = :ebook_id'
             );
             $stmtDel->execute(['ebook_id' => $ebookId]);
 
             // 2) 새 링크 넣기
-            $stmtIns = $this->pdo->prepare(
+            $stmtIns = $db->prepare(
                 'INSERT INTO ebook_links
                  (ebook_id, page, x, y, w, h, target_type, target, title)
                  VALUES
@@ -132,13 +135,13 @@ class EbookModel
                 }
             }
 
-            $this->pdo->commit();
+            $db->commit();
             return true;
 
         } catch (\Throwable $e) {
             // ✅ 여기서 null 체크 + 트랜잭션 여부 체크
-            if ($this->pdo instanceof PDO && $this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
+            if ($db instanceof PDO && $db->inTransaction()) {
+                $db->rollBack();
             }
             error_log('replaceLinks error: '.$e->getMessage());
             return false;
