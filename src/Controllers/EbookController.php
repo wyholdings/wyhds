@@ -27,6 +27,9 @@ class EbookController
 
     public function upload()
     {
+        // 🔹 Ghostscript 기본 옵션 설정 (이 프로세스에서만 유효)
+        putenv('GS_OPTIONS=-dNumRenderingThreads=4 -dBufferSpace=50000000');
+
         // 긴 작업 안전장치
         @ini_set('max_execution_time', '0');   // 무제한
         @ini_set('memory_limit', '1024M');     // 필요시 조정
