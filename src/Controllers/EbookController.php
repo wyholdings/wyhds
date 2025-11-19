@@ -169,8 +169,13 @@ class EbookController
      * 페이지 수를 받아 index.html 문자열을 생성하는 헬퍼.
      * (질문에 주신 HTML/JS를 그대로 사용하되 문자열 리터럴로 분리)
      */
-    function buildIndexHtml(int $totalPages): string
+    function buildIndexHtml(int $totalPages, array $linkMap = []): string
     {
+        $linkMapJson = json_encode(
+            $linkMap,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+
         $head = <<<HTML
     <!DOCTYPE html>
     <html lang='ko' class='show-link-boxes'>
@@ -284,19 +289,10 @@ class EbookController
                 }
             </style>
             <script>
-                window.linkMap = {
-                1: [
-                    { href: 'https://karp.or.kr', x: 380, y: 1534, w: 492, h: 169, title: '대한방사선방어학회 홈페이지' },
-                ],
-                2: [
-                    { href: 'https://sponsor-a.com', x: 100,  y: 0, w: 520, h: 220, title: '스폰서 A' },
-                    { goto: 10, x: 0, y: 0, w: 520, h: 220, title: '10페이지로 이동' },
-                ],
-                };
+                window.linkMap = {$linkMapJson};
 
                 window.imageMeta = {
-                default: { naturalWidth: 763, naturalHeight: 1079 },
-                // 5: { naturalWidth: 2200, naturalHeight: 3300 }, // 페이지별로 다른 경우 예시
+                    default: { naturalWidth: 763, naturalHeight: 1079 }
                 };
             </script>
             
@@ -1182,6 +1178,119 @@ class EbookController
         echo $this->twig->render('admin/ebook/list.html.twig', [
 
         ]);
+    }
+
+    // 예: EbookController 안에 exportZip 같은 액션이 있다고 치고
+    public function exportZip(string $ebookId)
+    {
+        $uploadBase = __DIR__ . '/../../public/ebooks/';
+        $outputDir  = rtrim($uploadBase, '/').'/'.$ebookId.'/';
+
+        // 1) 페이지 수 파악 (이미 생성된 PNG 기준)
+        $files = glob($outputDir.'*.png');
+        $totalPages = count($files);
+
+        // 2) DB에서 링크 가져오기
+        $ebookModel = new EbookModel();
+        $rows = $ebookModel->getLinksByEbook($ebookId); // ebook_links 조회
+
+        $linkMap = [];
+        foreach ($rows as $r) {
+            $page = (int)$r['page'];
+            if (!isset($linkMap[$page])) $linkMap[$page] = [];
+
+            $linkMap[$page][] = [
+                'href'  => $r['target_type'] === 'url'  ? $r['target'] : null,
+                'goto'  => $r['target_type'] === 'page' ? (int)$r['target'] : null,
+                'x'     => (int)$r['x'],
+                'y'     => (int)$r['y'],
+                'w'     => (int)$r['w'],
+                'h'     => (int)$r['h'],
+                'title' => $r['title'] ?? '',
+            ];
+        }
+
+        // 3) linkMap까지 포함된 index.html 생성/덮어쓰기
+        $html = $this->buildIndexHtml($totalPages, $linkMap);
+        file_put_contents($outputDir.'index.html', $html);
+
+        // 4) ZIP 생성 (지금 upload()에서 하던 흐름 그대로)
+        $zipPath = rtrim($uploadBase, '/').'/'.$ebookId.'.zip';
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('ZIP 생성 실패');
+        }
+        $files = scandir($outputDir);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') continue;
+            $zip->addFile($outputDir.$file, $ebookId.'/'.$file);
+        }
+        $zip->close();
+
+        // 나머지: header 내보내고 다운로드 응답하는 부분은 기존 코드 재활용
+    }
+
+    public function download(string $ebookId)
+    {
+        $uploadBase = __DIR__ . '/../../public/ebooks/';
+        $ebookDir   = rtrim($uploadBase, '/') . '/' . $ebookId . '/';
+
+        if (!is_dir($ebookDir)) {
+            http_response_code(404);
+            echo "eBook not found: {$ebookId}";
+            return;
+        }
+
+        // PNG 수 계산
+        $files = glob($ebookDir . '*.png');
+        $totalPages = count($files);
+
+        // 링크 불러오기
+        $ebookModel = new EbookModel();
+        $linkRows   = $ebookModel->getLinksByEbook($ebookId);
+
+        $linkMap = [];
+        foreach ($linkRows as $r) {
+            $page = (int)$r['page'];
+            if (!isset($linkMap[$page])) $linkMap[$page] = [];
+
+            $linkMap[$page][] = [
+                'href'  => $r['target_type'] === 'url'  ? $r['target'] : null,
+                'goto'  => $r['target_type'] === 'page' ? (int)$r['target'] : null,
+                'x'     => (int)$r['x'],
+                'y'     => (int)$r['y'],
+                'w'     => (int)$r['w'],
+                'h'     => (int)$r['h'],
+                'title' => $r['title'] ?? '',
+            ];
+        }
+
+        // 최신 index.html 재생성 (linkMap 포함)
+        $html = $this->buildIndexHtml($totalPages, $linkMap);
+        file_put_contents($ebookDir . 'index.html', $html);
+
+        // ZIP 생성
+        $zipPath = rtrim($uploadBase, '/') . '/' . $ebookId . '.zip';
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            http_response_code(500);
+            echo "ZIP 생성 실패";
+            return;
+        }
+
+        $files = scandir($ebookDir);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') continue;
+            $zip->addFile($ebookDir . $file, $ebookId . '/' . $file);
+        }
+        $zip->close();
+
+        // 다운로드 헤더
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $ebookId . '.zip"');
+        header('Content-Length: ' . filesize($zipPath));
+
+        readfile($zipPath);
     }
 
 }

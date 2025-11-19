@@ -1,39 +1,54 @@
 {% extends 'admin/layout/base.html.twig' %}
 
 {% block content %}
-<h1>문의 목록</h1>
+<h1>eBook 목록</h1>
 
 <table class="table table-bordered">
     <thead>
         <tr>
             <th>ID</th>
-            <th>파일 이름</th>
+            <th>원본 파일명</th>
             <th>폴더 이름</th>
             <th>등록일</th>
             <th>관리</th>
         </tr>
     </thead>
     <tbody>
-        {% for inquiry in inquiries %}
+        {% for ebook in ebooks %}
         <tr>
-            <td>{{ ebooks.id }}</td>
-            <td>{{ ebooks.company }}</td>
-            <td>{{ ebooks.name }}</td>
-            <td>{{ ebooks.email }}</td>
-            <td>{{ ebooks.created_at|date('Y-m-d') }}</td>
+            <td>{{ ebook.id }}</td>
+            <td>{{ ebook.file_name }}</td>
+            <td>{{ ebook.folder_name }}</td>
+            <td>{{ ebook.created_at|date('Y-m-d') }}</td>
             <td>
-                <a href="/admin/ebook/{{ ebooks.id }}/download" class="btn btn-sm btn-danger">다운로드</a>
+                {# 뷰어로 이동 (온라인 보기) #}
+                <a href="/ebooks/{{ ebook.folder_name }}/index.html"
+                   class="btn btn-sm btn-primary"
+                   target="_blank">
+                    뷰어로 이동
+                </a>
+
+                {# ZIP 다운로드 (어디 사이트든 업로드용) #}
+                <a href="/admin/ebook/download/{{ ebook.folder_name }}"
+                   class="btn btn-sm btn-danger">
+                    ZIP 다운로드
+                </a>
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="6">등록된 E-BOOK이 없습니다.</td></tr>
+        <tr>
+            <td colspan="5" class="text-center">등록된 eBook이 없습니다.</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
 
+<hr>
+
+<h3>새 eBook 업로드</h3>
 <form method="POST" enctype="multipart/form-data" action="/admin/ebook/upload">
     <label>eBook PDF 파일 업로드:</label><br>
     <input type="file" name="pdf" accept="application/pdf" required>
-    <button type="submit">변환 및 다운로드</button>
+    <button class="btn btn-primary mt-2" type="submit">변환 및 다운로드</button>
 </form>
 {% endblock %}

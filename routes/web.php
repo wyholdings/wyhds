@@ -47,4 +47,6 @@ $router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'd
 //ebook 빌드
 $router->get('/admin/ebook/list', [App\Controllers\EbookController::class, 'list']);
 $router->post('/admin/ebook/upload', [App\Controllers\EbookController::class, 'upload']);
+$router->get('/admin/ebook/download/{ebookId}', [App\Controllers\EbookController::class, 'download']);
+]);
 ?>
