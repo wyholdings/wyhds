@@ -74,49 +74,51 @@ class EbookModel
      */
     public function replaceLinks(string $ebookId, array $linkMap): bool
     {
-        $db = Database::getInstance()->getConnection();
-        
-        $db->beginTransaction();
+        if (!$this->pdo instanceof PDO) {
+            error_log('EbookModel::replaceLinks - PDO is null');
+            return false;
+        }
 
         try {
-            // 1) 기존 링크 싹 삭제
-            $del = $db->prepare("DELETE FROM ebook_links WHERE ebook_id = :ebook_id");
-            $del->execute(['ebook_id' => $ebookId]);
+            $this->pdo->beginTransaction();
 
-            // 2) 새 데이터 insert
-            $sql = "
-                INSERT INTO ebook_links
-                    (ebook_id, page, x, y, w, h, target_type, target, title)
-                VALUES
-                    (:ebook_id, :page, :x, :y, :w, :h, :target_type, :target, :title)
-            ";
-            $ins = $this->db->prepare($sql);
+            // 1) 기존 링크 싹 지우고
+            $stmtDel = $this->pdo->prepare(
+                'DELETE FROM ebook_links WHERE ebook_id = :ebook_id'
+            );
+            $stmtDel->execute(['ebook_id' => $ebookId]);
+
+            // 2) 새 링크 넣기
+            $stmtIns = $this->pdo->prepare(
+                'INSERT INTO ebook_links
+                 (ebook_id, page, x, y, w, h, target_type, target, title)
+                 VALUES
+                 (:ebook_id, :page, :x, :y, :w, :h, :target_type, :target, :title)'
+            );
 
             foreach ($linkMap as $page => $areas) {
                 $page = (int)$page;
                 if (!is_array($areas)) continue;
 
                 foreach ($areas as $area) {
+                    $x = (int)($area['x'] ?? 0);
+                    $y = (int)($area['y'] ?? 0);
+                    $w = (int)($area['w'] ?? 0);
+                    $h = (int)($area['h'] ?? 0);
+
                     $href = $area['href'] ?? null;
                     $goto = $area['goto'] ?? null;
-                    $x    = (int)($area['x'] ?? 0);
-                    $y    = (int)($area['y'] ?? 0);
-                    $w    = (int)($area['w'] ?? 0);
-                    $h    = (int)($area['h'] ?? 0);
-                    $title= $area['title'] ?? '';
+                    $title = $area['title'] ?? '';
 
-                    if ($href) {
-                        $targetType = 'url';
-                        $target     = $href;
-                    } elseif ($goto) {
+                    if ($goto) {
                         $targetType = 'page';
-                        $target     = (string)(int)$goto;
+                        $target = (string)(int)$goto;
                     } else {
-                        // href/goto 둘 다 없으면 스킵
-                        continue;
+                        $targetType = 'url';
+                        $target = (string)($href ?? '');
                     }
 
-                    $ins->execute([
+                    $stmtIns->execute([
                         'ebook_id'    => $ebookId,
                         'page'        => $page,
                         'x'           => $x,
@@ -130,13 +132,15 @@ class EbookModel
                 }
             }
 
-            $this->db->commit();
+            $this->pdo->commit();
             return true;
 
         } catch (\Throwable $e) {
-            $this->db->rollBack();
-            // 로그 찍어두면 좋음
-            // error_log('[ebook_links] replace 실패: '.$e->getMessage());
+            // ✅ 여기서 null 체크 + 트랜잭션 여부 체크
+            if ($this->pdo instanceof PDO && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('replaceLinks error: '.$e->getMessage());
             return false;
         }
     }
