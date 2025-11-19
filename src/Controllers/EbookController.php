@@ -346,14 +346,6 @@ class EbookController
     </div>
 
     <script>
-        function getEbookIdFromPath() {
-            const parts = location.pathname.split('/').filter(Boolean);
-            const ebooksIdx = parts.indexOf('ebooks');
-            if (ebooksIdx === -1) return null;
-            return parts[ebooksIdx + 1] || null; // ebook_691d65b081a60
-        }
-        const EBOOK_ID = getEbookIdFromPath();
-
         const EBOOK_ID = (function(){
             const parts = location.pathname.split('/').filter(Boolean);
             const ebooksIdx = parts.indexOf('ebooks');
@@ -377,7 +369,7 @@ class EbookController
                 window.enablePickerMode();
             }
         }
-
+        
         // 저장 버튼 이벤트
         document.addEventListener('DOMContentLoaded', function(){
             const btn = document.getElementById('btn-save-links');
@@ -436,22 +428,6 @@ class EbookController
                 enableAdminMode();
             }
         });
-
-        
-        function enableAdminMode() {
-            if (adminMode) return;
-            adminMode = true;
-
-            alert("관리자 모드 활성화됨!");
-
-            // CSS 테두리 표시
-            document.documentElement.classList.add("show-link-boxes");
-
-            // 링크 편집 모드 활성화
-            if (typeof window.enablePickerMode === "function") {
-                window.enablePickerMode();
-            }
-        }
 
         function getPageByNumber(page){
             const img = document.querySelector(`#flipbook img.link_area_\${page}`);
