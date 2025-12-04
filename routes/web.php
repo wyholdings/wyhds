@@ -44,6 +44,15 @@ $router->get('/admin/money/list', [App\Controllers\MoneyController::class, 'list
 $router->post('/admin/money/add', [App\Controllers\MoneyController::class, 'add']);
 $router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'delete']);
 
+$router->get('/admin/webhard', [App\Controllers\WebhardController::class, 'index']);
+$router->get('/admin/webhard/', [App\Controllers\WebhardController::class, 'index']);
+$router->get('/admin/webhard/download', [App\Controllers\WebhardController::class, 'download']);
+$router->get('/admin/webhard/logs', [App\Controllers\WebhardController::class, 'logs']);
+$router->post('/admin/webhard/folder', [App\Controllers\WebhardController::class, 'createFolder']);
+$router->post('/admin/webhard/rename', [App\Controllers\WebhardController::class, 'rename']);
+$router->post('/admin/webhard/delete', [App\Controllers\WebhardController::class, 'delete']);
+$router->post('/admin/webhard/upload', [App\Controllers\WebhardController::class, 'upload']);
+
 //ebook 빌드
 $router->get('/admin/ebook/list', [App\Controllers\EbookController::class, 'list']);
 $router->post('/admin/ebook/upload', [App\Controllers\EbookController::class, 'upload']);

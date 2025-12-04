@@ -1,0 +1,164 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0 text-gray-800">웹하드</h1>
+    <div>
+        {% if parent_path %}
+            <a href="/admin/webhard{% if parent_path %}?path={{ parent_path|url_encode }}{% endif %}" class="btn btn-sm btn-outline-secondary mr-2">상위 폴더</a>
+        {% endif %}
+        <a href="/admin/webhard" class="btn btn-sm btn-outline-primary">루트로 이동</a>
+    </div>
+</div>
+
+{% if flash %}
+    <div class="alert alert-{{ flash.error ? 'danger' : 'success' }} alert-dismissible fade show" role="alert">
+        {{ flash.message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+{% endif %}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        {% for crumb in breadcrumbs %}
+            <li class="breadcrumb-item {{ loop.last ? 'active' : '' }}">
+                {% if loop.last %}
+                    {{ crumb.label }}
+                {% else %}
+                    <a href="/admin/webhard{% if crumb.path %}?path={{ crumb.path|url_encode }}{% endif %}">{{ crumb.label }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 border-right">
+                <h5 class="mb-3">폴더 생성</h5>
+                <form action="/admin/webhard/folder" method="POST" class="form-inline">
+                    <input type="hidden" name="path" value="{{ current_path }}">
+                    <input type="text" name="folder_name" class="form-control mr-2 mb-2" placeholder="새 폴더 이름" required>
+                    <button type="submit" class="btn btn-primary mb-2">생성</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h5 class="mb-3">파일 업로드</h5>
+                <form action="/admin/webhard/upload" method="POST" enctype="multipart/form-data" class="form-inline">
+                    <input type="hidden" name="path" value="{{ current_path }}">
+                    <input type="file" name="file" class="form-control-file mr-2 mb-2" required>
+                    <button type="submit" class="btn btn-success mb-2">업로드</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">폴더</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>이름</th>
+                        <th>수정일</th>
+                        <th style="width: 260px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for folder in folders %}
+                        <tr>
+                            <td><a href="{{ folder.url }}">{{ folder.name }}</a></td>
+                            <td>{{ folder.modified }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <form class="form-inline mr-2" action="/admin/webhard/rename" method="POST">
+                                        <input type="hidden" name="path" value="{{ current_path }}">
+                                        <input type="hidden" name="old_name" value="{{ folder.name }}">
+                                        <input type="text" name="new_name" value="{{ folder.name }}" class="form-control form-control-sm mr-2" style="width: 140px;">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">이름 변경</button>
+                                    </form>
+                                    <form class="delete-form" data-name="{{ folder.name }}" action="/admin/webhard/delete" method="POST">
+                                        <input type="hidden" name="path" value="{{ current_path }}">
+                                        <input type="hidden" name="target_name" value="{{ folder.name }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted p-4">폴더가 없습니다.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">파일</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>이름</th>
+                        <th>크기</th>
+                        <th>수정일</th>
+                        <th style="width: 260px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                        <tr>
+                            <td><a href="{{ file.url }}" target="_blank">{{ file.name }}</a></td>
+                            <td>{{ (file.size / 1024)|number_format(1, '.', ',') }} KB</td>
+                            <td>{{ file.modified }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <form class="form-inline mr-2" action="/admin/webhard/rename" method="POST">
+                                        <input type="hidden" name="path" value="{{ current_path }}">
+                                        <input type="hidden" name="old_name" value="{{ file.name }}">
+                                        <input type="text" name="new_name" value="{{ file.name }}" class="form-control form-control-sm mr-2" style="width: 140px;">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">이름 변경</button>
+                                    </form>
+                                    <form class="delete-form" data-name="{{ file.name }}" action="/admin/webhard/delete" method="POST">
+                                        <input type="hidden" name="path" value="{{ current_path }}">
+                                        <input type="hidden" name="target_name" value="{{ file.name }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted p-4">파일이 없습니다.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    document.querySelectorAll('.delete-form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            var name = this.dataset.name || this.querySelector('input[name="target_name"]').value;
+            if (!confirm('삭제하시겠습니까? [' + name + ']')) {
+                e.preventDefault();
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -9,3 +9,7 @@ Thumbs.db    # Windows에서 생성되는 파일
 # 환경설정 파일들
 .env
 /vendor/
+# 업로드되는 웹하드 파일들
+/public/webhard/
+# 웹하드 로그 (기본 .logs 디렉터리)
+.logs/
