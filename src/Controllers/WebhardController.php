@@ -31,7 +31,7 @@ class WebhardController
             $this->redirect('');
         }
 
-        [$folders, $files] = $this->scanDirectory($currentDir, $relativePath);
+        [$folders, $files, $totalSize] = $this->scanDirectory($currentDir, $relativePath);
         $flash = $_SESSION['flash'] ?? null;
         unset($_SESSION['flash']);
 
@@ -41,6 +41,10 @@ class WebhardController
             'parent_path'  => $this->getParentPath($relativePath),
             'folders'      => $folders,
             'files'        => $files,
+            'folder_count' => count($folders),
+            'file_count'   => count($files),
+            'total_size'   => $totalSize,
+            'total_size_human' => $this->formatBytes($totalSize),
             'breadcrumbs'  => $this->buildBreadcrumbs($relativePath),
             'flash'        => $flash,
         ]);
@@ -292,6 +296,7 @@ class WebhardController
         $items = @scandir($dir) ?: [];
         $folders = [];
         $files = [];
+        $totalSize = 0;
 
         foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
@@ -316,6 +321,7 @@ class WebhardController
             } else {
                 $meta['type'] = 'file';
                 $meta['size'] = filesize($fullPath);
+                $totalSize += $meta['size'];
                 $meta['url'] = $this->buildPublicUrl($itemRelative);
                 $files[] = $meta;
             }
@@ -324,7 +330,7 @@ class WebhardController
         usort($folders, fn($a, $b) => strcmp($a['name'], $b['name']));
         usort($files, fn($a, $b) => strcmp($a['name'], $b['name']));
 
-        return [$folders, $files];
+        return [$folders, $files, $totalSize];
     }
 
     private function buildBreadcrumbs(string $relativePath): array
@@ -515,6 +521,19 @@ class WebhardController
         $adminId = (int)($_SESSION['admin_id'] ?? 0);
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         $this->logModel->insertLog($action, $relativePath, $status, $detail, $adminId, $ip);
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $power = (int)floor(log($bytes, 1024));
+        $power = min($power, count($units) - 1);
+
+        return sprintf('%.2f %s', $bytes / (1024 ** $power), $units[$power]);
     }
 
     private function jsonError(string $message): void

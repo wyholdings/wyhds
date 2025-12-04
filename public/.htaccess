@@ -11,3 +11,6 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
+
+# 업로드 허용 파일 수 상향 (폴더 업로드 지원)
+php_value max_file_uploads 5000

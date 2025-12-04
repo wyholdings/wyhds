@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0 text-gray-800">웹하드</h1>
+    <h1 class="h3 mb-0 text-gray-800">웹하드 ({{ total_size_human }})</h1>
     <div>
         {% if parent_path %}
             <a href="/admin/webhard{% if parent_path %}?path={{ parent_path|url_encode }}{% endif %}" class="btn btn-sm btn-outline-secondary mr-2">상위 폴더</a>
@@ -67,7 +67,7 @@
 
 
 <div class="card mb-4">
-    <div class="card-header">폴더</div>
+    <div class="card-header">폴더 ({{ folder_count }}개)</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table mb-0">
@@ -115,7 +115,7 @@
 </div>
 
 <div class="card">
-    <div class="card-header">파일</div>
+    <div class="card-header">파일 ({{ file_count }}개)</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table mb-0">
