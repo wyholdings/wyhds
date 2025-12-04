@@ -52,6 +52,14 @@
                     <input type="file" name="file" class="form-control-file mr-2 mb-2" required>
                     <button type="submit" class="btn btn-success mb-2">업로드</button>
                 </form>
+                <hr>
+                <h5 class="mb-3">폴더 업로드 (다중)</h5>
+                <form id="folder-upload-form" class="form-inline">
+                    <input type="hidden" name="path" value="{{ current_path }}">
+                    <input type="file" name="files[]" id="folder-upload-input" class="form-control-file mr-2 mb-2" webkitdirectory directory multiple>
+                    <button type="submit" class="btn btn-info mb-2">폴더 통째로 업로드</button>
+                    <small class="form-text text-muted">브라우저에서 지원하는 경우 하위 폴더 구조가 유지됩니다.</small>
+                </form>
             </div>
         </div>
     </div>
@@ -168,6 +176,50 @@
             }
         });
     });
+
+    var folderForm = document.getElementById('folder-upload-form');
+    var folderInput = document.getElementById('folder-upload-input');
+    if (folderForm && folderInput) {
+        folderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!folderInput.files || folderInput.files.length === 0) {
+                alert('업로드할 폴더를 선택하세요.');
+                return;
+            }
+
+            var submitBtn = folderForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '업로드 중...';
+            }
+
+            var formData = new FormData();
+            formData.append('path', folderForm.querySelector('input[name="path"]').value || '');
+            Array.from(folderInput.files).forEach(function(file) {
+                formData.append('files[]', file);
+                formData.append('paths[]', file.webkitRelativePath || file.name);
+            });
+
+            fetch('/admin/webhard/upload-folder', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(json) {
+                alert(json.message || '완료');
+                window.location.reload();
+            })
+            .catch(function() {
+                alert('업로드에 실패했습니다.');
+            })
+            .finally(function() {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '폴더 통째로 업로드';
+                }
+            });
+        });
+    }
 })();
 </script>
 {% endblock %}

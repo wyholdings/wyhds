@@ -49,6 +49,7 @@ $router->get('/admin/webhard/', [App\Controllers\WebhardController::class, 'inde
 $router->get('/admin/webhard/download', [App\Controllers\WebhardController::class, 'download']);
 $router->get('/admin/webhard/logs', [App\Controllers\WebhardController::class, 'logs']);
 $router->post('/admin/webhard/folder', [App\Controllers\WebhardController::class, 'createFolder']);
+$router->post('/admin/webhard/upload-folder', [App\Controllers\WebhardController::class, 'uploadFolder']);
 $router->post('/admin/webhard/rename', [App\Controllers\WebhardController::class, 'rename']);
 $router->post('/admin/webhard/delete', [App\Controllers\WebhardController::class, 'delete']);
 $router->post('/admin/webhard/upload', [App\Controllers\WebhardController::class, 'upload']);

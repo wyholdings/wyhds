@@ -187,6 +187,65 @@ class WebhardController
         $this->redirect($relativePath);
     }
 
+    public function uploadFolder(): void
+    {
+        $relativeBase = $this->sanitizeRelativePath($_POST['path'] ?? '');
+        $currentDir = $this->resolvePath($relativeBase);
+
+        if (!is_dir($currentDir)) {
+            $this->jsonError('지정한 폴더를 찾을 수 없습니다.');
+        }
+
+        if (empty($_FILES['files']) || !isset($_FILES['files']['error'])) {
+            $this->jsonError('업로드할 파일이 없습니다.');
+        }
+
+        $paths = $_POST['paths'] ?? [];
+        $count = count($_FILES['files']['name']);
+        $success = 0;
+
+        for ($i = 0; $i < $count; $i++) {
+            if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) {
+                $this->logAction('upload_folder', $relativeBase, 'fail', 'upload_error');
+                continue;
+            }
+
+            $relativeFile = $paths[$i] ?? $_FILES['files']['name'][$i] ?? '';
+            $relativeFile = $this->sanitizeRelativePath($relativeFile);
+
+            if ($relativeFile === '') {
+                $this->logAction('upload_folder', $relativeBase, 'fail', 'empty_path');
+                continue;
+            }
+
+            $fileName = basename($relativeFile);
+            $subDir = trim(dirname($relativeFile), '.');
+            $targetRelativeDir = $this->joinRelative($relativeBase, $subDir === '' ? '' : $subDir);
+            $targetDir = $this->resolvePath($targetRelativeDir);
+
+            if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+                $this->logAction('upload_folder', $targetRelativeDir, 'fail', 'mkdir_failed');
+                continue;
+            }
+
+            $destination = $targetDir . DIRECTORY_SEPARATOR . $fileName;
+
+            if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
+                $this->logAction('upload_folder', $this->joinRelative($targetRelativeDir, $fileName), 'fail', 'move_failed');
+                continue;
+            }
+
+            $success++;
+            $this->logAction('upload_folder', $this->joinRelative($targetRelativeDir, $fileName), 'success');
+        }
+
+        if ($success === 0) {
+            $this->jsonError('업로드에 실패했습니다.');
+        }
+
+        $this->jsonSuccess(sprintf('%d개 파일을 업로드했습니다.', $success));
+    }
+
     public function download(): void
     {
         $relativePath = $this->sanitizeRelativePath($_GET['path'] ?? '');
@@ -456,5 +515,20 @@ class WebhardController
         $adminId = (int)($_SESSION['admin_id'] ?? 0);
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         $this->logModel->insertLog($action, $relativePath, $status, $detail, $adminId, $ip);
+    }
+
+    private function jsonError(string $message): void
+    {
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => $message]);
+        exit;
+    }
+
+    private function jsonSuccess(string $message): void
+    {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'message' => $message]);
+        exit;
     }
 }
