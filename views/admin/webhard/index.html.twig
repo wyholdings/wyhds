@@ -73,7 +73,11 @@
                 <tbody>
                     {% for folder in folders %}
                         <tr>
-                            <td><a href="{{ folder.url }}">{{ folder.name }}</a></td>
+                            <td>
+                                <a href="{{ folder.url }}">
+                                    <i class="fas fa-folder-open text-warning mr-1"></i>{{ folder.name }}
+                                </a>
+                            </td>
                             <td>{{ folder.modified }}</td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -118,7 +122,11 @@
                 <tbody>
                     {% for file in files %}
                         <tr>
-                            <td><a href="{{ file.url }}" target="_blank">{{ file.name }}</a></td>
+                            <td>
+                                <a href="{{ file.url }}" target="_blank">
+                                    <i class="fas fa-file-alt text-secondary mr-1"></i>{{ file.name }}
+                                </a>
+                            </td>
                             <td>{{ (file.size / 1024)|number_format(1, '.', ',') }} KB</td>
                             <td>{{ file.modified }}</td>
                             <td>
