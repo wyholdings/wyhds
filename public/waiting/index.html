@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>웨이팅 | 테이블 호출</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/waiting.css" />
+  
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="tablet">
+    <div class="header">
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <div id="storeName" style="font-size:18px;">Blue Harbour Dining</div>
+          <div class="subtitle" style="margin:0;">테이블 호출 · 웨이팅</div>
+        </div>
+      </div>
+      <div class="time" id="clock">--:--</div>
+    </div>
+
+    <div class="card">
+      <h2>바로 등록</h2>
+      <div class="subtitle">태블릿에 정보를 입력하면 순서대로 안내해 드려요.</div>
+      <div class="pill">1. 인원 선택 · 2. 연락처 · 3. 개인정보 동의</div>
+      <form id="waitForm" class="form">
+        <div>
+          <label>인원수</label>
+          <div class="people-input" id="peopleControl">
+            <button type="button" class="counter-btn" id="decPeople">-</button>
+            <input type="number" id="peopleInput" min="1" max="30" value="2" inputmode="numeric">
+            <button type="button" class="counter-btn" id="incPeople">+</button>
+          </div>
+        </div>
+        <div>
+          <label>휴대폰 번호</label>
+          <input type="tel" id="phone" placeholder="010-1234-5678" inputmode="numeric" autocomplete="tel">
+        </div>
+        <div class="consent">
+          <input type="checkbox" id="consent">
+          <label for="consent" style="margin:0;">대기 안내 및 입장 호출을 위해 연락처를 수집·이용하는 것에 동의합니다. (확인 후 1일 내 파기)</label>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn">대기 등록하기</button>
+      </form>
+      <div class="notice" style="margin-top:12px;">현재 호출 시 전화 또는 문자로 안내됩니다. 장기간 미입장 시 대기 취소될 수 있어요.</div>
+    </div>
+
+    <div class="card board-card">
+      <h2>대기 현황</h2>
+      <div class="board">
+        <div class="board-right">
+          <div class="board-main" id="boardMain">
+            <div class="board-label">대기 팀</div>
+            <div class="board-number" id="nextTicket">--팀</div>
+            <div class="board-sub" id="queueSummary">현재 --팀 대기 중</div>
+          </div>
+          <div class="board-empty" id="boardEmpty">
+            <div class="board-empty-title">현재 대기팀이 없습니다.</div>
+            <div class="board-empty-sub">바로 입장 가능합니다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+<script src="js/waiting.js"></script>

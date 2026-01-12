@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>웨이팅 관리자</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/waiting.css" />
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="tablet">
+    <div class="header">
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <div id="storeName" style="font-size:18px;">Blue Harbour Dining</div>
+          <div class="subtitle" style="margin:0;">관리자 호출 화면</div>
+        </div>
+      </div>
+      <div class="admin-controls">
+        <div class="time" id="clock">--:--</div>
+      </div>
+    </div>
+
+    <div class="view active" id="loginView">
+      <div class="card">
+        <h2>관리자 로그인</h2>
+        <div class="subtitle">관리자용 비밀번호를 입력하세요.</div>
+        <form id="loginForm" class="stack">
+          <label>
+            비밀번호 / PIN
+            <input type="password" id="pin" placeholder="예) 1234" autocomplete="current-password">
+          </label>
+          <button type="submit" class="btn btn-primary">로그인</button>
+        </form>
+        <div class="notice" style="margin-top:10px;">기본 비밀번호는 코드 내에서 변경하세요. (ADMIN_PIN)</div>
+      </div>
+    </div>
+
+    <div class="view" id="storeSetup">
+      <div class="card">
+        <h2>업체정보 등록</h2>
+        <div class="subtitle">첫 등록 후 손님 호출 화면으로 이동합니다.</div>
+        <form id="storeForm" class="stack">
+          <label>업체명 <input type="text" id="storeNameInput" placeholder="예) Blue Harbour Dining" required></label>
+          <label>전화번호 <input type="text" id="storePhoneInput" placeholder="010-1234-5678"></label>
+          <label>주소 <input type="text" id="storeAddrInput" placeholder="주소를 입력하세요"></label>
+          <label>공지사항 <input type="text" id="storeNoticeInput" placeholder="예) 대기 후 호출 드립니다."></label>
+          <button type="submit" class="btn btn-primary">저장하고 진행</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="view admin-layout" id="adminView">
+      <div class="card">
+        <h2>대기 현황</h2>
+        <div class="subtitle">대기·호출·입장 완료 수를 한눈에 확인하세요.</div>
+        <div class="metrics">
+          <div class="metric"><span>대기팀</span><strong id="statWaiting">0</strong></div>
+          <div class="metric"><span>호출중</span><strong id="statCalling">0</strong></div>
+          <div class="metric"><span>입장완료</span><strong id="statSeated">0</strong></div>
+        </div>
+        <div class="notice" style="margin-top:10px;">호출을 누르면 고객에게 입장 안내를 시작합니다. 미응답 시 다시 호출하거나 입장을 확정하세요.</div>
+      </div>
+
+      <div class="card">
+        <h2>대기 리스트</h2>
+        <div class="subtitle" id="queueSummary">잠시만 기다려 주세요.</div>
+        <div class="queue" id="adminQueue"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
