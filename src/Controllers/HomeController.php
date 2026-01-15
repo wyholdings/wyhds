@@ -22,6 +22,11 @@ class HomeController
     {
         echo $this->twig->render('portfolio/portfolio.html.twig');
     }
+
+    public function services(): void
+    {
+        echo $this->twig->render('services/services.html.twig');
+    }
 }
 
 ?>
