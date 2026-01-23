@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\Contact;
+use App\Controllers\MessageController;
 
 class ContactController
 {
@@ -38,6 +39,13 @@ class ContactController
         if ($company && $name && filter_var($email, FILTER_VALIDATE_EMAIL) && $phone && $budget && $message) {
             $contact = new Contact();
             $contact->save($company, $name, $email, $phone, $budget, $message);
+            $receiverNumber = '010-4928-4236'; // 문의 접수 받을 번호
+            if ($receiverNumber) {
+                $subject = '새 문의 접수';
+                $msg = "회사: {$company}\n이름: {$name}";
+                $messageController = new MessageController();
+                $messageController->send($msg, $subject, $receiverNumber);
+            }
             echo json_encode(['success' => true, 'message' => '문의가 접수되었습니다. 빠른 시일안에 연락 드리겠습니다.']);
             exit;
         } else {
