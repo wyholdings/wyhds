@@ -15,17 +15,37 @@ class HomeController
 
     public function index(): void
     {
-        echo $this->twig->render('index.html.twig');
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('index.html.twig', [
+            'contact_form_token' => $contactToken,
+        ]);
     }
 
     public function portfolio(): void
     {
-        echo $this->twig->render('portfolio/portfolio.html.twig');
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('portfolio/portfolio.html.twig', [
+            'contact_form_token' => $contactToken,
+        ]);
     }
 
     public function services(): void
     {
-        echo $this->twig->render('services/services.html.twig');
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('services/services.html.twig', [
+            'contact_form_token' => $contactToken,
+        ]);
+    }
+
+    private function ensureContactFormToken(): string
+    {
+        if (empty($_SESSION['contact_form_token'])) {
+            $_SESSION['contact_form_token'] = bin2hex(random_bytes(16));
+        }
+
+        $_SESSION['contact_form_issued_at'] = time();
+
+        return $_SESSION['contact_form_token'];
     }
 }
 
