@@ -39,10 +39,11 @@ class VisitorLogController
     public function list(): void
     {
         $page = max(1, (int)($_GET['page'] ?? 1));
+        $keyword = trim((string)($_GET['q'] ?? ''));
         $perPage = 50;
         $offset = ($page - 1) * $perPage;
-        $logs = $this->logModel->getLogs($perPage, $offset);
-        $total = $this->logModel->countLogs();
+        $logs = $this->logModel->getLogs($perPage, $offset, $keyword);
+        $total = $this->logModel->countLogs($keyword);
         $totalPages = max(1, (int)ceil($total / $perPage));
 
         echo $this->twig->render('admin/visitor/logs.html.twig', [
@@ -52,6 +53,7 @@ class VisitorLogController
             'total_pages' => $totalPages,
             'total'       => $total,
             'per_page'    => $perPage,
+            'keyword'     => $keyword,
         ]);
     }
 }

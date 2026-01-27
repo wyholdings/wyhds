@@ -6,6 +6,18 @@
     <a href="/admin/visitor/logs" class="btn btn-sm btn-outline-secondary">새로고침</a>
 </div>
 
+<form class="form-inline mb-3" method="get" action="/admin/visitor/logs">
+    <div class="input-group" style="max-width: 420px;">
+        <input type="text" class="form-control" name="q" placeholder="페이지/Referer/IP/UA 검색" value="{{ keyword|default('') }}">
+        <div class="input-group-append">
+            <button class="btn btn-primary" type="submit">검색</button>
+        </div>
+    </div>
+    {% if keyword %}
+        <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs">초기화</a>
+    {% endif %}
+</form>
+
 <p class="text-muted mb-3">총 {{ total }}건 ({{ page }}/{{ total_pages }} 페이지)</p>
 
 <div class="card">
@@ -53,19 +65,19 @@
             {% set prev = page - 1 %}
             {% set next = page + 1 %}
             <li class="page-item {{ page == 1 ? 'disabled' : '' }}">
-                <a class="page-link" href="/admin/visitor/logs?page={{ prev }}">이전</a>
+                <a class="page-link" href="/admin/visitor/logs?page={{ prev }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}">이전</a>
             </li>
             {% for p in 1..total_pages %}
                 {% if p == page or (p <= 3) or (p > total_pages-3) or (p >= page-2 and p <= page+2) %}
                     <li class="page-item {{ p == page ? 'active' : '' }}">
-                        <a class="page-link" href="/admin/visitor/logs?page={{ p }}">{{ p }}</a>
+                        <a class="page-link" href="/admin/visitor/logs?page={{ p }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}">{{ p }}</a>
                     </li>
                 {% elseif loop.index0 == 3 or loop.index0 == total_pages-3 %}
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
             {% endfor %}
             <li class="page-item {{ page == total_pages ? 'disabled' : '' }}">
-                <a class="page-link" href="/admin/visitor/logs?page={{ next }}">다음</a>
+                <a class="page-link" href="/admin/visitor/logs?page={{ next }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}">다음</a>
             </li>
         </ul>
     </nav>

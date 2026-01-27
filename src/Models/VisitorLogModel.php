@@ -47,23 +47,33 @@ class VisitorLogModel
         ]);
     }
 
-    public function getLogs(int $limit = 100, int $offset = 0): array
+    public function getLogs(int $limit = 100, int $offset = 0, string $keyword = ''): array
     {
+        [$whereSql, $params] = $this->buildWhere($keyword);
         $stmt = $this->db->prepare("
             SELECT id, path, query_string, referer, user_agent, ip, session_id, duration_seconds, visited_at
             FROM visitor_logs
+            {$whereSql}
             ORDER BY id DESC
             LIMIT :offset, :limit
         ");
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_STR);
+        }
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function countLogs(): int
+    public function countLogs(string $keyword = ''): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) FROM visitor_logs");
+        [$whereSql, $params] = $this->buildWhere($keyword);
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM visitor_logs {$whereSql}");
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_STR);
+        }
+        $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
 
@@ -85,6 +95,20 @@ class VisitorLogModel
                 INDEX idx_path (path)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
+    }
+
+    private function buildWhere(string $keyword): array
+    {
+        $keyword = trim($keyword);
+        if ($keyword === '') {
+            return ['', []];
+        }
+
+        $like = '%' . $keyword . '%';
+        return [
+            "WHERE path LIKE :kw OR query_string LIKE :kw OR referer LIKE :kw OR user_agent LIKE :kw OR ip LIKE :kw OR session_id LIKE :kw",
+            [':kw' => $like],
+        ];
     }
 }
 
