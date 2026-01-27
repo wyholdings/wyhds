@@ -12,6 +12,9 @@ $router->get('/portfolio', [App\Controllers\HomeController::class, 'portfolio'])
 // 견적 문의
 $router->post('/contact/submit', [App\Controllers\ContactController::class, 'submit']);
 
+// 방문 로그 수집
+$router->post('/visit/leave', [App\Controllers\VisitorLogController::class, 'leave']);
+
 // 관리자(admin) 라우팅
 $router->get('/admin/', [App\Controllers\AdminController::class, 'dashboard']);
 $router->get('/admin', [App\Controllers\AdminController::class, 'dashboard']);
@@ -60,4 +63,7 @@ $router->get('/admin/ebook/list', [App\Controllers\EbookController::class, 'list
 $router->post('/admin/ebook/upload', [App\Controllers\EbookController::class, 'upload']);
 $router->get('/admin/ebook/download/{ebookId}', [App\Controllers\EbookController::class, 'download']);
 $router->post('/admin/ebook/{ebookId}/links', [App\Controllers\EbookController::class,'saveLinks']);
+
+//접속 로그
+$router->get('/admin/visitor/logs', [App\Controllers\VisitorLogController::class, 'list']);
 ?>

@@ -18,9 +18,52 @@ $dotenv->load();
 $loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/../views');
 $twig = new \Twig\Environment($loader);
 
+function resolveClientIp(): string
+{
+    $candidates = [
+        $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '',
+        $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '',
+        $_SERVER['REMOTE_ADDR'] ?? '',
+    ];
+
+    foreach ($candidates as $candidate) {
+        if ($candidate === '') {
+            continue;
+        }
+
+        $ip = trim(explode(',', $candidate)[0]);
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            return $ip;
+        }
+    }
+
+    return '';
+}
+
+$visitLogId = null;
+$path = parse_url($uri, PHP_URL_PATH);
+$accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && !preg_match('#^/admin#', $path)) {
+    $shouldLog = $accept === '' || stripos($accept, 'text/html') !== false;
+
+    if ($shouldLog) {
+        $visitModel = new App\Models\VisitorLogModel();
+        $visitLogId = $visitModel->createLog(
+            $path ?? '/',
+            (string)(parse_url($uri, PHP_URL_QUERY) ?? ''),
+            (string)($_SERVER['HTTP_REFERER'] ?? ''),
+            (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
+            resolveClientIp(),
+            session_id()
+        );
+    }
+}
+
 //twig globals
 $twig->addGlobal('site_title', 'WY Holdings');
 $twig->addGlobal('event_date', 'We make Your Holding dreams');
+$twig->addGlobal('visit_log_id', $visitLogId);
 
 $router = new App\Router($twig);
 
