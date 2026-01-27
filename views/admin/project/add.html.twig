@@ -1,60 +1,68 @@
 {% extends 'admin/layout/base.html.twig' %}
 
 {% block content %}
-<h1>{% if project %}프로젝트 수정{% else %}프로젝트 등록{% endif %}</h1>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0 text-gray-800">{% if project %}프로젝트 수정{% else %}프로젝트 등록{% endif %}</h1>
+    <a href="/admin/project/list" class="btn btn-sm btn-outline-secondary">목록</a>
+</div>
 
-<form method="post" action="{{ project ? '/admin/project/' ~ project.id ~ '/edit' : '/admin/project/add' }}">
-    <div class="form-group">
-        <label>프로젝트명</label>
-        <input type="text" name="name" class="form-control" value="{{ project.name ?? '' }}" required>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" action="{{ project ? '/admin/project/' ~ project.id ~ '/edit' : '/admin/project/add' }}">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>프로젝트명</label>
+                    <input type="text" name="name" class="form-control" value="{{ project.name ?? '' }}" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label>고객사/기관</label>
+                    <input type="text" name="client_name" class="form-control" value="{{ project.client_name ?? '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>사이트 URL</label>
+                <input type="url" name="site_url" class="form-control" value="{{ project.site_url ?? '' }}" placeholder="https://example.com">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label>프로젝트 시작일</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ project.start_date ?? '' }}">
+                </div>
+                <div class="form-group col-md-4">
+                    <label>URL 만료일(도메인)</label>
+                    <input type="date" name="url_expiry_date" class="form-control" value="{{ project.url_expiry_date ?? '' }}">
+                </div>
+                <div class="form-group col-md-4">
+                    <label>SSL 만료일</label>
+                    <input type="date" name="ssl_expiry_date" class="form-control" value="{{ project.ssl_expiry_date ?? '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label>담당자</label>
+                    <input type="text" name="manager" class="form-control" value="{{ project.manager ?? '' }}">
+                </div>
+                <div class="form-group col-md-4">
+                    <label>상태</label>
+                    <select name="status" class="form-control">
+                        <option value="active" {% if project.status == 'active' %}selected{% endif %}>진행중</option>
+                        <option value="hold" {% if project.status == 'hold' %}selected{% endif %}>보류</option>
+                        <option value="inactive" {% if project.status == 'inactive' %}selected{% endif %}>종료</option>
+                        <option value="expired" {% if project.status == 'expired' %}selected{% endif %}>만료</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label>메모</label>
+                    <textarea name="memo" class="form-control" rows="3">{{ project.memo ?? '' }}</textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">{% if project %}수정{% else %}등록{% endif %}</button>
+            <a href="/admin/project/list" class="btn btn-secondary">목록</a>
+        </form>
     </div>
-
-    <div class="form-group">
-        <label>고객사/기관</label>
-        <input type="text" name="client_name" class="form-control" value="{{ project.client_name ?? '' }}">
-    </div>
-
-    <div class="form-group">
-        <label>사이트 URL</label>
-        <input type="url" name="site_url" class="form-control" value="{{ project.site_url ?? '' }}" placeholder="https://example.com">
-    </div>
-
-    <div class="form-group">
-        <label>프로젝트 시작일</label>
-        <input type="date" name="start_date" class="form-control" value="{{ project.start_date ?? '' }}">
-    </div>
-
-    <div class="form-group">
-        <label>URL 만료일(도메인)</label>
-        <input type="date" name="url_expiry_date" class="form-control" value="{{ project.url_expiry_date ?? '' }}">
-    </div>
-
-    <div class="form-group">
-        <label>SSL 만료일</label>
-        <input type="date" name="ssl_expiry_date" class="form-control" value="{{ project.ssl_expiry_date ?? '' }}">
-    </div>
-
-    <div class="form-group">
-        <label>담당자</label>
-        <input type="text" name="manager" class="form-control" value="{{ project.manager ?? '' }}">
-    </div>
-
-    <div class="form-group">
-        <label>상태</label>
-        <select name="status" class="form-control">
-            <option value="active" {% if project.status == 'active' %}selected{% endif %}>진행중</option>
-            <option value="hold" {% if project.status == 'hold' %}selected{% endif %}>보류</option>
-            <option value="inactive" {% if project.status == 'inactive' %}selected{% endif %}>종료</option>
-            <option value="expired" {% if project.status == 'expired' %}selected{% endif %}>만료</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>메모</label>
-        <textarea name="memo" class="form-control" rows="4">{{ project.memo ?? '' }}</textarea>
-    </div>
-
-    <button type="submit" class="btn btn-primary">{% if project %}수정{% else %}등록{% endif %}</button>
-    <a href="/admin/project/list" class="btn btn-secondary">목록</a>
-</form>
+</div>
 {% endblock %}

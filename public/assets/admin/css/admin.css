@@ -11295,3 +11295,30 @@
     background-color: #e74a3b;
     vertical-align: middle;
 }
+
+.badge-status {
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    padding: 0.25rem 0.55rem;
+}
+
+.badge-status.badge-active {
+    background-color: #1cc88a;
+    color: #fff;
+}
+
+.badge-status.badge-inactive {
+    background-color: #858796;
+    color: #fff;
+}
+
+.badge-status.badge-hold {
+    background-color: #f6c23e;
+    color: #fff;
+}
+
+.badge-status.badge-expired {
+    background-color: #e74a3b;
+    color: #fff;
+}

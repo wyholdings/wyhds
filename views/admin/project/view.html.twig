@@ -1,75 +1,89 @@
 {% extends 'admin/layout/base.html.twig' %}
 
 {% block content %}
-<h1>프로젝트 정보</h1>
-
-<div class="form-group">
-    <label><strong>프로젝트명:</strong></label>
-    <p class="form-control-plaintext">{{ project.name }}</p>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">프로젝트 정보</h1>
+        <p class="text-muted mb-0">{{ project.name }}</p>
+    </div>
+    <div>
+        <a href="/admin/project/list" class="btn btn-sm btn-outline-secondary">목록</a>
+        <a href="/admin/project/{{ project.id }}/edit" class="btn btn-sm btn-primary">수정</a>
+    </div>
 </div>
 
-<div class="form-group">
-    <label><strong>고객사/기관:</strong></label>
-    <p class="form-control-plaintext">{{ project.client_name ?? '-' }}</p>
-</div>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label><strong>프로젝트명</strong></label>
+                <p class="form-control-plaintext">{{ project.name }}</p>
+            </div>
+            <div class="form-group col-md-6">
+                <label><strong>고객사/기관</strong></label>
+                <p class="form-control-plaintext">{{ project.client_name ?? '-' }}</p>
+            </div>
+        </div>
 
-<div class="form-group">
-    <label><strong>사이트 URL:</strong></label>
-    <p class="form-control-plaintext">
-        {% if project.site_url %}
-            <a href="{{ project.site_url }}" target="_blank" rel="noopener noreferrer">{{ project.site_url }}</a>
-        {% else %}
-            -
-        {% endif %}
-    </p>
-</div>
+        <div class="form-group">
+            <label><strong>사이트 URL</strong></label>
+            <p class="form-control-plaintext">
+                {% if project.site_url %}
+                    <a href="{{ project.site_url }}" target="_blank" rel="noopener noreferrer">{{ project.site_url }}</a>
+                {% else %}
+                    -
+                {% endif %}
+            </p>
+        </div>
 
-<div class="form-group">
-    <label><strong>프로젝트 시작일:</strong></label>
-    <p class="form-control-plaintext">{{ project.start_date ?? '-' }}</p>
-</div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label><strong>프로젝트 시작일</strong></label>
+                <p class="form-control-plaintext">{{ project.start_date ?? '-' }}</p>
+            </div>
+            <div class="form-group col-md-4">
+                <label><strong>URL 만료일</strong></label>
+                <p class="form-control-plaintext">
+                    {{ project.url_expiry_date ?? '-' }}
+                    {% if project.url_expiry_days is not null and project.url_expiry_days <= 30 and project.url_expiry_days >= 0 %}
+                        <span class="expiry-dot" title="D-30 임박"></span>
+                    {% endif %}
+                    {% if project.url_expiry_days is not null and project.url_expiry_days < 0 %}
+                        <span class="badge badge-danger ml-1">만료</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="form-group col-md-4">
+                <label><strong>SSL 만료일</strong></label>
+                <p class="form-control-plaintext">
+                    {{ project.ssl_expiry_date ?? '-' }}
+                    {% if project.ssl_expiry_days is not null and project.ssl_expiry_days <= 30 and project.ssl_expiry_days >= 0 %}
+                        <span class="expiry-dot" title="D-30 임박"></span>
+                    {% endif %}
+                    {% if project.ssl_expiry_days is not null and project.ssl_expiry_days < 0 %}
+                        <span class="badge badge-danger ml-1">만료</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
 
-<div class="form-group">
-    <label><strong>URL 만료일:</strong></label>
-    <p class="form-control-plaintext">
-        {{ project.url_expiry_date ?? '-' }}
-        {% if project.url_expiry_days is not null and project.url_expiry_days <= 30 and project.url_expiry_days >= 0 %}
-            <span class="expiry-dot" title="D-30 임박"></span>
-        {% endif %}
-        {% if project.url_expiry_days is not null and project.url_expiry_days < 0 %}
-            <span class="badge badge-danger ml-1">만료</span>
-        {% endif %}
-    </p>
-</div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label><strong>담당자</strong></label>
+                <p class="form-control-plaintext">{{ project.manager ?? '-' }}</p>
+            </div>
+            <div class="form-group col-md-4">
+                <label><strong>상태</strong></label>
+                <p class="form-control-plaintext">
+                    <span class="badge badge-status badge-{{ project.status }}">{{ project.status }}</span>
+                </p>
+            </div>
+        </div>
 
-<div class="form-group">
-    <label><strong>SSL 만료일:</strong></label>
-    <p class="form-control-plaintext">
-        {{ project.ssl_expiry_date ?? '-' }}
-        {% if project.ssl_expiry_days is not null and project.ssl_expiry_days <= 30 and project.ssl_expiry_days >= 0 %}
-            <span class="expiry-dot" title="D-30 임박"></span>
-        {% endif %}
-        {% if project.ssl_expiry_days is not null and project.ssl_expiry_days < 0 %}
-            <span class="badge badge-danger ml-1">만료</span>
-        {% endif %}
-    </p>
+        <div class="form-group">
+            <label><strong>메모</strong></label>
+            <p class="form-control-plaintext">{{ project.memo|nl2br }}</p>
+        </div>
+    </div>
 </div>
-
-<div class="form-group">
-    <label><strong>담당자:</strong></label>
-    <p class="form-control-plaintext">{{ project.manager ?? '-' }}</p>
-</div>
-
-<div class="form-group">
-    <label><strong>상태:</strong></label>
-    <p class="form-control-plaintext">{{ project.status ?? '-' }}</p>
-</div>
-
-<div class="form-group">
-    <label><strong>메모:</strong></label>
-    <p class="form-control-plaintext">{{ project.memo|nl2br }}</p>
-</div>
-
-<a href="/admin/project/list" class="btn btn-secondary">목록</a>
-<a href="/admin/project/{{ project.id }}/edit" class="btn btn-primary">수정</a>
 {% endblock %}
