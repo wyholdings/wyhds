@@ -17,7 +17,7 @@ class ProjectModel
 
     public function getAll(): array
     {
-        $stmt = $this->db->query("SELECT * FROM projects ORDER BY created_at DESC");
+        $stmt = $this->db->query("SELECT * FROM projects ORDER BY id, created_at DESC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
