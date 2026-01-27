@@ -1,0 +1,62 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0 text-gray-800">프로젝트 목록</h1>
+    <a href="/admin/project/add" class="btn btn-sm btn-primary">+ 프로젝트 등록</a>
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th style="width: 80px;">ID</th>
+            <th>프로젝트명</th>
+            <th style="width: 180px;">URL</th>
+            <th style="width: 140px;">URL 만료일</th>
+            <th style="width: 140px;">SSL 만료일</th>
+            <th style="width: 120px;">상태</th>
+            <th style="width: 160px;">관리</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects %}
+        {% set url_alert = project.url_expiry_days is not null and project.url_expiry_days <= 30 and project.url_expiry_days >= 0 %}
+        {% set ssl_alert = project.ssl_expiry_days is not null and project.ssl_expiry_days <= 30 and project.ssl_expiry_days >= 0 %}
+        {% set url_expired = project.url_expiry_days is not null and project.url_expiry_days < 0 %}
+        {% set ssl_expired = project.ssl_expiry_days is not null and project.ssl_expiry_days < 0 %}
+        <tr>
+            <td>{{ project.id }}</td>
+            <td>
+                <a href="/admin/project/{{ project.id }}/view">{{ project.name }}</a>
+                {% if project.client_name %}<div class="small text-muted">{{ project.client_name }}</div>{% endif %}
+            </td>
+            <td class="small">
+                {% if project.site_url %}
+                    <a href="{{ project.site_url }}" target="_blank" rel="noopener noreferrer">{{ project.site_url }}</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td class="small">
+                {{ project.url_expiry_date ?? '-' }}
+                {% if url_alert %}<span class="expiry-dot" title="D-30 임박"></span>{% endif %}
+                {% if url_expired %}<span class="badge badge-danger ml-1">만료</span>{% endif %}
+            </td>
+            <td class="small">
+                {{ project.ssl_expiry_date ?? '-' }}
+                {% if ssl_alert %}<span class="expiry-dot" title="D-30 임박"></span>{% endif %}
+                {% if ssl_expired %}<span class="badge badge-danger ml-1">만료</span>{% endif %}
+            </td>
+            <td>{{ project.status }}</td>
+            <td>
+                <a href="/admin/project/{{ project.id }}/view" class="btn btn-sm btn-info">보기</a>
+                <a href="/admin/project/{{ project.id }}/edit" class="btn btn-sm btn-warning">수정</a>
+                <a href="/admin/project/{{ project.id }}/delete" class="btn btn-sm btn-danger" onclick="return confirm('삭제할까요?')">삭제</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">등록된 프로젝트가 없습니다.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

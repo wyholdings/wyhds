@@ -35,6 +35,15 @@ $router->post('/admin/company/{id}/edit', [App\Controllers\CompanyController::cl
 // 관리자 업체 정보 삭제
 $router->get('/admin/company/{id}/delete', [App\Controllers\CompanyController::class, 'delete']);
 
+//프로젝트 관리
+$router->get('/admin/project/list', [App\Controllers\ProjectController::class, 'list']);
+$router->post('/admin/project/add', [App\Controllers\ProjectController::class, 'add']);
+$router->get('/admin/project/add', [App\Controllers\ProjectController::class, 'add']);
+$router->get('/admin/project/{id}/view', [App\Controllers\ProjectController::class, 'view']);
+$router->get('/admin/project/{id}/edit', [App\Controllers\ProjectController::class, 'edit']);
+$router->post('/admin/project/{id}/edit', [App\Controllers\ProjectController::class, 'edit']);
+$router->get('/admin/project/{id}/delete', [App\Controllers\ProjectController::class, 'delete']);
+
 
 //견적 문의 목록
 $router->get('/admin/inquiry/list', [App\Controllers\InquiryController::class, 'list']);

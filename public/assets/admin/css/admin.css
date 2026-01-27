@@ -11281,7 +11281,17 @@
   }
   
 
-  .main_nav_img {
+.main_nav_img {
     width: 100%;
     height: auto;
+}
+
+.expiry-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background-color: #e74a3b;
+    vertical-align: middle;
 }
