@@ -43,12 +43,16 @@
         <div class="form-group">
             <label><strong>URL 만료일</strong></label>
             <p class="form-control-plaintext">
-                {{ project.url_expiry_date ?? '-' }}
-                {% if project.url_expiry_days is not null and project.url_expiry_days <= 30 and project.url_expiry_days >= 0 %}
-                    <span class="expiry-dot" title="D-30 임박"></span>
-                {% endif %}
-                {% if project.url_expiry_days is not null and project.url_expiry_days < 0 %}
-                    <span class="badge badge-danger ml-1">만료</span>
+                {% if project.url_expiry_date %}
+                    {{ project.url_expiry_date }}
+                    {% if project.url_expiry_days is not null and project.url_expiry_days <= 30 and project.url_expiry_days >= 0 %}
+                        <span class="expiry-dot" title="D-30 임박"></span>
+                    {% endif %}
+                    {% if project.url_expiry_days is not null and project.url_expiry_days < 0 %}
+                        <span class="badge badge-danger ml-1">만료</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-secondary">미계약</span>
                 {% endif %}
             </p>
         </div>
@@ -56,12 +60,16 @@
         <div class="form-group">
             <label><strong>SSL 만료일</strong></label>
             <p class="form-control-plaintext">
-                {{ project.ssl_expiry_date ?? '-' }}
-                {% if project.ssl_expiry_days is not null and project.ssl_expiry_days <= 30 and project.ssl_expiry_days >= 0 %}
-                    <span class="expiry-dot" title="D-30 임박"></span>
-                {% endif %}
-                {% if project.ssl_expiry_days is not null and project.ssl_expiry_days < 0 %}
-                    <span class="badge badge-danger ml-1">만료</span>
+                {% if project.ssl_expiry_date %}
+                    {{ project.ssl_expiry_date }}
+                    {% if project.ssl_expiry_days is not null and project.ssl_expiry_days <= 30 and project.ssl_expiry_days >= 0 %}
+                        <span class="expiry-dot" title="D-30 임박"></span>
+                    {% endif %}
+                    {% if project.ssl_expiry_days is not null and project.ssl_expiry_days < 0 %}
+                        <span class="badge badge-danger ml-1">만료</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-secondary">미계약</span>
                 {% endif %}
             </p>
         </div>
@@ -69,12 +77,16 @@
         <div class="form-group">
             <label><strong>호스팅 만료일</strong></label>
             <p class="form-control-plaintext">
-                {{ project.hosting_expiry_date ?? '-' }}
-                {% if project.hosting_expiry_days is not null and project.hosting_expiry_days <= 30 and project.hosting_expiry_days >= 0 %}
-                    <span class="expiry-dot" title="D-30 임박"></span>
-                {% endif %}
-                {% if project.hosting_expiry_days is not null and project.hosting_expiry_days < 0 %}
-                    <span class="badge badge-danger ml-1">만료</span>
+                {% if project.hosting_expiry_date %}
+                    {{ project.hosting_expiry_date }}
+                    {% if project.hosting_expiry_days is not null and project.hosting_expiry_days <= 30 and project.hosting_expiry_days >= 0 %}
+                        <span class="expiry-dot" title="D-30 임박"></span>
+                    {% endif %}
+                    {% if project.hosting_expiry_days is not null and project.hosting_expiry_days < 0 %}
+                        <span class="badge badge-danger ml-1">만료</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-secondary">미계약</span>
                 {% endif %}
             </p>
         </div>
@@ -82,12 +94,16 @@
         <div class="form-group">
             <label><strong>유지보수 만료일</strong></label>
             <p class="form-control-plaintext">
-                {{ project.maintenance_expiry_date ?? '-' }}
-                {% if project.maintenance_expiry_days is not null and project.maintenance_expiry_days <= 30 and project.maintenance_expiry_days >= 0 %}
-                    <span class="expiry-dot" title="D-30 임박"></span>
-                {% endif %}
-                {% if project.maintenance_expiry_days is not null and project.maintenance_expiry_days < 0 %}
-                    <span class="badge badge-danger ml-1">만료</span>
+                {% if project.maintenance_expiry_date %}
+                    {{ project.maintenance_expiry_date }}
+                    {% if project.maintenance_expiry_days is not null and project.maintenance_expiry_days <= 30 and project.maintenance_expiry_days >= 0 %}
+                        <span class="expiry-dot" title="D-30 임박"></span>
+                    {% endif %}
+                    {% if project.maintenance_expiry_days is not null and project.maintenance_expiry_days < 0 %}
+                        <span class="badge badge-danger ml-1">만료</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-secondary">미계약</span>
                 {% endif %}
             </p>
         </div>

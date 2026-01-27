@@ -29,23 +29,23 @@
                 <div class="form-section-title">만료 정보</div>
                 <div class="form-group">
                     <label>프로젝트 시작일</label>
-                    <input type="date" name="start_date" class="form-control" value="{{ project.start_date ?? '' }}">
+                    <input type="date" name="start_date" class="form-control date-input" value="{{ project.start_date ?? '' }}">
                 </div>
                 <div class="form-group">
                     <label>URL 만료일(도메인)</label>
-                    <input type="date" name="url_expiry_date" class="form-control" value="{{ project.url_expiry_date ?? '' }}">
+                    <input type="date" name="url_expiry_date" class="form-control date-input" value="{{ project.url_expiry_date ?? '' }}">
                 </div>
                 <div class="form-group">
                     <label>SSL 만료일</label>
-                    <input type="date" name="ssl_expiry_date" class="form-control" value="{{ project.ssl_expiry_date ?? '' }}">
+                    <input type="date" name="ssl_expiry_date" class="form-control date-input" value="{{ project.ssl_expiry_date ?? '' }}">
                 </div>
                 <div class="form-group">
                     <label>호스팅 만료일</label>
-                    <input type="date" name="hosting_expiry_date" class="form-control" value="{{ project.hosting_expiry_date ?? '' }}">
+                    <input type="date" name="hosting_expiry_date" class="form-control date-input" value="{{ project.hosting_expiry_date ?? '' }}">
                 </div>
                 <div class="form-group">
                     <label>유지보수 만료일</label>
-                    <input type="date" name="maintenance_expiry_date" class="form-control" value="{{ project.maintenance_expiry_date ?? '' }}">
+                    <input type="date" name="maintenance_expiry_date" class="form-control date-input" value="{{ project.maintenance_expiry_date ?? '' }}">
                 </div>
             </div>
 

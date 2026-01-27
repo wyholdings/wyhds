@@ -11342,3 +11342,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
+
+.date-input {
+    max-width: 240px;
+}
