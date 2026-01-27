@@ -22,6 +22,8 @@ class ProjectController
         foreach ($projects as &$project) {
             $project['url_expiry_days'] = $this->daysUntil($project['url_expiry_date'] ?? null);
             $project['ssl_expiry_days'] = $this->daysUntil($project['ssl_expiry_date'] ?? null);
+            $project['hosting_expiry_days'] = $this->daysUntil($project['hosting_expiry_date'] ?? null);
+            $project['maintenance_expiry_days'] = $this->daysUntil($project['maintenance_expiry_date'] ?? null);
         }
         unset($project);
 
@@ -56,6 +58,8 @@ class ProjectController
 
         $project['url_expiry_days'] = $this->daysUntil($project['url_expiry_date'] ?? null);
         $project['ssl_expiry_days'] = $this->daysUntil($project['ssl_expiry_date'] ?? null);
+        $project['hosting_expiry_days'] = $this->daysUntil($project['hosting_expiry_date'] ?? null);
+        $project['maintenance_expiry_days'] = $this->daysUntil($project['maintenance_expiry_date'] ?? null);
 
         echo $this->twig->render('admin/project/view.html.twig', [
             'project' => $project,
@@ -100,6 +104,8 @@ class ProjectController
             'start_date'      => $input['start_date'] ?? null,
             'url_expiry_date' => $input['url_expiry_date'] ?? null,
             'ssl_expiry_date' => $input['ssl_expiry_date'] ?? null,
+            'hosting_expiry_date' => $input['hosting_expiry_date'] ?? null,
+            'maintenance_expiry_date' => $input['maintenance_expiry_date'] ?? null,
             'manager'         => trim((string)($input['manager'] ?? '')),
             'status'          => $input['status'] ?? 'active',
             'memo'            => trim((string)($input['memo'] ?? '')),

@@ -34,9 +34,9 @@ class ProjectModel
     {
         $sql = "
             INSERT INTO projects
-                (name, client_name, site_url, start_date, url_expiry_date, ssl_expiry_date, manager, status, memo, created_at, updated_at)
+                (name, client_name, site_url, start_date, url_expiry_date, ssl_expiry_date, hosting_expiry_date, maintenance_expiry_date, manager, status, memo, created_at, updated_at)
             VALUES
-                (:name, :client_name, :site_url, :start_date, :url_expiry_date, :ssl_expiry_date, :manager, :status, :memo, NOW(), NOW())
+                (:name, :client_name, :site_url, :start_date, :url_expiry_date, :ssl_expiry_date, :hosting_expiry_date, :maintenance_expiry_date, :manager, :status, :memo, NOW(), NOW())
         ";
 
         $stmt = $this->db->prepare($sql);
@@ -48,7 +48,9 @@ class ProjectModel
             ':start_date'      => $data['start_date'],
             ':url_expiry_date' => $data['url_expiry_date'],
             ':ssl_expiry_date' => $data['ssl_expiry_date'],
-            ':manager'         => $data['manager'],
+            ':hosting_expiry_date'     => $data['hosting_expiry_date'],
+            ':maintenance_expiry_date' => $data['maintenance_expiry_date'],
+            ':manager'                 => $data['manager'],
             ':status'          => $data['status'],
             ':memo'            => $data['memo'],
         ]);
@@ -64,6 +66,8 @@ class ProjectModel
                 start_date = :start_date,
                 url_expiry_date = :url_expiry_date,
                 ssl_expiry_date = :ssl_expiry_date,
+                hosting_expiry_date = :hosting_expiry_date,
+                maintenance_expiry_date = :maintenance_expiry_date,
                 manager = :manager,
                 status = :status,
                 memo = :memo,
@@ -93,6 +97,8 @@ class ProjectModel
                 start_date DATE DEFAULT NULL,
                 url_expiry_date DATE DEFAULT NULL,
                 ssl_expiry_date DATE DEFAULT NULL,
+                hosting_expiry_date DATE DEFAULT NULL,
+                maintenance_expiry_date DATE DEFAULT NULL,
                 manager VARCHAR(80) DEFAULT NULL,
                 status VARCHAR(20) DEFAULT 'active',
                 memo TEXT DEFAULT NULL,
@@ -100,7 +106,9 @@ class ProjectModel
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_status (status),
                 INDEX idx_url_expiry (url_expiry_date),
-                INDEX idx_ssl_expiry (ssl_expiry_date)
+                INDEX idx_ssl_expiry (ssl_expiry_date),
+                INDEX idx_hosting_expiry (hosting_expiry_date),
+                INDEX idx_maintenance_expiry (maintenance_expiry_date)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
     }

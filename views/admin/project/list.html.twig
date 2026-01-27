@@ -20,6 +20,8 @@
                         <th style="width: 200px;">URL</th>
                         <th style="width: 140px;">URL 만료일</th>
                         <th style="width: 140px;">SSL 만료일</th>
+                        <th style="width: 140px;">호스팅 만료일</th>
+                        <th style="width: 140px;">유지보수 만료일</th>
                         <th style="width: 120px;">상태</th>
                         <th style="width: 180px;">관리</th>
                     </tr>
@@ -28,8 +30,12 @@
                     {% for project in projects %}
                     {% set url_alert = project.url_expiry_days is not null and project.url_expiry_days <= 30 and project.url_expiry_days >= 0 %}
                     {% set ssl_alert = project.ssl_expiry_days is not null and project.ssl_expiry_days <= 30 and project.ssl_expiry_days >= 0 %}
+                    {% set hosting_alert = project.hosting_expiry_days is not null and project.hosting_expiry_days <= 30 and project.hosting_expiry_days >= 0 %}
+                    {% set maintenance_alert = project.maintenance_expiry_days is not null and project.maintenance_expiry_days <= 30 and project.maintenance_expiry_days >= 0 %}
                     {% set url_expired = project.url_expiry_days is not null and project.url_expiry_days < 0 %}
                     {% set ssl_expired = project.ssl_expiry_days is not null and project.ssl_expiry_days < 0 %}
+                    {% set hosting_expired = project.hosting_expiry_days is not null and project.hosting_expiry_days < 0 %}
+                    {% set maintenance_expired = project.maintenance_expiry_days is not null and project.maintenance_expiry_days < 0 %}
                     <tr>
                         <td class="text-muted">{{ project.id }}</td>
                         <td>
@@ -53,6 +59,16 @@
                             {% if ssl_alert %}<span class="expiry-dot" title="D-30 임박"></span>{% endif %}
                             {% if ssl_expired %}<span class="badge badge-danger ml-1">만료</span>{% endif %}
                         </td>
+                        <td class="small">
+                            {{ project.hosting_expiry_date ?? '-' }}
+                            {% if hosting_alert %}<span class="expiry-dot" title="D-30 임박"></span>{% endif %}
+                            {% if hosting_expired %}<span class="badge badge-danger ml-1">만료</span>{% endif %}
+                        </td>
+                        <td class="small">
+                            {{ project.maintenance_expiry_date ?? '-' }}
+                            {% if maintenance_alert %}<span class="expiry-dot" title="D-30 임박"></span>{% endif %}
+                            {% if maintenance_expired %}<span class="badge badge-danger ml-1">만료</span>{% endif %}
+                        </td>
                         <td>
                             <span class="badge badge-status badge-{{ project.status }}">{{ project.status }}</span>
                         </td>
@@ -63,7 +79,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="7" class="text-center text-muted p-4">등록된 프로젝트가 없습니다.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted p-4">등록된 프로젝트가 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

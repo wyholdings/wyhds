@@ -67,6 +67,32 @@
         </div>
 
         <div class="form-group">
+            <label><strong>호스팅 만료일</strong></label>
+            <p class="form-control-plaintext">
+                {{ project.hosting_expiry_date ?? '-' }}
+                {% if project.hosting_expiry_days is not null and project.hosting_expiry_days <= 30 and project.hosting_expiry_days >= 0 %}
+                    <span class="expiry-dot" title="D-30 임박"></span>
+                {% endif %}
+                {% if project.hosting_expiry_days is not null and project.hosting_expiry_days < 0 %}
+                    <span class="badge badge-danger ml-1">만료</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label><strong>유지보수 만료일</strong></label>
+            <p class="form-control-plaintext">
+                {{ project.maintenance_expiry_date ?? '-' }}
+                {% if project.maintenance_expiry_days is not null and project.maintenance_expiry_days <= 30 and project.maintenance_expiry_days >= 0 %}
+                    <span class="expiry-dot" title="D-30 임박"></span>
+                {% endif %}
+                {% if project.maintenance_expiry_days is not null and project.maintenance_expiry_days < 0 %}
+                    <span class="badge badge-danger ml-1">만료</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="form-group">
             <label><strong>담당자</strong></label>
             <p class="form-control-plaintext">{{ project.manager ?? '-' }}</p>
         </div>
