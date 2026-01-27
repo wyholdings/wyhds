@@ -9,43 +9,45 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <form method="post" action="{{ project ? '/admin/project/' ~ project.id ~ '/edit' : '/admin/project/add' }}">
-            <div class="form-row">
-                <div class="form-group col-md-6">
+            <div class="form-section">
+                <div class="form-section-title">기본 정보</div>
+                <div class="form-group">
                     <label>프로젝트명</label>
                     <input type="text" name="name" class="form-control" value="{{ project.name ?? '' }}" required>
                 </div>
-                <div class="form-group col-md-6">
+                <div class="form-group">
                     <label>고객사/기관</label>
                     <input type="text" name="client_name" class="form-control" value="{{ project.client_name ?? '' }}">
                 </div>
+                <div class="form-group">
+                    <label>사이트 URL</label>
+                    <input type="url" name="site_url" class="form-control" value="{{ project.site_url ?? '' }}" placeholder="https://example.com">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>사이트 URL</label>
-                <input type="url" name="site_url" class="form-control" value="{{ project.site_url ?? '' }}" placeholder="https://example.com">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group col-md-4">
+            <div class="form-section">
+                <div class="form-section-title">만료 정보</div>
+                <div class="form-group">
                     <label>프로젝트 시작일</label>
                     <input type="date" name="start_date" class="form-control" value="{{ project.start_date ?? '' }}">
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>URL 만료일(도메인)</label>
                     <input type="date" name="url_expiry_date" class="form-control" value="{{ project.url_expiry_date ?? '' }}">
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>SSL 만료일</label>
                     <input type="date" name="ssl_expiry_date" class="form-control" value="{{ project.ssl_expiry_date ?? '' }}">
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group col-md-4">
+            <div class="form-section">
+                <div class="form-section-title">운영 정보</div>
+                <div class="form-group">
                     <label>담당자</label>
                     <input type="text" name="manager" class="form-control" value="{{ project.manager ?? '' }}">
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>상태</label>
                     <select name="status" class="form-control">
                         <option value="active" {% if project.status == 'active' %}selected{% endif %}>진행중</option>
@@ -54,9 +56,9 @@
                         <option value="expired" {% if project.status == 'expired' %}selected{% endif %}>만료</option>
                     </select>
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>메모</label>
-                    <textarea name="memo" class="form-control" rows="3">{{ project.memo ?? '' }}</textarea>
+                    <textarea name="memo" class="form-control" rows="4">{{ project.memo ?? '' }}</textarea>
                 </div>
             </div>
 

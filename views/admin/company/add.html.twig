@@ -9,19 +9,17 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <form method="post" action="{{ company ? '/admin/company/' ~ company.id ~ '/edit' : '/admin/company/add' }}">
-            <div class="form-row">
-                <div class="form-group col-md-6">
+            <div class="form-section">
+                <div class="form-section-title">기본 정보</div>
+                <div class="form-group">
                     <label>업체명</label>
                     <input type="text" name="name" class="form-control" value="{{ company.name ?? '' }}" required>
                 </div>
-                <div class="form-group col-md-6">
+                <div class="form-group">
                     <label>사업자등록번호</label>
                     <input type="text" name="business_number" class="form-control" value="{{ company.business_number ?? '' }}">
                 </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>업체 타입</label>
                     <select name="type" class="form-control">
                         <option value="client" {% if company.type == 'client' %}selected{% endif %}>고객사</option>
@@ -29,38 +27,43 @@
                         <option value="internal" {% if company.type == 'internal' %}selected{% endif %}>내부</option>
                     </select>
                 </div>
-                <div class="form-group col-md-4">
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">계약 정보</div>
+                <div class="form-group">
                     <label>계약 시작일</label>
                     <input type="date" name="contract_start" class="form-control" value="{{ company.contract_start ?? '' }}">
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>계약 종료일</label>
                     <input type="date" name="contract_end" class="form-control" value="{{ company.contract_end ?? '' }}">
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group col-md-4">
+            <div class="form-section">
+                <div class="form-section-title">담당자 / 연락처</div>
+                <div class="form-group">
                     <label>담당자</label>
                     <input type="text" name="manager" class="form-control" value="{{ company.manager ?? '' }}">
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>전화번호</label>
                     <input type="text" name="phone" class="form-control" value="{{ company.phone ?? '' }}">
                 </div>
-                <div class="form-group col-md-4">
+                <div class="form-group">
                     <label>이메일</label>
                     <input type="email" name="email" class="form-control" value="{{ company.email ?? '' }}">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>주소</label>
-                <input type="text" name="address" class="form-control" value="{{ company.address ?? '' }}">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group col-md-4">
+            <div class="form-section">
+                <div class="form-section-title">운영 정보</div>
+                <div class="form-group">
+                    <label>주소</label>
+                    <input type="text" name="address" class="form-control" value="{{ company.address ?? '' }}">
+                </div>
+                <div class="form-group">
                     <label>상태</label>
                     <select name="status" class="form-control">
                         <option value="active" {% if company.status == 'active' %}selected{% endif %}>활성</option>
@@ -68,9 +71,9 @@
                         <option value="hold" {% if company.status == 'hold' %}selected{% endif %}>보류</option>
                     </select>
                 </div>
-                <div class="form-group col-md-8">
+                <div class="form-group">
                     <label>메모</label>
-                    <textarea name="memo" class="form-control" rows="3">{{ company.memo ?? '' }}</textarea>
+                    <textarea name="memo" class="form-control" rows="4">{{ company.memo ?? '' }}</textarea>
                 </div>
             </div>
 
