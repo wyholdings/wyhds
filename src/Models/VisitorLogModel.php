@@ -100,7 +100,7 @@ class VisitorLogModel
     {
         [$whereSql, $params] = $this->buildWhere($keyword, $onlyWithDuration);
         $stmt = $this->db->prepare("
-            SELECT id, path, query_string, referer, user_agent, ip, session_id, duration_seconds, visited_at
+            SELECT id, path, query_string, referer, user_agent, ip, session_id, duration_seconds, status_code, visited_at
             FROM visitor_logs
             {$whereSql}
             ORDER BY id DESC
