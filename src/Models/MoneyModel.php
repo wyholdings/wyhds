@@ -18,9 +18,12 @@ class MoneyModel
         if ($period === 'month' && $periodValue) {
             $whereSql .= " AND MONTH(date) = ?";
             $params[] = (int)$periodValue;
-        } elseif ($period === 'quarter' && $periodValue) {
-            $whereSql .= " AND QUARTER(date) = ?";
-            $params[] = (int)$periodValue;
+        } elseif ($period === 'half' && $periodValue) {
+            if ((int)$periodValue === 1) {
+                $whereSql .= " AND MONTH(date) BETWEEN 1 AND 6";
+            } else {
+                $whereSql .= " AND MONTH(date) BETWEEN 7 AND 12";
+            }
         }
 
         $stmt = $db->prepare("SELECT * FROM account_book WHERE {$whereSql} ORDER BY date ASC, created_at DESC");
@@ -39,9 +42,12 @@ class MoneyModel
         if ($period === 'month' && $periodValue) {
             $whereSql .= " AND MONTH(date) = ?";
             $params[] = (int)$periodValue;
-        } elseif ($period === 'quarter' && $periodValue) {
-            $whereSql .= " AND QUARTER(date) = ?";
-            $params[] = (int)$periodValue;
+        } elseif ($period === 'half' && $periodValue) {
+            if ((int)$periodValue === 1) {
+                $whereSql .= " AND MONTH(date) BETWEEN 1 AND 6";
+            } else {
+                $whereSql .= " AND MONTH(date) BETWEEN 7 AND 12";
+            }
         }
 
         $stmt = $db->prepare("

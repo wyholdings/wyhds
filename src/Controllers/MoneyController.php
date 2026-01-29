@@ -23,23 +23,23 @@ class MoneyController
         $year = $_GET['year'] ?? date('Y');
         $period = $_GET['period'] ?? 'year';
         $month = (int)($_GET['month'] ?? (int)date('n'));
-        $quarter = (int)($_GET['quarter'] ?? (int)ceil((int)date('n') / 3));
+        $half = (int)($_GET['half'] ?? (((int)date('n') <= 6) ? 1 : 2));
 
-        if (!in_array($period, ['year', 'month', 'quarter'], true)) {
+        if (!in_array($period, ['year', 'month', 'half'], true)) {
             $period = 'year';
         }
         if ($month < 1 || $month > 12) {
             $month = (int)date('n');
         }
-        if ($quarter < 1 || $quarter > 4) {
-            $quarter = (int)ceil((int)date('n') / 3);
+        if ($half < 1 || $half > 2) {
+            $half = ((int)date('n') <= 6) ? 1 : 2;
         }
 
         $periodValue = null;
         if ($period === 'month') {
             $periodValue = $month;
-        } elseif ($period === 'quarter') {
-            $periodValue = $quarter;
+        } elseif ($period === 'half') {
+            $periodValue = $half;
         }
 
         $moneyModel = new MoneyModel();
@@ -53,12 +53,12 @@ class MoneyController
         }
 
         $months = range(1, 12);
-        $quarters = [1, 2, 3, 4];
+        $halves = [1, 2];
         $periodLabel = "{$year}년 전체";
         if ($period === 'month') {
             $periodLabel = "{$year}년 {$month}월";
-        } elseif ($period === 'quarter') {
-            $periodLabel = "{$year}년 {$quarter}분기";
+        } elseif ($period === 'half') {
+            $periodLabel = $half === 1 ? "{$year}년 상반기" : "{$year}년 하반기";
         }
         
         echo $this->twig->render('admin/money/list.html.twig', [
@@ -71,9 +71,9 @@ class MoneyController
             'years' => $years,
             'period' => $period,
             'month' => $month,
-            'quarter' => $quarter,
+            'half' => $half,
             'months' => $months,
-            'quarters' => $quarters,
+            'halves' => $halves,
             'period_label' => $periodLabel,
         ]);
     }

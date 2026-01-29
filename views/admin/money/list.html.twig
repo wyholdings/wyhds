@@ -22,12 +22,12 @@ select.form-select-sm {
             </select>
             <select name="period" class="form-select form-select-sm" style="min-width: 110px;" onchange="this.form.submit()">
                 <option value="year" {{ period == 'year' ? 'selected' : '' }}>연간</option>
-                <option value="quarter" {{ period == 'quarter' ? 'selected' : '' }}>분기</option>
+                <option value="half" {{ period == 'half' ? 'selected' : '' }}>반기</option>
                 <option value="month" {{ period == 'month' ? 'selected' : '' }}>월간</option>
             </select>
-            <select name="quarter" class="form-select form-select-sm {{ period != 'quarter' ? 'd-none' : '' }}" style="min-width: 90px;" onchange="this.form.submit()">
-            {% for q in quarters %}
-                <option value="{{ q }}" {{ q == quarter ? 'selected' : '' }}>{{ q }}분기</option>
+            <select name="half" class="form-select form-select-sm {{ period != 'half' ? 'd-none' : '' }}" style="min-width: 110px;" onchange="this.form.submit()">
+            {% for h in halves %}
+                <option value="{{ h }}" {{ h == half ? 'selected' : '' }}>{{ h == 1 ? '상반기' : '하반기' }}</option>
             {% endfor %}
             </select>
             <select name="month" class="form-select form-select-sm {{ period != 'month' ? 'd-none' : '' }}" style="min-width: 90px;" onchange="this.form.submit()">
@@ -39,8 +39,8 @@ select.form-select-sm {
     </form>
     <div class="d-flex gap-2 align-items-center">
         <div class="btn-group">
-            <a href="?member_name={{ member_name }}&type=수입&year={{ year }}&period={{ period }}{% if period == 'month' %}&month={{ month }}{% elseif period == 'quarter' %}&quarter={{ quarter }}{% endif %}" class="btn btn-outline-primary {{ type == '수입' ? 'active' : '' }}">수입</a>
-            <a href="?member_name={{ member_name }}&type=지출&year={{ year }}&period={{ period }}{% if period == 'month' %}&month={{ month }}{% elseif period == 'quarter' %}&quarter={{ quarter }}{% endif %}" class="btn btn-outline-danger {{ type == '지출' ? 'active' : '' }}">지출</a>
+            <a href="?member_name={{ member_name }}&type=수입&year={{ year }}&period={{ period }}{% if period == 'month' %}&month={{ month }}{% elseif period == 'half' %}&half={{ half }}{% endif %}" class="btn btn-outline-primary {{ type == '수입' ? 'active' : '' }}">수입</a>
+            <a href="?member_name={{ member_name }}&type=지출&year={{ year }}&period={{ period }}{% if period == 'month' %}&month={{ month }}{% elseif period == 'half' %}&half={{ half }}{% endif %}" class="btn btn-outline-danger {{ type == '지출' ? 'active' : '' }}">지출</a>
         </div>
     </div>
 </div>
