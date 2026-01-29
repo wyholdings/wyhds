@@ -40,10 +40,11 @@ class VisitorLogController
     {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $keyword = trim((string)($_GET['q'] ?? ''));
+        $onlyWithDuration = (string)($_GET['real_only'] ?? '') === '1';
         $perPage = 50;
         $offset = ($page - 1) * $perPage;
-        $logs = $this->logModel->getLogs($perPage, $offset, $keyword);
-        $total = $this->logModel->countLogs($keyword);
+        $logs = $this->logModel->getLogs($perPage, $offset, $keyword, $onlyWithDuration);
+        $total = $this->logModel->countLogs($keyword, $onlyWithDuration);
         $totalPages = max(1, (int)ceil($total / $perPage));
 
         echo $this->twig->render('admin/visitor/logs.html.twig', [
@@ -54,6 +55,7 @@ class VisitorLogController
             'total'       => $total,
             'per_page'    => $perPage,
             'keyword'     => $keyword,
+            'only_with_duration' => $onlyWithDuration,
         ]);
     }
 }
