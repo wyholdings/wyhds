@@ -21,15 +21,44 @@ class MoneyController
         $member_name = $_GET['member_name'] ?? 'cwy';
         $member_name_text = $member_name === 'cwy' ? '우용' : '민재';
         $year = $_GET['year'] ?? date('Y');
+        $period = $_GET['period'] ?? 'year';
+        $month = (int)($_GET['month'] ?? (int)date('n'));
+        $quarter = (int)($_GET['quarter'] ?? (int)ceil((int)date('n') / 3));
+
+        if (!in_array($period, ['year', 'month', 'quarter'], true)) {
+            $period = 'year';
+        }
+        if ($month < 1 || $month > 12) {
+            $month = (int)date('n');
+        }
+        if ($quarter < 1 || $quarter > 4) {
+            $quarter = (int)ceil((int)date('n') / 3);
+        }
+
+        $periodValue = null;
+        if ($period === 'month') {
+            $periodValue = $month;
+        } elseif ($period === 'quarter') {
+            $periodValue = $quarter;
+        }
 
         $moneyModel = new MoneyModel();
-        $monies = $moneyModel->getAll($member_name, $type, $year);
-        $total_money = $moneyModel->getSumByMember($member_name, $type, $year);
+        $monies = $moneyModel->getAll($member_name, $type, $year, $period, $periodValue);
+        $total_money = $moneyModel->getSumByMember($member_name, $type, $year, $period, $periodValue);
 
         $current_year = (int)date('Y');
         $years = [];
         for ($y = $current_year; $y >= 2024; $y--) {
             $years[] = $y;
+        }
+
+        $months = range(1, 12);
+        $quarters = [1, 2, 3, 4];
+        $periodLabel = "{$year}년 전체";
+        if ($period === 'month') {
+            $periodLabel = "{$year}년 {$month}월";
+        } elseif ($period === 'quarter') {
+            $periodLabel = "{$year}년 {$quarter}분기";
         }
         
         echo $this->twig->render('admin/money/list.html.twig', [
@@ -40,6 +69,12 @@ class MoneyController
             'member_name_text' => $member_name_text,
             'year' => $year,
             'years' => $years,
+            'period' => $period,
+            'month' => $month,
+            'quarter' => $quarter,
+            'months' => $months,
+            'quarters' => $quarters,
+            'period_label' => $periodLabel,
         ]);
     }
 

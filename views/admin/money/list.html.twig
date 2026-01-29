@@ -14,16 +14,61 @@ select.form-select-sm {
     <form method="get" class="ms-2">
         <input type="hidden" name="member_name" value="{{ member_name }}">
         <input type="hidden" name="type" value="{{ type }}">
-        <select name="year" class="form-select form-select-sm" style="min-width: 100px;" onchange="this.form.submit()">
-        {% for y in years %}
-            <option value="{{ y }}" {{ y == year ? 'selected' : '' }}>{{ y }}년</option>
-        {% endfor %}
-        </select>
+        <div class="d-flex gap-2 align-items-center">
+            <select name="year" class="form-select form-select-sm" style="min-width: 100px;" onchange="this.form.submit()">
+            {% for y in years %}
+                <option value="{{ y }}" {{ y == year ? 'selected' : '' }}>{{ y }}년</option>
+            {% endfor %}
+            </select>
+            <select name="period" class="form-select form-select-sm" style="min-width: 110px;" onchange="this.form.submit()">
+                <option value="year" {{ period == 'year' ? 'selected' : '' }}>연간</option>
+                <option value="quarter" {{ period == 'quarter' ? 'selected' : '' }}>분기</option>
+                <option value="month" {{ period == 'month' ? 'selected' : '' }}>월간</option>
+            </select>
+            <select name="quarter" class="form-select form-select-sm {{ period != 'quarter' ? 'd-none' : '' }}" style="min-width: 90px;" onchange="this.form.submit()">
+            {% for q in quarters %}
+                <option value="{{ q }}" {{ q == quarter ? 'selected' : '' }}>{{ q }}분기</option>
+            {% endfor %}
+            </select>
+            <select name="month" class="form-select form-select-sm {{ period != 'month' ? 'd-none' : '' }}" style="min-width: 90px;" onchange="this.form.submit()">
+            {% for m in months %}
+                <option value="{{ m }}" {{ m == month ? 'selected' : '' }}>{{ m }}월</option>
+            {% endfor %}
+            </select>
+        </div>
     </form>
     <div class="d-flex gap-2 align-items-center">
         <div class="btn-group">
-            <a href="?member_name={{ member_name }}&type=수입&year={{ year }}" class="btn btn-outline-primary {{ type == '수입' ? 'active' : '' }}">수입</a>
-            <a href="?member_name={{ member_name }}&type=지출&year={{ year }}" class="btn btn-outline-danger {{ type == '지출' ? 'active' : '' }}">지출</a>
+            <a href="?member_name={{ member_name }}&type=수입&year={{ year }}&period={{ period }}{% if period == 'month' %}&month={{ month }}{% elseif period == 'quarter' %}&quarter={{ quarter }}{% endif %}" class="btn btn-outline-primary {{ type == '수입' ? 'active' : '' }}">수입</a>
+            <a href="?member_name={{ member_name }}&type=지출&year={{ year }}&period={{ period }}{% if period == 'month' %}&month={{ month }}{% elseif period == 'quarter' %}&quarter={{ quarter }}{% endif %}" class="btn btn-outline-danger {{ type == '지출' ? 'active' : '' }}">지출</a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <strong>통계표 ({{ period_label }})</strong>
+        </div>
+        <div class="table-responsive mt-2">
+            <table class="table table-sm table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 120px;">건수</th>
+                        <th style="width: 160px;">금액 합계</th>
+                        <th style="width: 160px;">부가세 합계</th>
+                        <th style="width: 160px;">총합계</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ total_money.row_count|default(0) }}</td>
+                        <td>{{ total_money.amount_sum|default(0)|number_format }}</td>
+                        <td>{{ total_money.vat_sum|default(0)|number_format }}</td>
+                        <td>{{ total_money.total_sum|default(0)|number_format }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
