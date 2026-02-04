@@ -16,7 +16,8 @@ class HomeController
     public function index(): void
     {
         $contactToken = $this->ensureContactFormToken();
-        echo $this->twig->render('index.html.twig', [
+        $template = (($_GET['mode'] ?? '') === 'dev') ? 'index_dev.html.twig' : 'index.html.twig';
+        echo $this->twig->render($template, [
             'contact_form_token' => $contactToken,
         ]);
     }
