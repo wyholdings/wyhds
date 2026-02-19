@@ -1,159 +1,624 @@
-{% extends 'layout/base.html.twig' %}
+{% extends 'layout/base_dev.html.twig' %}
 
 {% block body %}
-    <div id="wrap" class="home">
-        <section class="home-hero" id="home">
-            <div class="site-container">
-                <div class="hero-copy">
-                    <p class="section-eyebrow">우용홀딩스</p>
-                    <h1>dev 학회 웹사이트 제작 · 웹디자인 · 인쇄물 디자인 전문 기업<br>우용홀딩스</h1>
-                    <p class="hero-sub">기획부터 운영까지 한 번에</p>
-                    <div class="button-group">
-                        <a class="btn primary" href="#contact">프로젝트 문의하기</a>
-                        <a class="btn secondary" href="/portfolio">포트폴리오 보기</a>
-                    </div>
-                    <div class="hero-metrics">
-                        <div class="metric-card">
-                            <span class="metric-label">프로젝트 경험</span>
-                            <strong class="metric-value">150+ 건</strong>
+
+
+    <!-- mainvisual // S -->
+    <div id="mainvisual">
+        <p class="v_symbol"><img src="../images_dev/visual_symbol.png" alt="logo symbol bg"></p>
+        <p class="v_circle"><img src="../images_dev/visual_circle.png" alt="circle bg"></p>
+        
+        <div class="swiper">
+            <!-- Additional required wrapper -->
+            <div class="swiper-wrapper">
+                <!-- Slides -->
+                <div class="swiper-slide">
+                    <div class="inner">
+                        <div class="textbox">
+                            <p class="tit">HOMEPAGE</p>
+                            <h3 class="title">
+                                대한방사선방어학회 학술행사 시스템
+                            </h3>
+                            <div class="desc">
+                                전자결제 시스템<br/>
+                                학술대회 관리 시스템<Br/>
+                                초록접수 및 관리 시스템
+                            </div>                            
                         </div>
-                        <div class="metric-card">
-                            <span class="metric-label">운영 지원</span>
-                            <strong class="metric-value">상시 모니터링</strong>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">파트너십</span>
-                            <strong class="metric-value">학회·협회 중심</strong>
+                        <div class="imgbox">
+                            <p><img src="../images_dev/visual_item01.png" alt="대한방사선방어학회 홈페이지"></p>
                         </div>
                     </div>
                 </div>
-                <div class="hero-panel">
-                    <p class="panel-title">프로젝트 진행 방식</p>
-                    <ul class="panel-list">
-                        <li>1:1 실무자 커뮤니케이션</li>
-                        <li>기획 → 디자인 → 개발 일괄</li>
-                        <li>운영/유지보수까지 연결</li>
-                    </ul>
-                    <a class="panel-link" href="/services">서비스 상세 보기</a>
+                <div class="swiper-slide">                
+                    <div class="inner">
+                        <div class="textbox">
+                            <p class="tit">DESIGN</p>
+                            <h3 class="title">
+                                대한방사선방어학회 하계 워크숍 제작물 
+                            </h3>
+                            <div class="desc">
+                               키비주얼 디자인<br/>
+                               자료집, 논문집 제작<br/>
+                               현수막, X배너, 포스터 디자인
+                            </div>                            
+                        </div>
+                        <div class="imgbox">
+                            <p><img src="../images_dev/visual_item02.png" alt="대한방사선방어학회 제작물 일체"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <section class="section home-services reveal" id="services">
-            <div class="site-container">
-                <div class="section-heading">
-                    <p class="section-eyebrow">Services</p>
-                    <h2 class="section-title">우리가 하는 일</h2>
-                    <p class="section-desc">브랜드 목적과 운영 환경에 맞춰 실무 중심으로 제작합니다.</p>
-                </div>
-                <div class="grid-12 card-grid">
-                    <article class="wire-card span-4">
-                        <div class="card-icon"><i class="bi bi-display"></i></div>
-                        <h3>웹사이트 제작</h3>
-                        <p>기획부터 개발까지 연결되는 반응형 웹사이트 구축</p>
-                        <a class="card-link" href="/services">서비스 자세히 보기</a>
-                    </article>
-                    <article class="wire-card span-4">
-                        <div class="card-icon"><i class="bi bi-brush"></i></div>
-                        <h3>웹/UX 디자인</h3>
-                        <p>브랜드 톤과 사용자 경험을 정리하는 UI 설계</p>
-                        <a class="card-link" href="/services">서비스 자세히 보기</a>
-                    </article>
-                    <article class="wire-card span-4">
-                        <div class="card-icon"><i class="bi bi-printer"></i></div>
-                        <h3>인쇄물 디자인</h3>
-                        <p>행사·브로슈어·홍보물까지 일관된 그래픽 제작</p>
-                        <a class="card-link" href="/services">서비스 자세히 보기</a>
-                    </article>
-                </div>
+            <!-- If we need pagination -->
+            <div class="slide-option">
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
             </div>
-        </section>
+        </div>
 
-        <section class="section home-portfolio reveal" id="portfolio">
-            <div class="site-container">
-                <div class="section-heading heading-row">
-                    <div>
-                        <p class="section-eyebrow">Portfolio</p>
-                        <h2 class="section-title">대표 포트폴리오</h2>
-                        <p class="section-desc">대표 사례로 우용홀딩스의 결과물을 한눈에 확인하세요.</p>
+        <div class="scrollDown">
+            <p>SCROLL</p>
+            <div class="barbg">
+                <div class="bar"></div>
+            </div>
+        </div>
+    </div>
+    <!-- mainvisual // E -->
+
+    <script>
+          const swiper = new Swiper('.swiper', {
+            // Optional parameters
+
+            loop: true,
+            autoplay:true,
+            slidesPerView:1,
+            delay:3000,
+            speed : 1500,
+            
+            // If we need pagination
+            pagination: {
+                el: '.swiper-pagination',
+            },
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+
+            // And if we need scrollbar
+            scrollbar: {
+                el: '.swiper-scrollbar',
+            },
+            });
+    </script>
+
+
+    
+    <!-- Service  // S -->
+    <div id="service">       
+        <div class="bgtext"><p><span>WY</span>D&S &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span>WY</span>D&S </p> </div>
+        <div class="title">
+            <h3 data-aos="fade-up" data-aos-delay="300">SERVICE</h3>
+            <p>홈페이지 제작부터 편집 디자인까지 토탈솔루션을 제공합니다</p>
+        </div>
+        <div class="service_list">
+            <div class="item_wrap">
+                <div class="item">
+                    <div class="item_in">
+                        <a href="">
+                            <div class="tbox">
+                                <p class="tit">SERVICE 03</p>
+                                <h3><b>키비주얼 제작 · 편집 디자인</b> <img src="../images_dev/arrow_white.png" alt=""></h3>
+                            </div>
+                            <div class="bg"><img src="../images_dev/service03.png"></div>
+                        </a>
                     </div>
-                    <a class="btn secondary" href="/portfolio">전체 포트폴리오 보기</a>
                 </div>
-                <div class="grid-12 card-grid">
-                    <article class="wire-card span-4">
-                        <div class="portfolio-thumb"><img src="/images/image.png"></div>
-                        <h3>(사) 대한방사선방어학회</h3>
-                        <p>학회 / ERP</p>
-                    </article>
-                    <article class="wire-card span-4">
-                        <div class="portfolio-thumb"><img src="/images/odaweek.png"></div>
-                        <h3>개발협력주간</h3>
-                        <p>행사 / 홍보</p>
-                    </article>
-                    <article class="wire-card span-4">
-                        <div class="portfolio-thumb"><img src="/images/siontc.png"></div>
-                        <h3>시온텍</h3>
-                        <p>회사 / 홍보</p>
-                    </article>
+                <div class="item">
+                    <div class="item_in">                
+                        <a href="">
+                            <div class="tbox">
+                                <p class="tit">SERVICE 02</p>
+                                <h3><b>기업 · 기관 홈페이지</b> 제작 <img src="../images_dev/arrow_white.png" alt=""></h3>
+                            </div>
+                            <div class="bg"><img src="../images_dev/service02.png"></div>
+                        </a>
+                    </div>
+                </div>
+                <div class="item">
+                    <div class="item_in">
+                        <a href="">
+                            <div class="tbox">
+                                <p class="tit">SERVICE 01</p>
+                                <h3><b>학회 · 협회 · 학술대회</b> 홈페이지 제작 <img src="../images_dev/arrow_white.png" alt=""></h3>
+                            </div>
+                            <div class="bg"><img src="../images_dev/service01.png"></div>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </div>
+    <!-- Service  // E -->
+  <script>
+    const cards = document.querySelectorAll('.item')
+    const about = document.querySelector('.service_list')
+    const isMobile = window.innerWidth <= 768
 
-        <section class="section home-why reveal" id="about">
-            <div class="site-container">
-                <div class="section-heading">
-                    <p class="section-eyebrow">Why 우용홀딩스</p>
-                    <h2 class="section-title">왜 우용홀딩스인가요</h2>
-                    <p class="section-desc">직접 소통하고, 운영을 고려한 결과를 만드는 팀입니다.</p>
+    const baseGap = isMobile ? 16 : 50
+    const gap = isMobile ? 16 : 70
+    const strength = isMobile ? 0.08 : 0.18   // 🔥 축소감 강화
+    const moveY = isMobile ? 12 : 32
+
+    let ticking = false
+
+    //  카드 겹침 간격
+    cards.forEach((card, index) => {
+        let extraGap = index === cards.length - 1 ? (isMobile ? 40 : 80) : 0
+        card.style.paddingTop =
+        `${baseGap + index * gap + extraGap}px`
+    })
+
+    function update() {
+        const scrollY = window.scrollY
+        const windowH = window.innerHeight
+        const sectionTop = about.offsetTop
+        const sectionHeight = about.offsetHeight
+
+        const start = sectionTop - windowH * 0.3
+        const end = sectionTop + sectionHeight - windowH * 0.5
+
+        let progress = (scrollY - start) / (end - start)
+        progress = Math.min(Math.max(progress, 0), 1)
+
+        cards.forEach((card, index) => {
+        const inner = card.querySelector('.item_in')
+        const depth = cards.length - 1 - index
+
+        const finalScale = 1 - depth * strength
+        const finalY = -depth * moveY
+        const finalBrightness = 1 - depth * strength
+
+        const scale = 1 - (1 - finalScale) * progress
+        const translateY = finalY * progress
+        const brightness = 1 - (1 - finalBrightness) * progress
+
+        inner.style.transform =
+            `translateY(${translateY}px) scale(${scale})`
+        
+        })
+    }
+
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+        requestAnimationFrame(() => {
+            update()
+            ticking = false
+        })
+        ticking = true
+        }
+    })
+    update()
+    </script>
+
+
+
+    <!-- portfolio   // S -->
+    <div id="portfolio">
+        <video class="bg-video" autoplay muted loop playsinline>
+            <source src="../images_dev/portfolio_bg.mp4" type="video/mp4">
+        </video>
+
+        <div class="portfolio_inner">
+            <div class="title">
+                <h3>PORTFOLIO</h3>
+                <p>우용디앤에스와 함께라면 가능합니다</p>
+            </div>
+
+            <div class="port_list"  data-aos="fade-up" data-aos-delay="300" data-aos-duration="1000">
+                <div class="box">
+                    <a href="">
+                        <div class="hover">
+                            <h4>(주)시온텍</h4>
+                            <p class="tag">#기업홈페이지 #반응형 #제품소개</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images_dev/work01.png" alt="시온텍">
+                        </div>
+                        <span class="arrow"><img src="../images_dev/arrow_white.png" alt=""></span>
+                    </a>
                 </div>
-                <ul class="why-list">
-                    <li><span class="why-icon"></span>기획부터 개발까지 직접 진행</li>
-                    <li><span class="why-icon"></span>관리자 시스템 및 유지보수 고려</li>
-                    <li><span class="why-icon"></span>실무자와 직접 소통</li>
-                    <li><span class="why-icon"></span>다양한 프로젝트 경험</li>
+                <div class="box">
+                    <a href="">
+                        <div class="hover">
+                            <h4>대한방사선방어학회</h4>
+                            <p class="tag">#학회홈페이지 #학술대회</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images_dev/work02.png" alt="대한방사선방어학회">
+                        </div>
+                        <span class="arrow"><img src="../images_dev/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="">
+                        <div class="hover">
+                            <h4>온자박푸드몰</h4>
+                            <p class="tag">#쇼핑몰 #회사홈페이지</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images_dev/work03.png" alt="온자박푸드몰">
+                        </div>
+                        <span class="arrow"><img src="../images_dev/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="">
+                        <div class="hover">
+                            <h4>2025 개발협력주간</h4>
+                            <p class="tag">#행사홈페이지 #등록시스템</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images_dev/work04.png" alt="개발협력주간">
+                        </div>
+                        <span class="arrow"><img src="../images_dev/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="">
+                        <div class="hover">
+                            <h4>글로벌평생학습 리더십 컨퍼런스</h4>
+                            <p class="tag">#행사홈페이지 #컨퍼런스 #등록시스템</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images_dev/work05.png" alt="GLLC">
+                        </div>
+                        <span class="arrow"><img src="../images_dev/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="">
+                        <div class="hover">
+                            <h4>사기방지 국제 컨퍼런스</h4>
+                            <p class="tag">#국제학술행사 #컨퍼런스 #등록시스템</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images_dev/work06.png" alt="GLLC">
+                        </div>
+                        <span class="arrow"><img src="../images_dev/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="btnbox">
+                <a href="">VIEW MORE</a>
+            </div>
+        </div>
+    </div>
+    <!-- portfolio   // E -->
+
+
+
+    <!-- benefit   // S -->
+    <div class="" id="benefit">
+        <div class="title">
+            <h3>OUR BENEFIT</h3>
+            <p>최고의 기술력을 바탕으로 솔루션을 제공합니다</p>
+        </div>
+
+        <div class="swiper-container" >
+            <div class="swiper-wrapper"  >
+                <div class="swiper-slide" >
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">01</p>
+                            <p class="icon"><img src="../images_dev/benefit01.png" alt=""></p>
+                            <h4>반응형 웹 구현</h4>
+                            <h5>PC·태블릿·모바일 최적화 지원</h5>
+                        </div>
+                    </div>
+                </div> 
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">02</p>
+                            <p class="icon"><img src="../images_dev/benefit02.png" alt=""></p>
+                            <h4>관리자 페이지 제공</h4>
+                            <h5>직관적인 CMS 관리 기능</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">03</p>
+                            <p class="icon"><img src="../images_dev/benefit03.png" alt=""></p>
+                            <h4>데이터 백업 지원</h4>
+                            <h5>정기 백업 시스템 무상 제공</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">04</p>
+                            <p class="icon"><img src="../images_dev/benefit04.png" alt=""></p>
+                            <h4>안정적인 서버 운영</h4>
+                            <h5>24시간 모니터링 환경</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">05</p>
+                            <p class="icon"><img src="../images_dev/benefit05.png" alt=""></p>
+                            <h4>트래픽/디비 용량 세팅</h4>
+                            <h5>트레픽/디비 무제한 제공</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">06</p>
+                            <p class="icon"><img src="../images_dev/benefit06.png" alt=""></p>
+                            <h4>검색엔진 최적화(SEO)</h4>
+                            <h5>네이버·구글 노출 최적화</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">07</p>
+                            <p class="icon"><img src="../images_dev/benefit07.png" alt=""></p>
+                            <h4>성능 최적화 설계</h4>
+                            <h5>빠르고 가벼운 웹사이트 구축</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">08</p>
+                            <p class="icon"><img src="../images_dev/benefit08.png" alt=""></p>
+                            <h4>프로젝트 100% 내부 진행</h4>
+                            <h5>외주 없이 전 과정 자체 제작</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">09</p>
+                            <p class="icon"><img src="../images_dev/benefit09.png" alt=""></p>
+                            <h4>체계적인 일정 관리</h4>
+                            <h5>기획 → 디자인 → 개발 원스톱</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">10</p>
+                            <p class="icon"><img src="../images_dev/benefit10.png" alt=""></p>
+                            <h4>고객 맞춤 커스터마이징</h4>
+                            <h5>기성 템플릿이 아닌 맞춤 제작</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">11</p>
+                            <p class="icon"><img src="../images_dev/benefit11.png" alt=""></p>
+                            <h4>안정적인 유지보수 지원</h4>
+                            <h5>프로젝트 이후 지속 관리</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">12</p>
+                            <p class="icon"><img src="../images_dev/benefit12.png" alt=""></p>
+                            <h4>서버 보안 강화</h4>
+                            <h5>보안 취약점 사전 차단</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 스크롤바 -->
+            <div class="swiper-scrollbar"></div>
+        </div>
+    </div>    
+    <!-- benefit   // E -->
+
+    <script>
+        new Swiper('.swiper-container', {
+
+        slidesPerView : 6,
+        spaceBetween : 30,
+        slidesPerGroup : 1,
+        loop:true,
+        autoplay:true,
+        centeredSlides: true,
+        // 스크롤바 설정하기
+        scrollbar : {
+            el : '.swiper-scrollbar',
+            draggable: true,
+        },
+        breakpoints:{
+            0 : {
+                slidesPerView : 2
+            },
+            768 : {
+                slidesPerView : 3
+            },
+            1024 : {
+            slidesPerView : 4
+            },
+            1280 : {
+            slidesPerView : 5
+            },
+            1800 : {
+            slidesPerView : 6
+            }
+        }
+    });
+    </script>
+
+
+   
+    <!-- PARTNER   // S -->
+    <div id="partner">
+        <div class="title">
+            <h3>OUR PRTNERS</h3>
+            <p>우용디앤에스와 함께 해주시는 고객사</p>
+        </div>
+
+        <div class="gra_box">
+            <div class="partner_wrap partner_wrap1">
+                <ul class="partner_list partner_list1">
+                    <li><img src="../images_dev/partner01.png" alt=""></li>
+                    <li><img src="../images_dev/partner02.png" alt=""></li>
+                    <li><img src="../images_dev/partner03.png" alt=""></li>
+                    <li><img src="../images_dev/partner04.png" alt=""></li>
+                    <li><img src="../images_dev/partner05.png" alt=""></li>
+                    <li><img src="../images_dev/partner06.png" alt=""></li>
                 </ul>
             </div>
-        </section>
-
-        <section class="section home-process reveal" id="process">
-            <div class="site-container">
-                <div class="section-heading">
-                    <p class="section-eyebrow">Process</p>
-                    <h2 class="section-title">제작 프로세스</h2>
-                    <p class="section-desc">일정과 역할을 투명하게 공유하며 진행합니다.</p>
-                </div>
-                <div class="process-flow">
-                    <div class="process-step">
-                        <span class="process-label">상담</span>
-                        <span class="process-desc">요구사항 파악 및 일정 정리</span>
-                    </div>
-                    <div class="process-step">
-                        <span class="process-label">기획</span>
-                        <span class="process-desc">구조 설계 및 기능 정의</span>
-                    </div>
-                    <div class="process-step">
-                        <span class="process-label">디자인</span>
-                        <span class="process-desc">브랜드 톤과 UI 시안 확정</span>
-                    </div>
-                    <div class="process-step">
-                        <span class="process-label">개발</span>
-                        <span class="process-desc">퍼블리싱 및 기능 구현</span>
-                    </div>
-                    <div class="process-step">
-                        <span class="process-label">오픈/운영</span>
-                        <span class="process-desc">테스트 후 운영 지원</span>
-                    </div>
-                </div>
+            
+            <div class="partner_wrap partner_wrap2">
+                <ul class="partner_list partner_list2">
+                    <li><img src="../images_dev/partner07.png" alt=""></li>
+                    <li><img src="../images_dev/partner08.png" alt=""></li>
+                    <li><img src="../images_dev/partner09.png" alt=""></li>
+                    <li><img src="../images_dev/partner10.png" alt=""></li>
+                    <li><img src="../images_dev/partner11.png" alt=""></li>
+                    <li><img src="../images_dev/partner12.png" alt=""></li>
+                    <li><img src="../images_dev/partner13.png" alt=""></li>
+                </ul>
             </div>
-        </section>
-
-        <section class="home-cta reveal" id="contact">
-            <div class="site-container">
-                <h2>프로젝트를 고민 중이신가요?</h2>
-                <p>지금 문의하시면 빠르게 상담드립니다.</p>
-                {# <a class="btn primary" href="/#contact">프로젝트 문의하기</a> #}
-                {% include 'partials/_contact.html.twig' %}
-            </div>
-        </section>
+        </div>
     </div>
+    <script>
+
+        $(window).on('load', function () {
+            setFlowBanner('.partner_wrap1', '.partner_list1', 60, 'flowRolling');
+            setFlowBanner('.partner_wrap2', '.partner_list2', 60, 'flowRolling2');
+        });
+
+        function setFlowBanner(wrapSelector, listSelector, speed, animationName) {
+        const $wrap = $(wrapSelector);
+        let $list = $(listSelector);
+        let $clone = $list.clone();
+        let wrapWidth = '';
+        let listWidth = '';
+
+        $wrap.append($clone);
+        initBanner();
+
+
+        let oldWChk = getDeviceType();
+        $(window).on('resize', function () {
+            let newWChk = getDeviceType();
+            if (newWChk !== oldWChk) {
+                oldWChk = newWChk;
+                initBanner();
+            }
+        });
+
+
+        function initBanner() {
+            if (wrapWidth !== '') {
+                $wrap.find(listSelector).css('animation', 'none');
+                $wrap.find(listSelector).slice(2).remove();
+            }
+            wrapWidth = $wrap.width();
+            listWidth = $list.width();
+
+            if (listWidth < wrapWidth) {
+                const listCount = Math.ceil(wrapWidth * 2 / listWidth);
+                for (let i = 2; i < listCount; i++) {
+                    let $cloned = $clone.clone();
+                    $wrap.append($cloned);
+                }
+            }
+
+            $wrap.find(listSelector).css({
+                'animation': `${listWidth / speed}s linear infinite ${animationName}`
+            });
+        }
+
+
+        $wrap
+            .on('mouseleave', function () {
+                $wrap.find(listSelector).css('animation-play-state', 'running');
+            });
+        }
+
+
+        function getDeviceType() {
+            const w = window.innerWidth;
+            if (w > 1501) return 'pc';
+            else if (w > 681) return 'ta';
+            else return 'mo';
+        }
+
+    </script>
+    <!-- PARTNER   // E -->
+
+
+    <!-- CONTACT   // S -->
+    <div id="contact">
+        <div class="title">
+            <h3>CONTACT US</h3>
+            <p>궁금한 사항이 있으신가요?  담당자가 확인 후 빠르게 회신드립니다</p>
+        </div>
+
+        <div class="formbox"  data-aos="fade-up" data-aos-delay="300" data-aos-duration="1000">
+            <ul>
+                <li class="half">t
+                    <p class="tit">업체명 <font>*</font></p>
+                    <input type="text" placeholder="업체, 단체명을 입력해 주세요." name="" value="" required >
+                </li>
+                <li class="half">
+                    <p class="tit">성명 <font>*</font></p>
+                    <input type="text" placeholder="성명을 입력해 주세요." name="" value="" required >
+                </li>
+                <li class="half">
+                    <p class="tit">연락처 <font>*</font></p>
+                    <input type="text" placeholder="연락처를 입력해 주세요." name="" value="" required >
+                </li>
+                <li class="half">
+                    <p class="tit">이메일 <font>*</font></p>
+                    <input type="text" placeholder="이메일을 입력해 주세요." name="" value="" required >
+                </li>
+                <li class="half">
+                    <p class="tit">예산 </p>
+                    <input type="text" placeholder="희망 예산을 만원 단위로 입력해 주세요. " name="" value=""  >
+                </li>
+                <li class="memo">
+                    <p class="tit">문의내용</p>
+                    <textarea name="" id="" placeholder="문의내용을 입력하세요."></textarea>
+                </li>
+            </ul>
+
+            <div class="btnbox">
+                <a href="">문의하기 <img src="../images_dev/arrow_white.png" alt=""></a>
+            </div>
+        </div>
+    </div>
+    <!-- CONTACT   // E -->
+
+
+
+
+
 {% endblock %}

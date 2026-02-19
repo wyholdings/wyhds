@@ -1,0 +1,135 @@
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggle = document.querySelector('.nav-toggle');
+        const nav = document.querySelector('.site-nav');
+
+        if (!toggle || !nav) {
+            return;
+        }
+
+        toggle.addEventListener('click', function () {
+            const isOpen = nav.classList.toggle('is-open');
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    });
+</script>
+
+<div id="wrapper">
+    <div id="header" data-aos="fade-down" data-aos-duration="1500" >
+        <div class="header_in"> 
+            <h1><a href="/index.php">우용홀딩스로고자리</a></h1>
+            <a href="#none" class="burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </a>
+        </div>
+              <div id="gnb">
+            <ul>
+                <li><a href="">회사소개</a>
+                    <div class="submenu">
+                        <a href="">서브메뉴</a>
+                        <a href="">서브메뉴</a>
+                    </div>
+                </li>
+                <li><a href="">포트폴리오</a>
+                    <div class="submenu">
+                        <a href="">서브메뉴</a>
+                        <a href="">서브메뉴</a>
+                    </div>
+                </li>
+                <li>
+                    <a href="">서비스</a>
+                    <div class="submenu">
+                        <a href="">서브메뉴</a>
+                        <a href="">서브메뉴</a>
+                    </div>
+                </li>
+                <li><a href="">견적문의</a>
+                    <div class="submenu">
+                        <a href="">서브메뉴</a>
+                        <a href="">서브메뉴</a>
+                    </div>
+                </li>
+            </ul>
+        </div> 
+    </div>           
+
+
+    
+	<!-- 모바일 Menu -->
+	<div id="menuArea" class="header_mobile" >
+		<div class="menuList">
+			<button type="button" class="btnMenu_mClose" title="Close">Close</button>
+			<ul class="list">	
+                <li>
+					<a class="dropdown-toggle">회사소개</a>
+					<ul class="sMenu">
+						<li><a href="">서브메뉴</a></li>
+						<li><a href="">서브메뉴</a></li>
+					</ul>
+				</li>
+				<li>
+					<a class="dropdown-toggle">포트폴리오</a>
+					<ul class="sMenu">
+						<li><a href="">서브메뉴</a></li>
+						<li><a href="">서브메뉴</a></li>
+					</ul>
+				</li>
+				<li>
+					<a class="dropdown-toggle">서비스</a>
+					<ul class="sMenu">
+						<li><a href="">서브메뉴</a></li>
+						<li><a href="">서브메뉴</a></li>
+					</ul>
+				</li>
+				<li>
+					<a class="dropdown-toggle">견적문의</a>
+					<ul class="sMenu">
+						<li><a href="">서브메뉴</a></li>
+						<li><a href="">서브메뉴</a></li>
+					</ul>
+				</li>
+            </ul>	
+            <div class="navfoot">
+                <h6>견적문의</h6>
+                <p>031-111-1234</p>			
+                <p>help@wyhds.com</p>			
+            </div>
+		</div>
+	</div>
+	<!-- //모바일 Menu -->
+
+
+<script>
+    $(function () {
+        $('.burger').click(function () {
+            $('#menuArea').addClass('on');
+            $("body").append("<div id='grayLayer'><a href='#'></a></div>");
+		    $("#grayLayer").show();
+        });
+
+        $("body").on("click ", "#menuArea .btnMenu_mClose", function(){
+            $("#menuArea").removeClass("on");
+            $("#grayLayer").remove();
+        });
+
+        $("body").on("click ", "#grayLayer", function(){
+            $("#menuArea").removeClass("on");
+            $("#grayLayer").remove();
+	    });  
+    });
+
+   window.addEventListener('scroll', function () {
+  const header = document.getElementById('header');
+
+    if (window.scrollY > 100) {
+        header.classList.add('onheader');
+    } else {
+        header.classList.remove('onheader');
+    }
+    });
+
+</script>
+

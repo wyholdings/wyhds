@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include 'partials/_header_dev.html.twig' %}
+</head>
+<body>
+    {% include 'partials/_navbar_dev.html.twig' %}
+    
+    {% block body %}{% endblock %}
+    
+    {% include 'partials/_footer_dev.html.twig' %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/script.js"></script>
+    {% if visit_log_id %}
+        <script>window.VISIT_LOG_ID = {{ visit_log_id }};</script>
+    {% else %}
+        <script>window.VISIT_LOG_ID = null;</script>
+    {% endif %}
+    <script src="/assets/js/visit.js"></script>
+</body>
+</html>
