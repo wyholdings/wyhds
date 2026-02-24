@@ -206,29 +206,41 @@ class WebhardController
 
         $paths = $_POST['paths'] ?? [];
         $count = count($_FILES['files']['name']);
+        $requestedCount = is_array($paths) ? count($paths) : $count;
         $success = 0;
+        $failed = 0;
 
         for ($i = 0; $i < $count; $i++) {
-            if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) {
-                $this->logAction('upload_folder', $relativeBase, 'fail', 'upload_error');
+            $errorCode = (int)($_FILES['files']['error'][$i] ?? UPLOAD_ERR_NO_FILE);
+            if ($errorCode !== UPLOAD_ERR_OK) {
+                $this->logAction('upload_folder', $relativeBase, 'fail', 'upload_error:' . $errorCode);
+                $failed++;
                 continue;
             }
 
             $relativeFile = $paths[$i] ?? $_FILES['files']['name'][$i] ?? '';
-            $relativeFile = $this->sanitizeRelativePath($relativeFile);
+            $relativeFile = $this->sanitizeUploadRelativePath($relativeFile);
 
             if ($relativeFile === '') {
                 $this->logAction('upload_folder', $relativeBase, 'fail', 'empty_path');
+                $failed++;
                 continue;
             }
 
-            $fileName = basename($relativeFile);
-            $subDir = trim(dirname($relativeFile), '.');
+            [$subDir, $fileName] = $this->splitRelativeFile($relativeFile);
+            $fileName = $this->sanitizeSegment($fileName);
+            if ($fileName === '') {
+                $this->logAction('upload_folder', $relativeBase, 'fail', 'bad_name');
+                $failed++;
+                continue;
+            }
+
             $targetRelativeDir = $this->joinRelative($relativeBase, $subDir === '' ? '' : $subDir);
             $targetDir = $this->resolvePath($targetRelativeDir);
 
             if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
                 $this->logAction('upload_folder', $targetRelativeDir, 'fail', 'mkdir_failed');
+                $failed++;
                 continue;
             }
 
@@ -236,6 +248,7 @@ class WebhardController
 
             if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
                 $this->logAction('upload_folder', $this->joinRelative($targetRelativeDir, $fileName), 'fail', 'move_failed');
+                $failed++;
                 continue;
             }
 
@@ -245,6 +258,18 @@ class WebhardController
 
         if ($success === 0) {
             $this->jsonError('업로드에 실패했습니다.');
+        }
+
+        if ($requestedCount > $count) {
+            $note = sprintf('요청 %d개 중 서버 수신 %d개, ', $requestedCount, $count);
+            if ($failed > 0) {
+                $this->jsonSuccess($note . sprintf('%d개 업로드, %d개 실패 (웹하드 로그 확인)', $success, $failed));
+            }
+            $this->jsonSuccess($note . sprintf('%d개 업로드 완료 (PHP 업로드 제한 확인 필요)', $success));
+        }
+
+        if ($failed > 0) {
+            $this->jsonSuccess(sprintf('%d개 업로드, %d개 실패 (웹하드 로그 확인)', $success, $failed));
         }
 
         $this->jsonSuccess(sprintf('%d개 파일을 업로드했습니다.', $success));
@@ -384,6 +409,40 @@ class WebhardController
         }
 
         return implode('/', $safeSegments);
+    }
+
+    private function sanitizeUploadRelativePath(?string $path): string
+    {
+        // Browser-provided webkitRelativePath uses "/" separators.
+        // Avoid treating "\" bytes as separators to prevent multibyte filename truncation on Windows.
+        $path = trim((string)$path, '/');
+        $segments = array_filter(explode('/', $path), 'strlen');
+        $safeSegments = [];
+
+        foreach ($segments as $segment) {
+            $segment = $this->sanitizeSegment($segment);
+
+            if ($segment === '' || $segment === '..') {
+                continue;
+            }
+
+            $safeSegments[] = $segment;
+        }
+
+        return implode('/', $safeSegments);
+    }
+
+    private function splitRelativeFile(string $relativeFile): array
+    {
+        $relativeFile = trim($relativeFile, '/');
+        $pos = strrpos($relativeFile, '/');
+        if ($pos === false) {
+            return ['', $relativeFile];
+        }
+
+        $dir = substr($relativeFile, 0, $pos);
+        $name = substr($relativeFile, $pos + 1);
+        return [$dir, $name];
     }
 
     private function sanitizeSegment(string $segment): string
