@@ -2,6 +2,7 @@
 
 {% block content %}
 <h1>eBook 목록</h1>
+<p class="text-muted mb-3">총 {{ total|default(0) }}건 ({{ page|default(1) }}/{{ total_pages|default(1) }} 페이지)</p>
 
 <table class="table table-bordered">
     <thead>
@@ -42,6 +43,30 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% if total_pages|default(1) > 1 %}
+<nav aria-label="pagination" class="mt-3">
+    <ul class="pagination">
+        {% set prev = page - 1 %}
+        {% set next = page + 1 %}
+        <li class="page-item {{ page == 1 ? 'disabled' : '' }}">
+            <a class="page-link" href="/admin/ebook/list?page={{ prev }}">이전</a>
+        </li>
+        {% for p in 1..total_pages %}
+            {% if p == page or (p <= 3) or (p > total_pages-3) or (p >= page-2 and p <= page+2) %}
+                <li class="page-item {{ p == page ? 'active' : '' }}">
+                    <a class="page-link" href="/admin/ebook/list?page={{ p }}">{{ p }}</a>
+                </li>
+            {% elseif loop.index0 == 3 or loop.index0 == total_pages-3 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {{ page == total_pages ? 'disabled' : '' }}">
+            <a class="page-link" href="/admin/ebook/list?page={{ next }}">다음</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 
 <hr>
 

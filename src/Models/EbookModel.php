@@ -8,14 +8,23 @@ use PDO;
 class EbookModel
 {
     //Ebook list
-    public function getAll()
+    public function getAll(int $limit = 20, int $offset = 0): array
     {
         $db = Database::getInstance()->getConnection();
 
-        $stmt = $db->prepare("SELECT * FROM ebooks ORDER BY created_at DESC");
+        $stmt = $db->prepare("SELECT * FROM ebooks ORDER BY created_at DESC LIMIT :offset, :limit");
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public function countAll(): int
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT COUNT(*) FROM ebooks");
+        return (int)$stmt->fetchColumn();
     }
 
     public function upload($data)

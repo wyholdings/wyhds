@@ -17,11 +17,27 @@ class EbookController
     //문의 목록
     public function list()
     {   
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
         $ebookModel = new EbookModel();
-        $ebooks = $ebookModel->getAll();
+        $ebooks = $ebookModel->getAll($perPage, $offset);
+        $total = $ebookModel->countAll();
+        $totalPages = max(1, (int)ceil($total / $perPage));
+
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $offset = ($page - 1) * $perPage;
+            $ebooks = $ebookModel->getAll($perPage, $offset);
+        }
 
         echo $this->twig->render('admin/ebook/list.html.twig', [
-            'ebooks' => $ebooks
+            'ebooks' => $ebooks,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'total_pages' => $totalPages,
         ]);
     }
 
