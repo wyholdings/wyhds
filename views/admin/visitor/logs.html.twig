@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h3 mb-0 text-gray-800">접속 로그</h1>
-    <a href="/admin/visitor/logs{% if keyword %}?q={{ keyword|url_encode }}{% if only_with_duration %}&real_only=1{% endif %}{% elseif only_with_duration %}?real_only=1{% endif %}" class="btn btn-sm btn-outline-secondary">새로고침</a>
+    <a href="/admin/visitor/logs{% if keyword %}?q={{ keyword|url_encode }}{% if show_all %}&show_all=1{% endif %}{% elseif show_all %}?show_all=1{% endif %}" class="btn btn-sm btn-outline-secondary">새로고침</a>
 </div>
 
 <form class="form-inline mb-3" method="get" action="/admin/visitor/logs">
@@ -14,12 +14,12 @@
         </div>
     </div>
     <div class="custom-control custom-checkbox ml-3">
-        <input type="checkbox" class="custom-control-input" id="realOnly" name="real_only" value="1" {% if only_with_duration %}checked{% endif %}>
-        <label class="custom-control-label" for="realOnly">체류시간 있는 것만</label>
+        <input type="checkbox" class="custom-control-input" id="showAll" name="show_all" value="1" {% if show_all %}checked{% endif %}>
+        <label class="custom-control-label" for="showAll">전체보기</label>
     </div>
     {% if keyword %}
-        <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs{% if only_with_duration %}?real_only=1{% endif %}">초기화</a>
-    {% elseif only_with_duration %}
+        <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs{% if show_all %}?show_all=1{% endif %}">초기화</a>
+    {% elseif show_all %}
         <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs">초기화</a>
     {% endif %}
 </form>
@@ -73,19 +73,19 @@
             {% set prev = page - 1 %}
             {% set next = page + 1 %}
             <li class="page-item {{ page == 1 ? 'disabled' : '' }}">
-                <a class="page-link" href="/admin/visitor/logs?page={{ prev }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if only_with_duration %}&real_only=1{% endif %}">이전</a>
+                <a class="page-link" href="/admin/visitor/logs?page={{ prev }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}">이전</a>
             </li>
             {% for p in 1..total_pages %}
                 {% if p == page or (p <= 3) or (p > total_pages-3) or (p >= page-2 and p <= page+2) %}
                     <li class="page-item {{ p == page ? 'active' : '' }}">
-                        <a class="page-link" href="/admin/visitor/logs?page={{ p }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if only_with_duration %}&real_only=1{% endif %}">{{ p }}</a>
+                        <a class="page-link" href="/admin/visitor/logs?page={{ p }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}">{{ p }}</a>
                     </li>
                 {% elseif loop.index0 == 3 or loop.index0 == total_pages-3 %}
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
             {% endfor %}
             <li class="page-item {{ page == total_pages ? 'disabled' : '' }}">
-                <a class="page-link" href="/admin/visitor/logs?page={{ next }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if only_with_duration %}&real_only=1{% endif %}">다음</a>
+                <a class="page-link" href="/admin/visitor/logs?page={{ next }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}">다음</a>
             </li>
         </ul>
     </nav>

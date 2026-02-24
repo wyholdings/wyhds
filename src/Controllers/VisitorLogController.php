@@ -40,7 +40,16 @@ class VisitorLogController
     {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $keyword = trim((string)($_GET['q'] ?? ''));
-        $onlyWithDuration = (string)($_GET['real_only'] ?? '') === '1';
+        $showAll = (string)($_GET['show_all'] ?? '') === '1';
+        if ($showAll) {
+            $onlyWithDuration = false;
+        } elseif (array_key_exists('real_only', $_GET)) {
+            // Backward compatibility for existing URLs/bookmarks.
+            $onlyWithDuration = (string)($_GET['real_only'] ?? '') === '1';
+        } else {
+            // Default view: only logs with duration.
+            $onlyWithDuration = true;
+        }
         $perPage = 50;
         $offset = ($page - 1) * $perPage;
         $logs = $this->logModel->getLogs($perPage, $offset, $keyword, $onlyWithDuration);
@@ -56,6 +65,7 @@ class VisitorLogController
             'per_page'    => $perPage,
             'keyword'     => $keyword,
             'only_with_duration' => $onlyWithDuration,
+            'show_all'    => !$onlyWithDuration,
         ]);
     }
 }
