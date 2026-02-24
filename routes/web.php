@@ -1,6 +1,7 @@
 <?php
 
 $router->get('/', [App\Controllers\HomeController::class, 'index']);
+$router->get('/demo', [App\Controllers\HomeController::class, 'demo']);
 $router->get('/services', [App\Controllers\HomeController::class, 'services']);
 $router->get('/login', [App\Controllers\AuthController::class, 'showLoginForm']);
 $router->post('/login', [App\Controllers\AuthController::class, 'login']);

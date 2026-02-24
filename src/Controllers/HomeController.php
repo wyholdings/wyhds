@@ -38,6 +38,16 @@ class HomeController
         ]);
     }
 
+    public function demo(): void
+    {
+        echo $this->twig->render('demo/base.html.twig', [
+            'site_title' => '학회 Base Demo',
+            'event_name' => '2026 한국학회 연례학술대회',
+            'event_date' => '2026.10.22 - 2026.10.24',
+            'event_place' => '서울 COEX',
+        ]);
+    }
+
     private function ensureContactFormToken(): string
     {
         if (empty($_SESSION['contact_form_token'])) {

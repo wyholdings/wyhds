@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_title }}</title>
+    <meta name="description" content="학회 사이트 구축 전 빠르게 재사용 가능한 base 데모 페이지">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/demo-base.css">
+</head>
+<body class="demo-body">
+    <header class="demo-header">
+        <div class="demo-wrap">
+            <a class="demo-brand" href="/demo">ACADEMIC BASE</a>
+            <nav class="demo-nav" aria-label="주요 메뉴">
+                <a href="#overview">학회소개</a>
+                <a href="#program">프로그램</a>
+                <a href="#speakers">연사</a>
+                <a href="#register">등록안내</a>
+                <a href="#contact">문의</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="demo-hero" id="overview">
+            <div class="demo-wrap">
+                <p class="demo-kicker">Reusable Conference Base</p>
+                <h1>{{ event_name }}</h1>
+                <p class="demo-meta">{{ event_date }} | {{ event_place }}</p>
+                <p class="demo-desc">
+                    학회 업무 요청이 들어오면 이 템플릿을 기준으로 로고/컬러/문구/폼만 교체해서
+                    빠르게 신규 사이트를 오픈할 수 있습니다.
+                </p>
+                <div class="demo-actions">
+                    <a class="demo-btn demo-btn-primary" href="#register">사전등록</a>
+                    <a class="demo-btn demo-btn-ghost" href="#program">프로그램 보기</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="demo-section" id="program">
+            <div class="demo-wrap">
+                <h2>프로그램 요약</h2>
+                <div class="demo-grid">
+                    <article class="demo-card">
+                        <h3>Day 1</h3>
+                        <p>튜토리얼 / 워크숍 / 환영 리셉션</p>
+                    </article>
+                    <article class="demo-card">
+                        <h3>Day 2</h3>
+                        <p>키노트 / 구두발표 / 포스터 세션</p>
+                    </article>
+                    <article class="demo-card">
+                        <h3>Day 3</h3>
+                        <p>특별세션 / 패널토론 / 폐회식</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="demo-section demo-section-alt" id="speakers">
+            <div class="demo-wrap">
+                <h2>초청 연사</h2>
+                <div class="demo-grid">
+                    <article class="demo-card">
+                        <h3>Prof. A</h3>
+                        <p>AI for Scientific Discovery</p>
+                    </article>
+                    <article class="demo-card">
+                        <h3>Prof. B</h3>
+                        <p>Clinical Data and Future Healthcare</p>
+                    </article>
+                    <article class="demo-card">
+                        <h3>Dr. C</h3>
+                        <p>Real-world Conference Operations</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="demo-section" id="register">
+            <div class="demo-wrap">
+                <h2>등록 안내</h2>
+                <div class="demo-grid demo-grid-2">
+                    <article class="demo-card">
+                        <h3>사전등록</h3>
+                        <p>2026.09.30(수)까지</p>
+                    </article>
+                    <article class="demo-card">
+                        <h3>현장등록</h3>
+                        <p>행사 당일 등록 데스크 운영</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="demo-footer" id="contact">
+        <div class="demo-wrap">
+            <h2>문의</h2>
+            <p>Email: office@example.org | Tel: 02-0000-0000</p>
+            <p class="demo-footnote">Template route: <code>/demo</code></p>
+        </div>
+    </footer>
+</body>
+</html>
