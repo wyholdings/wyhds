@@ -56,6 +56,7 @@ $router->get('/admin/inquiry/{id}/delete', [App\Controllers\InquiryController::c
 //수입/지출
 $router->get('/admin/money/list', [App\Controllers\MoneyController::class, 'list']);
 $router->post('/admin/money/add', [App\Controllers\MoneyController::class, 'add']);
+$router->post('/admin/money/update', [App\Controllers\MoneyController::class, 'update']);
 $router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'delete']);
 
 $router->get('/admin/webhard', [App\Controllers\WebhardController::class, 'index']);

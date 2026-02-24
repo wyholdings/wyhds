@@ -89,6 +89,19 @@ class MoneyModel
         return $stmt->execute([$id]);
     }
 
+    public function update($id, $amount, $vat, $date, $company, $product)
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("
+            UPDATE account_book
+            SET amount = ?, vat = ?, date = ?, company = ?, product = ?
+            WHERE id = ?
+        ");
+
+        return $stmt->execute([$amount, $vat, $date, $company, $product, $id]);
+    }
+
     
 }
 

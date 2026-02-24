@@ -78,26 +78,30 @@ select.form-select-sm {
 {# 입력 폼 영역 (ajax + hidden) #}
 <div id="entry-form" class="card p-3 mb-4" style="display:none;">
     <form id="account-form">
+    <input type="hidden" name="id" id="edit-id" value="">
     <input type="hidden" name="member_name" value="{{ member_name }}">
     <input type="hidden" name="type" value="{{ type }}">
     <div class="row g-2">
         <div class="col-md-2">
-        <input type="number" name="amount" class="form-control" placeholder="금액" required>
+        <input type="number" name="amount" id="form-amount" class="form-control" placeholder="금액" required>
         </div>
         <div class="col-md-2">
-        <input type="number" name="vat" class="form-control" placeholder="부가세" value="0">
+        <input type="number" name="vat" id="form-vat" class="form-control" placeholder="부가세" value="0">
         </div>
         <div class="col-md-2">
-        <input type="date" name="date" class="form-control" required>
+        <input type="date" name="date" id="form-date" class="form-control" required>
         </div>
         <div class="col-md-2">
-        <input type="text" name="company" class="form-control" placeholder="업체명">
+        <input type="text" name="company" id="form-company" class="form-control" placeholder="업체명">
         </div>
         <div class="col-md-2">
-        <input type="text" name="product" class="form-control" placeholder="품목명">
+        <input type="text" name="product" id="form-product" class="form-control" placeholder="품목명">
         </div>
         <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">저장</button>
+        <div class="d-flex gap-2">
+            <button type="submit" id="form-submit-btn" class="btn btn-primary w-100">저장</button>
+            <button type="button" id="form-cancel-btn" class="btn btn-outline-secondary w-100" style="display:none;">취소</button>
+        </div>
         </div>
     </div>
     </form>
@@ -106,18 +110,28 @@ select.form-select-sm {
 <table class="table table-bordered table-striped">
     <thead class="table-light">
     <tr>
-        <th>날짜</th><th>금액</th><th>부가세</th><th>총금액</th><th>업체</th><th>품목</th><th>삭제</th>
+        <th>날짜</th><th>금액</th><th>부가세</th><th>총금액</th><th>업체</th><th>품목</th><th>수정</th><th>삭제</th>
     </tr>
     </thead>
     <tbody id="account-list">
     {% for item in monies %}
-        <tr data-id="{{ item.id }}">
+        <tr
+            data-id="{{ item.id }}"
+            data-date="{{ item.date|e('html_attr') }}"
+            data-amount="{{ item.amount }}"
+            data-vat="{{ item.vat }}"
+            data-company="{{ item.company|default('')|e('html_attr') }}"
+            data-product="{{ item.product|default('')|e('html_attr') }}"
+        >
         <td>{{ item.date }}</td>
         <td>{{ item.amount|number_format }}</td>
         <td>{{ item.vat|number_format }}</td>
-        <td>{{ item.total|number_format }}</td>
+        <td>{{ (item.amount + item.vat)|number_format }}</td>
         <td>{{ item.company }}</td>
         <td>{{ item.product }}</td>
+        <td>
+            <button class="btn btn-sm btn-outline-primary edit-btn" data-id="{{ item.id }}">수정</button>
+        </td>
         <td>
             <button class="btn btn-sm btn-danger delete-btn" data-id="{{ item.id }}">삭제</button>
         </td>
@@ -133,23 +147,64 @@ select.form-select-sm {
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
     </tr>
     </tfoot>
 </table>
 </div>
 
 <script>
-document.getElementById('toggle-form-btn').addEventListener('click', () => {
-    const form = document.getElementById('entry-form');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    });
+const toggleBtn = document.getElementById('toggle-form-btn');
+const entryForm = document.getElementById('entry-form');
+const accountForm = document.getElementById('account-form');
+const editIdInput = document.getElementById('edit-id');
+const submitBtn = document.getElementById('form-submit-btn');
+const cancelBtn = document.getElementById('form-cancel-btn');
 
-    document.getElementById('account-form').addEventListener('submit', async function (e) {
+function setAddMode() {
+    editIdInput.value = '';
+    submitBtn.textContent = '저장';
+    cancelBtn.style.display = 'none';
+    toggleBtn.textContent = '+ 항목 추가';
+}
+
+function setEditMode(row) {
+    editIdInput.value = row.dataset.id || '';
+    document.getElementById('form-date').value = row.dataset.date || '';
+    document.getElementById('form-amount').value = row.dataset.amount || '';
+    document.getElementById('form-vat').value = row.dataset.vat || '0';
+    document.getElementById('form-company').value = row.dataset.company || '';
+    document.getElementById('form-product').value = row.dataset.product || '';
+    submitBtn.textContent = '수정 저장';
+    cancelBtn.style.display = 'inline-block';
+    entryForm.style.display = 'block';
+    toggleBtn.textContent = '수정 중';
+    window.scrollTo({ top: entryForm.offsetTop - 80, behavior: 'smooth' });
+}
+
+toggleBtn.addEventListener('click', () => {
+    if (entryForm.style.display === 'none') {
+        entryForm.style.display = 'block';
+    } else {
+        entryForm.style.display = 'none';
+        accountForm.reset();
+        setAddMode();
+    }
+});
+
+cancelBtn.addEventListener('click', () => {
+    accountForm.reset();
+    setAddMode();
+});
+
+    accountForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const formData = new FormData(this);
+    const editId = editIdInput.value;
+    const endpoint = editId ? '/admin/money/update' : '/admin/money/add';
 
-    const response = await fetch('/admin/money/add', {
+    const response = await fetch(endpoint, {
         method: 'POST',
         body: formData
     });
@@ -157,24 +212,21 @@ document.getElementById('toggle-form-btn').addEventListener('click', () => {
     const result = await response.json();
 
     if (result.success) {
-        const newRow = `
-        <tr>
-            <td>${result.data.date}</td>
-            <td>${Number(result.data.amount).toLocaleString()}</td>
-            <td>${Number(result.data.vat).toLocaleString()}</td>
-            <td>${Number(result.data.total).toLocaleString()}</td>
-            <td>${result.data.company}</td>
-            <td>${result.data.product}</td>
-            <td>
-                <button class="btn btn-sm btn-danger delete-btn" data-id="${result.data.id}">삭제</button>
-            </td>
-        </tr>`;
-        document.getElementById('account-list').insertAdjacentHTML('afterbegin', newRow);
         this.reset();
+        setAddMode();
         location.reload();
     } else {
         alert('저장 실패: ' + result.message);
     }
+});
+
+document.querySelectorAll('.edit-btn').forEach(button => {
+  button.addEventListener('click', function () {
+    const id = this.dataset.id;
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    if (!row) return;
+    setEditMode(row);
+  });
 });
 
 document.querySelectorAll('.delete-btn').forEach(button => {
@@ -200,6 +252,8 @@ document.querySelectorAll('.delete-btn').forEach(button => {
     }
   });
 });
+
+setAddMode();
 </script>
 
 

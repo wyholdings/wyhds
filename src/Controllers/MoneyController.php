@@ -110,6 +110,37 @@ class MoneyController
         }
     }
 
+    public function update()
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        $amount = (int)($_POST['amount'] ?? 0);
+        $vat = (int)($_POST['vat'] ?? 0);
+        $date = trim((string)($_POST['date'] ?? ''));
+        $company = trim((string)($_POST['company'] ?? ''));
+        $product = trim((string)($_POST['product'] ?? ''));
+
+        if ($id <= 0 || $amount <= 0 || $date === '') {
+            $this->jsonResponse(false, '필수 항목 누락');
+        }
+
+        $moneyModel = new MoneyModel();
+        $success = $moneyModel->update($id, $amount, $vat, $date, $company, $product);
+
+        if (!$success) {
+            $this->jsonResponse(false, 'DB 수정 실패');
+        }
+
+        $this->jsonResponse(true, '', [
+            'id' => $id,
+            'amount' => $amount,
+            'vat' => $vat,
+            'total' => $amount + $vat,
+            'date' => $date,
+            'company' => $company,
+            'product' => $product,
+        ]);
+    }
+
     protected function jsonResponse($success, $message = '', $data = []) {
         header('Content-Type: application/json');
         echo json_encode([
