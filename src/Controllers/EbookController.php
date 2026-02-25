@@ -252,8 +252,20 @@ class EbookController
                     border-radius: 5px;
                 }
                 #page-info {
-                    margin-top: 10px;
                     font-size: 0.9rem;
+                    width: 90px;
+                    padding: 8px 10px;
+                    text-align: center;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    box-sizing: border-box;
+                }
+                #page-display {
+                    font-size: 0.9rem;
+                    padding: 8px 10px;
+                    min-width: 78px;
+                    text-align: center;
+                    display: inline-block;
                 }
 
                 @media (max-width: 768px) {
@@ -349,12 +361,13 @@ class EbookController
 
         $tail = <<<HTML
     </div></div>
+    <span id='page-display'></span>
     <div id='controls'>
-    <button onclick='$("#flipbook").turn("page", 1)'>⏮</button>
-    <button onclick='$("#flipbook").turn("previous")'>◀</button>
-    <button onclick='$("#flipbook").turn("next")'>▶</button>
-    <button onclick='$("#flipbook").turn("page", {$totalPages})'>⏭</button>
-    <div id='page-info'></div>
+    <button type='button' id='btn-first'>⏮</button>
+    <button type='button' id='btn-prev'>◀</button>
+    <input id='page-info' type='number' min='1' placeholder='페이지 입력' aria-label='페이지 입력 후 Enter로 이동'>
+    <button type='button' id='btn-next'>▶</button>
+    <button type='button' id='btn-last'>⏭</button>
     <div id="admin-save-panel">
         링크 좌표 편집 중
         <button id="btn-save-links">DB 저장</button>
@@ -543,7 +556,7 @@ class EbookController
                             const gotoStr = prompt('이동할 페이지 번호 (없으면 취소)', '');
                             if (gotoStr) gotoPage = parseInt(gotoStr, 10) || null;
                         }
-                        const title = prompt('툴팁/설명 (옵션)', '') || '';
+                        const title = '';
 
                         // linkMap에 반영
                         if (!window.linkMap[pageNum]) window.linkMap[pageNum] = [];
@@ -717,6 +730,34 @@ class EbookController
 
             const totalPages = $('#flipbook .page').length;
             const { width, height,display } = getFlipbookSize();
+            const pageInput = document.getElementById('page-info');
+            const pageDisplay = document.getElementById('page-display');
+            const btnFirst = document.getElementById('btn-first');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnLast = document.getElementById('btn-last');
+
+            if (pageInput) {
+                pageInput.max = totalPages;
+                const goToInputPage = () => {
+                    const target = parseInt(pageInput.value, 10);
+                    if (Number.isFinite(target) && target >= 1 && target <= totalPages) {
+                        $('#flipbook').turn('page', target);
+                    } else {
+                        alert(`1부터 \${totalPages} 사이의 페이지 번호를 입력하세요.`);
+                    }
+                };
+                pageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') goToInputPage();
+                });
+                pageInput.addEventListener('change', goToInputPage);
+            }
+
+            const goTo = (p) => $('#flipbook').turn('page', Math.max(1, Math.min(totalPages, p)));
+            if (btnFirst) btnFirst.addEventListener('click', () => goTo(1));
+            if (btnLast) btnLast.addEventListener('click', () => goTo(totalPages));
+            if (btnPrev) btnPrev.addEventListener('click', () => goTo(($('#flipbook').turn('page') || 1) - 1));
+            if (btnNext) btnNext.addEventListener('click', () => goTo(($('#flipbook').turn('page') || 1) + 1));
 
             $('#flipbook').turn({
                 width,
@@ -731,23 +772,23 @@ class EbookController
                     $('#flipbook .page-canvas .link-area').remove();
                 },
                 turned: function (event, page, view) {
-                    const info = document.getElementById('page-info');
                     const flipbook = document.getElementById('flipbook');
 
                     if (page == 1 || event == 'previous') {
                     flipbook.style.right = isNarrow() ? '' : '15%';
                     flipbook.style.left = '';
-                    info.innerText = '';
                     } else {
                     flipbook.style.right = '';
                     flipbook.style.left = '';
                     }
 
                     if (view[0] && view[1]) {
-                    info.innerText = `\${view[0]}-\${view[1]}`;
+                    if (pageInput) pageInput.value = view[0];
+                    if (pageDisplay) pageDisplay.textContent = `\${view[0]}-\${view[1]}`;
                     flipbook.classList.remove('single-page');
                     } else if (view[0]) {
-                    info.innerText = `\${view[0]}`;
+                    if (pageInput) pageInput.value = view[0];
+                    if (pageDisplay) pageDisplay.textContent = `\${view[0]}`;
                     flipbook.classList.add('single-page');
                     flipbook.style.left = isNarrow() ? '' : '14%';
                     }
@@ -757,6 +798,12 @@ class EbookController
                 }
             });
 
+            if (pageInput) pageInput.value = 1;
+            if (pageDisplay) {
+                const view = $('#flipbook').turn('view') || [];
+                if (view[0] && view[1]) pageDisplay.textContent = `\${view[0]}-\${view[1]}`;
+                else if (view[0]) pageDisplay.textContent = `\${view[0]}`;
+            }
             requestAnimationFrame(applyLinks);
 
             const reflow = () => {
