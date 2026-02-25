@@ -756,8 +756,8 @@ class EbookController
             const goTo = (p) => $('#flipbook').turn('page', Math.max(1, Math.min(totalPages, p)));
             if (btnFirst) btnFirst.addEventListener('click', () => goTo(1));
             if (btnLast) btnLast.addEventListener('click', () => goTo(totalPages));
-            if (btnPrev) btnPrev.addEventListener('click', () => goTo(($('#flipbook').turn('page') || 1) - 1));
-            if (btnNext) btnNext.addEventListener('click', () => goTo(($('#flipbook').turn('page') || 1) + 1));
+            if (btnPrev) btnPrev.addEventListener('click', () => $('#flipbook').turn('previous'));
+            if (btnNext) btnNext.addEventListener('click', () => $('#flipbook').turn('next'));
 
             $('#flipbook').turn({
                 width,
