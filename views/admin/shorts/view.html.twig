@@ -1,0 +1,129 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">쇼츠 자동화 프로젝트</h1>
+        <p class="text-muted mb-0">{{ project.channel_name }}</p>
+    </div>
+    <div>
+        <a href="/admin/shorts/list" class="btn btn-sm btn-outline-secondary">목록</a>
+        <a href="/admin/shorts/studio" class="btn btn-sm btn-outline-info">스튜디오</a>
+        <a href="/admin/shorts/{{ project.id }}/edit" class="btn btn-sm btn-primary">수정</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">채널 운영 정보</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label><strong>니치</strong></label>
+                    <p class="form-control-plaintext">{{ project.niche }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>타겟 시청자</strong></label>
+                    <p class="form-control-plaintext">{{ project.target_audience ?: '-' }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>콘텐츠 포맷</strong></label>
+                    <p class="form-control-plaintext">{{ project.content_format }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>수집 소스</strong></label>
+                    <p class="form-control-plaintext">{{ project.source_platform ?: '-' }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>자동화 스택</strong></label>
+                    <p class="form-control-plaintext">{{ project.automation_stack ?: '-' }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>업로드 주기</strong></label>
+                    <p class="form-control-plaintext">{{ project.publishing_frequency ?: '-' }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>평균 길이</strong></label>
+                    <p class="form-control-plaintext">{{ project.avg_length_seconds }}초</p>
+                </div>
+                <div class="form-group mb-0">
+                    <label><strong>상태</strong></label>
+                    <p class="form-control-plaintext">
+                        <span class="badge badge-status badge-{{ project.status }}">{{ project.status }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">프롬프트 팩</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label><strong>주제 생성 프롬프트</strong></label>
+                    <div class="prompt-box">{{ project.topic_prompt ?: '미입력' }}</div>
+                </div>
+                <div class="form-group">
+                    <label><strong>스크립트 생성 프롬프트</strong></label>
+                    <div class="prompt-box">{{ project.script_prompt ?: '미입력' }}</div>
+                </div>
+                <div class="form-group mb-0">
+                    <label><strong>썸네일/자막 공식</strong></label>
+                    <div class="prompt-box">{{ project.thumbnail_formula ?: '미입력' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">수익화 / 정책</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label><strong>수익화 모델</strong></label>
+                    <p class="form-control-plaintext">{{ project.monetization_model }}</p>
+                </div>
+                <div class="form-group">
+                    <label><strong>CTA 문구</strong></label>
+                    <p class="form-control-plaintext">{{ project.cta_text ?: '-' }}</p>
+                </div>
+                <div class="form-group mb-0">
+                    <label><strong>정책 체크 메모</strong></label>
+                    <div class="prompt-box">{{ project.compliance_notes ?: '미입력' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">권장 자동화 순서</h6>
+            </div>
+            <div class="card-body">
+                <div class="automation-step">1. 주제 수집: 커뮤니티/트렌드 소스에서 후보군 수집</div>
+                <div class="automation-step">2. 필터링: 조회 가능성, 정책 리스크, 재사용 위험 점검</div>
+                <div class="automation-step">3. 스크립트 생성: 훅, 전개, CTA 포함</div>
+                <div class="automation-step">4. TTS/영상 합성: 이미지, 자막, 음성 붙이기</div>
+                <div class="automation-step">5. 업로드 예약: 제목, 해시태그, 설명 자동 입력</div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">운영 메모</h6>
+            </div>
+            <div class="card-body">
+                <div class="prompt-box">{{ project.memo ?: '메모 없음' }}</div>
+                <div class="small text-muted mt-3">
+                    생성일 {{ project.created_at }}<br>
+                    수정일 {{ project.updated_at }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">쇼츠 스튜디오</h1>
+        <p class="text-muted mb-0">키워드 하나로 스크립트, 음성, 커버, MP4까지 한 번에 생성합니다.</p>
+    </div>
+    <a href="/admin/shorts/list" class="btn btn-sm btn-outline-secondary">프로젝트 목록</a>
+</div>
+
+{% if flash %}
+<div class="alert alert-{{ flash.type }}">{{ flash.message }}</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">즉시 생성</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/admin/shorts/studio">
+                    <div class="form-group">
+                        <label>프로젝트 템플릿</label>
+                        <select name="project_id" class="form-control">
+                            <option value="">선택 안 함</option>
+                            {% for project in projects %}
+                            <option value="{{ project.id }}" {% if form.project_id == (project.id ~ '') %}selected{% endif %}>{{ project.channel_name }} / {{ project.niche }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>키워드</label>
+                        <input type="text" name="keyword" class="form-control" value="{{ form.keyword }}" placeholder="예: 조선시대 미스터리, 부업 자동화, 고양이 상식" required>
+                    </div>
+                    <div class="form-group">
+                        <label>톤</label>
+                        <select name="tone" class="form-control">
+                            <option value="clickable" {% if form.tone == 'clickable' %}selected{% endif %}>클릭 유도형</option>
+                            <option value="calm" {% if form.tone == 'calm' %}selected{% endif %}>차분한 정보형</option>
+                            <option value="dramatic" {% if form.tone == 'dramatic' %}selected{% endif %}>강한 훅형</option>
+                            <option value="fast" {% if form.tone == 'fast' %}selected{% endif %}>빠른 템포형</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>목표 길이(초)</label>
+                        <input type="number" min="15" max="60" name="duration" class="form-control date-input" value="{{ form.duration }}">
+                    </div>
+                    <div class="form-group">
+                        <label>TTS 보이스</label>
+                        <input type="text" name="voice" class="form-control" value="{{ form.voice }}" placeholder="예: alloy">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">영상 생성 실행</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">환경 체크</h6>
+            </div>
+            <div class="card-body small">
+                <div class="mb-2"><strong>텍스트 모델:</strong> {{ openai_model }}</div>
+                <div class="mb-2"><strong>TTS 모델:</strong> {{ tts_model }}</div>
+                <div class="mb-2"><strong>FFmpeg 경로:</strong> {{ ffmpeg_path ?: '미설정' }}</div>
+                <div class="text-muted">OPENAI_API_KEY와 FFMPEG_PATH가 없으면 생성이 실패합니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7 mb-4">
+        {% if result %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">방금 생성한 결과</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <video class="w-100 studio-video" controls preload="metadata">
+                        <source src="{{ result.video_url }}" type="video/mp4">
+                    </video>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ result.cover_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-block">커버 이미지 열기</a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ result.audio_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-block">음성 파일 열기</a>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><strong>제목</strong></label>
+                    <div class="prompt-box">{{ result.script.video_title }}</div>
+                </div>
+                <div class="form-group">
+                    <label><strong>내레이션</strong></label>
+                    <div class="prompt-box">{{ result.script.narration }}</div>
+                </div>
+                <div class="form-group mb-0">
+                    <label><strong>해시태그</strong></label>
+                    <div class="prompt-box">{% for tag in result.script.hashtags %}#{{ tag }} {% endfor %}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">최근 생성 기록</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 70px;">ID</th>
+                                <th>키워드</th>
+                                <th>프로젝트</th>
+                                <th>상태</th>
+                                <th>결과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for render in renders %}
+                            <tr>
+                                <td class="text-muted">{{ render.id }}</td>
+                                <td>
+                                    {{ render.keyword }}
+                                    {% if render.script and render.script.video_title %}
+                                    <div class="small text-muted">{{ render.script.video_title }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ render.channel_name ?: '-' }}</td>
+                                <td><span class="badge badge-status badge-{{ render.status }}">{{ render.status }}</span></td>
+                                <td>
+                                    {% if render.video_url %}
+                                    <a href="{{ render.video_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info">영상</a>
+                                    {% endif %}
+                                    {% if render.error_message %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#errorModal{{ render.id }}">오류</button>
+                                    <div class="modal fade" id="errorModal{{ render.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">오류 상세</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="prompt-box">{{ render.error_message }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted p-4">생성 기록이 없습니다.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

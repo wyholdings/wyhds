@@ -1,0 +1,118 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0 text-gray-800">{% if project %}쇼츠 자동화 프로젝트 수정{% else %}쇼츠 자동화 프로젝트 등록{% endif %}</h1>
+    <a href="/admin/shorts/list" class="btn btn-sm btn-outline-secondary">목록</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post" action="{{ project ? '/admin/shorts/' ~ project.id ~ '/edit' : '/admin/shorts/add' }}">
+            <div class="form-section">
+                <div class="form-section-title">채널 전략</div>
+                <div class="form-group">
+                    <label>채널명</label>
+                    <input type="text" name="channel_name" class="form-control" value="{{ project.channel_name ?? '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>니치</label>
+                    <input type="text" name="niche" class="form-control" value="{{ project.niche ?? '' }}" placeholder="예: 역사, 동물, 미스터리, 돈 버는 팁" required>
+                </div>
+                <div class="form-group">
+                    <label>타겟 시청자</label>
+                    <input type="text" name="target_audience" class="form-control" value="{{ project.target_audience ?? '' }}" placeholder="예: 18-34세, 해외 트렌드 관심층">
+                </div>
+                <div class="form-group">
+                    <label>콘텐츠 포맷</label>
+                    <select name="content_format" class="form-control">
+                        <option value="facts" {% if (project.content_format ?? 'facts') == 'facts' %}selected{% endif %}>지식형</option>
+                        <option value="story" {% if project.content_format == 'story' %}selected{% endif %}>스토리형</option>
+                        <option value="ranking" {% if project.content_format == 'ranking' %}selected{% endif %}>랭킹형</option>
+                        <option value="reaction" {% if project.content_format == 'reaction' %}selected{% endif %}>반응형</option>
+                        <option value="news" {% if project.content_format == 'news' %}selected{% endif %}>뉴스형</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">자동화 파이프라인</div>
+                <div class="form-group">
+                    <label>주제 수집 소스</label>
+                    <input type="text" name="source_platform" class="form-control" value="{{ project.source_platform ?? 'reddit' }}" placeholder="예: Reddit, Google Trends, 커뮤니티, RSS">
+                </div>
+                <div class="form-group">
+                    <label>자동화 스택</label>
+                    <input type="text" name="automation_stack" class="form-control" value="{{ project.automation_stack ?? '' }}" placeholder="예: OpenAI + TTS + FFmpeg + 예약 업로드">
+                </div>
+                <div class="form-group">
+                    <label>업로드 주기</label>
+                    <input type="text" name="publishing_frequency" class="form-control" value="{{ project.publishing_frequency ?? '' }}" placeholder="예: 하루 3개, 주 5회">
+                </div>
+                <div class="form-group">
+                    <label>평균 영상 길이(초)</label>
+                    <input type="number" min="10" max="180" name="avg_length_seconds" class="form-control date-input" value="{{ project.avg_length_seconds ?? 30 }}">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">수익화 / 운영</div>
+                <div class="form-group">
+                    <label>CTA 문구</label>
+                    <input type="text" name="cta_text" class="form-control" value="{{ project.cta_text ?? '' }}" placeholder="예: 더 많은 쇼츠 보려면 구독">
+                </div>
+                <div class="form-group">
+                    <label>수익화 모델</label>
+                    <select name="monetization_model" class="form-control">
+                        <option value="adsense" {% if (project.monetization_model ?? 'adsense') == 'adsense' %}selected{% endif %}>애드센스</option>
+                        <option value="affiliate" {% if project.monetization_model == 'affiliate' %}selected{% endif %}>제휴 마케팅</option>
+                        <option value="lead" {% if project.monetization_model == 'lead' %}selected{% endif %}>리드 수집</option>
+                        <option value="digital_product" {% if project.monetization_model == 'digital_product' %}selected{% endif %}>디지털 상품</option>
+                        <option value="mixed" {% if project.monetization_model == 'mixed' %}selected{% endif %}>혼합형</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>상태</label>
+                    <select name="status" class="form-control">
+                        <option value="planning" {% if (project.status ?? 'planning') == 'planning' %}selected{% endif %}>기획중</option>
+                        <option value="building" {% if project.status == 'building' %}selected{% endif %}>구축중</option>
+                        <option value="running" {% if project.status == 'running' %}selected{% endif %}>운영중</option>
+                        <option value="paused" {% if project.status == 'paused' %}selected{% endif %}>중지</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">프롬프트 팩</div>
+                <div class="form-group">
+                    <label>주제 생성 프롬프트</label>
+                    <textarea name="topic_prompt" class="form-control" rows="5" placeholder="예: 지난 7일 기준으로 조회수 높은 주제를 20개 뽑고, 쇼츠 훅 한 줄을 함께 작성">{{ project.topic_prompt ?? '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>스크립트 생성 프롬프트</label>
+                    <textarea name="script_prompt" class="form-control" rows="7" placeholder="예: 35초 분량, 첫 2초 훅 강하게, 문장 짧게, 결론형 CTA 포함">{{ project.script_prompt ?? '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>썸네일/자막 공식</label>
+                    <textarea name="thumbnail_formula" class="form-control" rows="4" placeholder="예: 숫자 + 충격 단어 + 결과 강조">{{ project.thumbnail_formula ?? '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">정책 / 메모</div>
+                <div class="form-group">
+                    <label>정책 체크 메모</label>
+                    <textarea name="compliance_notes" class="form-control" rows="4" placeholder="재사용 콘텐츠, 저작권, 과장 표현, 의료/금융 민감 표현 등 체크 기준">{{ project.compliance_notes ?? '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>운영 메모</label>
+                    <textarea name="memo" class="form-control" rows="5">{{ project.memo ?? '' }}</textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">{% if project %}수정{% else %}등록{% endif %}</button>
+            <a href="/admin/shorts/list" class="btn btn-secondary">목록</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

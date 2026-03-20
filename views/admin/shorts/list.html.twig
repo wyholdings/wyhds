@@ -1,0 +1,99 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">유튜브 쇼츠 자동화</h1>
+        <p class="text-muted mb-0">채널 운영 구조와 자동화 프롬프트를 함께 관리합니다.</p>
+    </div>
+    <div>
+        <a href="/admin/shorts/studio" class="btn btn-sm btn-outline-primary">쇼츠 스튜디오</a>
+        <a href="/admin/shorts/add" class="btn btn-sm btn-primary">+ 자동화 프로젝트 등록</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-left-secondary h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">기획중</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.planning }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">구축중</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.building }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">운영중</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.running }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-left-danger h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">중지</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.paused }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>채널명</th>
+                        <th>니치</th>
+                        <th>포맷</th>
+                        <th>수익화</th>
+                        <th>업로드 주기</th>
+                        <th>평균 길이</th>
+                        <th>상태</th>
+                        <th style="width: 180px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                        <td class="text-muted">{{ project.id }}</td>
+                        <td>
+                            <a href="/admin/shorts/{{ project.id }}/view">{{ project.channel_name }}</a>
+                            {% if project.target_audience %}
+                            <div class="small text-muted">{{ project.target_audience }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ project.niche }}</td>
+                        <td>{{ project.content_format }}</td>
+                        <td>{{ project.monetization_model }}</td>
+                        <td>{{ project.publishing_frequency ?: '-' }}</td>
+                        <td>{{ project.avg_length_seconds }}초</td>
+                        <td><span class="badge badge-status badge-{{ project.status }}">{{ project.status }}</span></td>
+                        <td>
+                            <a href="/admin/shorts/{{ project.id }}/view" class="btn btn-sm btn-outline-info">보기</a>
+                            <a href="/admin/shorts/{{ project.id }}/edit" class="btn btn-sm btn-outline-warning">수정</a>
+                            <a href="/admin/shorts/{{ project.id }}/delete" class="btn btn-sm btn-outline-danger" onclick="return confirm('삭제할까요?')">삭제</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted p-4">등록된 쇼츠 자동화 프로젝트가 없습니다.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
