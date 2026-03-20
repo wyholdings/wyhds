@@ -12,6 +12,7 @@ class ShortsAutomationService
     private string $outputRoot;
     private string $outputRootLabel;
     private string $ffmpegPath;
+    private string $ffprobePath;
 
     public function __construct()
     {
@@ -24,6 +25,7 @@ class ShortsAutomationService
             : $this->publicRoot . '/generated/shorts';
         $this->outputRootLabel = $configuredOutputRoot !== '' ? $configuredOutputRoot : $this->outputRoot;
         $this->ffmpegPath = trim((string)($_ENV['FFMPEG_PATH'] ?? 'ffmpeg'));
+        $this->ffprobePath = trim((string)($_ENV['FFPROBE_PATH'] ?? 'ffprobe'));
     }
 
     public function generate(array $payload): array
@@ -46,6 +48,7 @@ class ShortsAutomationService
 
         $coverPath = $jobDir . '/cover.png';
         $audioPath = $jobDir . '/voice.aac';
+        $subtitlePath = $jobDir . '/captions.srt';
         $videoPath = $jobDir . '/final.mp4';
         $manifestPath = $jobDir . '/manifest.json';
 
@@ -59,7 +62,9 @@ class ShortsAutomationService
             throw new RuntimeException('음성 생성 후 파일을 찾을 수 없습니다: ' . $audioPath);
         }
 
-        $this->renderVideo($coverPath, $audioPath, $videoPath);
+        $duration = $this->probeDuration($audioPath) ?? max(15, (int)($payload['duration'] ?? 30));
+        $this->createSubtitleFile($subtitlePath, (array)($script['caption_lines'] ?? []), $duration);
+        $this->renderVideo($coverPath, $audioPath, $subtitlePath, $videoPath, $duration);
 
         $manifest = [
             'keyword' => $keyword,
@@ -133,7 +138,7 @@ class ShortsAutomationService
         }
     }
 
-    private function renderVideo(string $coverPath, string $audioPath, string $videoPath): void
+    private function renderVideo(string $coverPath, string $audioPath, string $subtitlePath, string $videoPath, float $duration): void
     {
         if (!is_file($coverPath)) {
             throw new RuntimeException('ffmpeg 입력용 커버 이미지가 없습니다: ' . $coverPath);
@@ -143,12 +148,25 @@ class ShortsAutomationService
             throw new RuntimeException('ffmpeg 입력용 음성 파일이 없습니다: ' . $audioPath);
         }
 
+        if (!is_file($subtitlePath)) {
+            throw new RuntimeException('ffmpeg 입력용 자막 파일이 없습니다: ' . $subtitlePath);
+        }
+
+        $subtitleFilterPath = str_replace('\\', '/', $subtitlePath);
+        $subtitleFilterPath = str_replace(':', '\:', $subtitleFilterPath);
+        $fontName = $this->detectSubtitleFontName();
+        $subtitleStyle = "FontName={$fontName},FontSize=20,PrimaryColour=&H00FFFFFF,OutlineColour=&H0010181E,BorderStyle=1,Outline=2,Shadow=0,Alignment=2,MarginV=120";
+        $videoFilter = "scale=1080:1920,zoompan=z='min(zoom+0.0009,1.12)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30,eq=contrast=1.05:saturation=1.12:brightness=0.02,subtitles='{$subtitleFilterPath}':force_style='{$subtitleStyle}',format=yuv420p";
+        $audioFilter = 'loudnorm=I=-16:TP=-1.5:LRA=11';
+
         $command = sprintf(
-            '%s -y -loop 1 -framerate 30 -i %s -i %s -vf %s -c:v libx264 -tune stillimage -c:a aac -b:a 192k -pix_fmt yuv420p -shortest %s 2>&1',
+            '%s -y -loop 1 -framerate 30 -t %s -i %s -i %s -vf %s -af %s -c:v libx264 -preset medium -crf 20 -profile:v high -level 4.1 -movflags +faststart -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -shortest %s 2>&1',
             escapeshellarg($this->ffmpegPath),
+            escapeshellarg(number_format($duration, 2, '.', '')),
             escapeshellarg($coverPath),
             escapeshellarg($audioPath),
-            escapeshellarg('scale=1080:1920,format=yuv420p'),
+            escapeshellarg($videoFilter),
+            escapeshellarg($audioFilter),
             escapeshellarg($videoPath)
         );
 
@@ -209,6 +227,85 @@ class ShortsAutomationService
     {
         preg_match_all('/./us', $text, $matches);
         return $matches[0] ?? [];
+    }
+
+    private function createSubtitleFile(string $targetPath, array $captionLines, float $duration): void
+    {
+        $captionLines = array_values(array_filter(array_map(
+            static fn ($line) => trim((string)$line),
+            $captionLines
+        ), static fn ($line) => $line !== ''));
+
+        if ($captionLines === []) {
+            $captionLines = [''];
+        }
+
+        $chunkCount = count($captionLines);
+        $segmentDuration = max(1.2, $duration / max(1, $chunkCount));
+        $cursor = 0.0;
+        $body = '';
+
+        foreach ($captionLines as $index => $line) {
+            $start = $cursor;
+            $end = min($duration, $index === $chunkCount - 1 ? $duration : $cursor + $segmentDuration);
+            $body .= ($index + 1) . "\n";
+            $body .= $this->formatSrtTime($start) . ' --> ' . $this->formatSrtTime($end) . "\n";
+            $body .= $line . "\n\n";
+            $cursor = $end;
+        }
+
+        if (file_put_contents($targetPath, $body) === false) {
+            throw new RuntimeException('자막 파일 저장에 실패했습니다: ' . $targetPath);
+        }
+    }
+
+    private function formatSrtTime(float $seconds): string
+    {
+        $milliseconds = (int)round($seconds * 1000);
+        $hours = (int)floor($milliseconds / 3600000);
+        $milliseconds -= $hours * 3600000;
+        $minutes = (int)floor($milliseconds / 60000);
+        $milliseconds -= $minutes * 60000;
+        $secs = (int)floor($milliseconds / 1000);
+        $milliseconds -= $secs * 1000;
+
+        return sprintf('%02d:%02d:%02d,%03d', $hours, $minutes, $secs, $milliseconds);
+    }
+
+    private function probeDuration(string $path): ?float
+    {
+        $command = sprintf(
+            '%s -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s 2>&1',
+            escapeshellarg($this->ffprobePath),
+            escapeshellarg($path)
+        );
+
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0) {
+            return null;
+        }
+
+        $value = trim(implode("\n", $output));
+        return is_numeric($value) ? (float)$value : null;
+    }
+
+    private function detectSubtitleFontName(): string
+    {
+        $normalized = strtolower(str_replace('\\', '/', $this->fontPath));
+
+        if (str_contains($normalized, 'malgun')) {
+            return 'Malgun Gothic';
+        }
+
+        if (str_contains($normalized, 'dejavusans')) {
+            return 'DejaVu Sans';
+        }
+
+        if (str_contains($normalized, 'arial')) {
+            return 'Arial';
+        }
+
+        return 'sans-serif';
     }
 
     private function ensureDirectory(string $path): void
