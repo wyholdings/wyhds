@@ -116,6 +116,21 @@ class ShortsAutomationService
 
     private function createCoverImage(string $targetPath, string $keyword, array $script): void
     {
+        $bgPrompt = trim(implode("\n", [
+            'Create a vertical 9:16 cinematic background image for a YouTube Shorts title card.',
+            'Topic keyword: ' . $keyword,
+            'Use one strong focal scene, premium editorial composition, dramatic lighting.',
+            'No text, no letters, no numbers, no logo, no watermark, no UI.',
+            'Leave a clean central area for large title overlay.',
+        ]));
+
+        $backgroundPath = preg_replace('/\.png$/', '_bg.png', $targetPath) ?: ($targetPath . '_bg.png');
+        $this->openAI->generateImage($bgPrompt, $backgroundPath);
+        $this->renderCoverTextOverlay($backgroundPath, $targetPath, $keyword);
+    }
+
+    private function renderCoverTextOverlay(string $backgroundPath, string $targetPath, string $keyword): void
+    {
         if (!extension_loaded('gd')) {
             throw new RuntimeException('GD 확장이 필요합니다.');
         }
@@ -124,44 +139,40 @@ class ShortsAutomationService
             throw new RuntimeException('SHORTS_FONT_PATH 또는 기본 폰트 경로를 찾을 수 없습니다: ' . $this->fontPath);
         }
 
-        $width = 1080;
-        $height = 1920;
-        $image = imagecreatetruecolor($width, $height);
+        if (!is_file($backgroundPath)) {
+            throw new RuntimeException('표지 배경 이미지가 없습니다: ' . $backgroundPath);
+        }
+
+        $imageData = file_get_contents($backgroundPath);
+        $image = $imageData !== false ? @imagecreatefromstring($imageData) : false;
         if ($image === false) {
-            throw new RuntimeException('커버 이미지 생성에 실패했습니다.');
+            throw new RuntimeException('표지 배경 이미지를 열지 못했습니다.');
         }
 
-        imagealphablending($image, true);
-        imagesavealpha($image, true);
-
-        $top = imagecolorallocate($image, 14, 25, 43);
-        $bottom = imagecolorallocate($image, 39, 84, 138);
-        $accent = imagecolorallocate($image, 255, 196, 61);
-        $white = imagecolorallocate($image, 255, 255, 255);
-        $muted = imagecolorallocate($image, 210, 223, 241);
-
-        for ($y = 0; $y < $height; $y++) {
-            $ratio = $height > 1 ? $y / ($height - 1) : 0;
-            $r = (int)(14 + ((39 - 14) * $ratio));
-            $g = (int)(25 + ((84 - 25) * $ratio));
-            $b = (int)(43 + ((138 - 43) * $ratio));
-            $lineColor = imagecolorallocate($image, $r, $g, $b);
-            imageline($image, 0, $y, $width, $y, $lineColor);
-        }
-
-        imagefilledellipse($image, 870, 300, 540, 540, $accent);
-        imagefilledrectangle($image, 80, 1180, 1000, 1550, imagecolorallocatealpha($image, 10, 18, 33, 35));
-
-        $this->drawWrappedText($image, 102, 0, 90, 300, $white, $this->fontPath, $keyword, 820, 1.2);
-        $this->drawWrappedText($image, 52, 0, 95, 530, $muted, $this->fontPath, (string)($script['cover_subtitle'] ?? $keyword), 820, 1.4);
-        $this->drawWrappedText($image, 38, 0, 110, 1260, $accent, $this->fontPath, strtoupper((string)($keyword)), 820, 1.4);
-
-        $captionPreview = array_slice((array)($script['caption_lines'] ?? []), 0, 4);
-        $this->drawWrappedText($image, 46, 0, 110, 1350, $white, $this->fontPath, implode("\n", $captionPreview), 780, 1.55);
-
-        $result = imagepng($image, $targetPath);
+        $canvas = imagecreatetruecolor(1080, 1920);
+        imagecopyresampled($canvas, $image, 0, 0, 0, 0, 1080, 1920, imagesx($image), imagesy($image));
         imagedestroy($image);
 
+        imagealphablending($canvas, true);
+        imagesavealpha($canvas, true);
+
+        $overlay = imagecolorallocatealpha($canvas, 6, 10, 18, 45);
+        imagefilledrectangle($canvas, 0, 0, 1080, 1920, $overlay);
+
+        $white = imagecolorallocate($canvas, 255, 255, 255);
+        $shadow = imagecolorallocatealpha($canvas, 0, 0, 0, 55);
+
+        $lines = $this->wrapText(118, $this->fontPath, $keyword, 860);
+        $lineHeight = 138;
+        $startY = 760 - (int)(count($lines) * $lineHeight / 2);
+        foreach ($lines as $index => $line) {
+            $y = $startY + ($index * $lineHeight);
+            imagettftext($canvas, 118, 0, 92, $y + 8, $shadow, $this->fontPath, $line);
+            imagettftext($canvas, 118, 0, 84, $y, $white, $this->fontPath, $line);
+        }
+
+        $result = imagepng($canvas, $targetPath);
+        imagedestroy($canvas);
         clearstatcache(true, $targetPath);
 
         if ($result === false || !is_file($targetPath) || filesize($targetPath) === 0) {
@@ -188,8 +199,8 @@ class ShortsAutomationService
 
         imagefilledrectangle($image, 0, 0, $width, $height, $background);
         imagefilledrectangle($image, 90, 220, 990, 1640, imagecolorallocate($image, 20, 31, 52));
-        $this->drawWrappedText($image, 98, 0, 150, 720, $white, $this->fontPath, '구독 좋아요', 780, 1.25);
-        $this->drawWrappedText($image, 68, 0, 150, 910, $accent, $this->fontPath, '부탁드려요', 780, 1.25);
+        $this->drawWrappedText($image, 78, 0, 120, 820, $white, $this->fontPath, '시청해주셔서', 840, 1.2);
+        $this->drawWrappedText($image, 92, 0, 120, 980, $accent, $this->fontPath, '감사합니다.', 840, 1.2);
 
         $result = imagepng($image, $targetPath);
         imagedestroy($image);
