@@ -127,6 +127,10 @@
                     <label><strong>해시태그</strong></label>
                     <div class="prompt-box">{% for tag in result.script.hashtags %}#{{ tag }} {% endfor %}</div>
                 </div>
+                <div class="small text-muted mt-3">
+                    모델 {{ openai_model }}<br>
+                    cached_tokens {{ result.script._cached_tokens ?? 0 }}
+                </div>
             </div>
         </div>
         {% endif %}

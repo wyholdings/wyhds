@@ -85,6 +85,7 @@ PROMPT;
 
         $response = $this->requestJson('/responses', [
             'model' => $this->textModel,
+            'prompt_cache_key' => 'shorts-script-v3',
             'input' => [
                 [
                     'role' => 'system',
@@ -176,6 +177,9 @@ PROMPT;
         if (($payload['narration'] ?? '') === '' || empty($payload['caption_lines']) || empty($payload['caption_highlights']) || empty($payload['scene_prompts'])) {
             throw new RuntimeException('스크립트 생성 결과가 비어 있습니다.');
         }
+
+        $payload['_usage'] = $response['usage'] ?? null;
+        $payload['_cached_tokens'] = (int)($response['usage']['input_tokens_details']['cached_tokens'] ?? 0);
 
         return $payload;
     }

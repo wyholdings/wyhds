@@ -14,6 +14,8 @@ class ShortsAutomationService
     private string $ffmpegPath;
     private string $ffprobePath;
     private string $bgmPath;
+    private float $introDuration = 1.8;
+    private float $outroDuration = 2.4;
 
     public function __construct()
     {
@@ -52,14 +54,21 @@ class ShortsAutomationService
             : [];
 
         $coverPath = $jobDir . '/cover.png';
+        $outroPath = $jobDir . '/outro.png';
         $audioPath = $jobDir . '/voice.aac';
         $mixedAudioPath = $jobDir . '/voice_mix.aac';
+        $timedAudioPath = $jobDir . '/voice_timed.aac';
         $subtitlePath = $jobDir . '/captions.ass';
+        $introClipPath = $jobDir . '/intro.mp4';
         $sceneVideoPath = $jobDir . '/scenes.mp4';
+        $outroClipPath = $jobDir . '/outro.mp4';
+        $timelineListPath = $jobDir . '/timeline.txt';
+        $timelineVideoPath = $jobDir . '/timeline.mp4';
         $videoPath = $jobDir . '/final.mp4';
         $manifestPath = $jobDir . '/manifest.json';
 
         $this->createCoverImage($coverPath, $keyword, $script);
+        $this->createOutroImage($outroPath);
         if (!is_file($coverPath)) {
             throw new RuntimeException('커버 이미지 생성 후 파일을 찾을 수 없습니다: ' . $coverPath);
         }
@@ -69,22 +78,28 @@ class ShortsAutomationService
             throw new RuntimeException('음성 생성 후 파일을 찾을 수 없습니다: ' . $audioPath);
         }
 
-        $duration = $this->probeDuration($audioPath) ?? max(30, (int)($payload['duration'] ?? 60));
+        $audioDuration = $this->probeDuration($audioPath) ?? max(30, (int)($payload['duration'] ?? 60));
         $this->createAssSubtitleFile(
             $subtitlePath,
             (array)($script['caption_lines'] ?? []),
             (array)($script['caption_highlights'] ?? []),
-            $duration
+            $audioDuration,
+            $this->introDuration
         );
         $sceneImagePaths = $this->createSceneImages($jobDir, $script, $keyword, $referenceImagePaths);
-        $this->renderSceneVideo($sceneImagePaths, $sceneVideoPath, $duration);
-        $finalAudioPath = $this->prepareAudioTrack($audioPath, $mixedAudioPath);
-        $this->renderVideo($sceneVideoPath, $finalAudioPath, $subtitlePath, $videoPath);
+        $this->renderStillClip($coverPath, $introClipPath, $this->introDuration);
+        $this->renderSceneVideo($sceneImagePaths, $sceneVideoPath, $audioDuration);
+        $this->renderStillClip($outroPath, $outroClipPath, $this->outroDuration);
+        $this->concatVideoClips([$introClipPath, $sceneVideoPath, $outroClipPath], $timelineListPath, $timelineVideoPath);
+        $finalAudioPath = $this->prepareAudioTrack($audioPath, $mixedAudioPath, $timedAudioPath, $this->introDuration, $this->outroDuration);
+        $this->renderVideo($timelineVideoPath, $finalAudioPath, $subtitlePath, $videoPath, $this->introDuration + $audioDuration + $this->outroDuration);
 
         $manifest = [
             'keyword' => $keyword,
             'script' => $script,
             'scene_images' => array_map([$this, 'toPublicUrl'], $sceneImagePaths),
+            'cached_tokens' => $script['_cached_tokens'] ?? 0,
+            'usage' => $script['_usage'] ?? null,
             'generated_at' => date('c'),
         ];
         file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
@@ -137,7 +152,7 @@ class ShortsAutomationService
         imagefilledellipse($image, 870, 300, 540, 540, $accent);
         imagefilledrectangle($image, 80, 1180, 1000, 1550, imagecolorallocatealpha($image, 10, 18, 33, 35));
 
-        $this->drawWrappedText($image, 96, 0, 90, 300, $white, $this->fontPath, (string)($script['cover_title'] ?? $keyword), 820, 1.2);
+        $this->drawWrappedText($image, 102, 0, 90, 300, $white, $this->fontPath, $keyword, 820, 1.2);
         $this->drawWrappedText($image, 52, 0, 95, 530, $muted, $this->fontPath, (string)($script['cover_subtitle'] ?? $keyword), 820, 1.4);
         $this->drawWrappedText($image, 38, 0, 110, 1260, $accent, $this->fontPath, strtoupper((string)($keyword)), 820, 1.4);
 
@@ -154,7 +169,38 @@ class ShortsAutomationService
         }
     }
 
-    private function renderVideo(string $sceneVideoPath, string $audioPath, string $subtitlePath, string $videoPath): void
+    private function createOutroImage(string $targetPath): void
+    {
+        if (!extension_loaded('gd')) {
+            throw new RuntimeException('GD 확장이 필요합니다.');
+        }
+
+        if (!is_file($this->fontPath)) {
+            throw new RuntimeException('SHORTS_FONT_PATH 또는 기본 폰트 경로를 찾을 수 없습니다: ' . $this->fontPath);
+        }
+
+        $width = 1080;
+        $height = 1920;
+        $image = imagecreatetruecolor($width, $height);
+        $background = imagecolorallocate($image, 12, 18, 31);
+        $accent = imagecolorallocate($image, 255, 196, 61);
+        $white = imagecolorallocate($image, 255, 255, 255);
+
+        imagefilledrectangle($image, 0, 0, $width, $height, $background);
+        imagefilledrectangle($image, 90, 220, 990, 1640, imagecolorallocate($image, 20, 31, 52));
+        $this->drawWrappedText($image, 98, 0, 150, 720, $white, $this->fontPath, '구독 좋아요', 780, 1.25);
+        $this->drawWrappedText($image, 68, 0, 150, 910, $accent, $this->fontPath, '부탁드려요', 780, 1.25);
+
+        $result = imagepng($image, $targetPath);
+        imagedestroy($image);
+        clearstatcache(true, $targetPath);
+
+        if ($result === false || !is_file($targetPath) || filesize($targetPath) === 0) {
+            throw new RuntimeException('아웃트로 이미지 저장에 실패했습니다.');
+        }
+    }
+
+    private function renderVideo(string $sceneVideoPath, string $audioPath, string $subtitlePath, string $videoPath, float $totalDuration): void
     {
         if (!is_file($sceneVideoPath)) {
             throw new RuntimeException('ffmpeg 입력용 장면 영상이 없습니다: ' . $sceneVideoPath);
@@ -172,11 +218,12 @@ class ShortsAutomationService
         $subtitleFilterPath = str_replace(':', '\:', $subtitleFilterPath);
         $videoFilter = "ass='{$subtitleFilterPath}',eq=contrast=1.04:saturation=1.08:brightness=0.01,format=yuv420p";
         $command = sprintf(
-            '%s -y -i %s -i %s -vf %s -c:v libx264 -preset medium -crf 19 -profile:v high -level 4.1 -movflags +faststart -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -shortest %s 2>&1',
+            '%s -y -i %s -i %s -vf %s -c:v libx264 -preset medium -crf 19 -profile:v high -level 4.1 -movflags +faststart -c:a aac -b:a 192k -ar 48000 -pix_fmt yuv420p -t %s %s 2>&1',
             escapeshellarg($this->ffmpegPath),
             escapeshellarg($sceneVideoPath),
             escapeshellarg($audioPath),
             escapeshellarg($videoFilter),
+            escapeshellarg(number_format($totalDuration, 2, '.', '')),
             escapeshellarg($videoPath)
         );
 
@@ -280,13 +327,12 @@ class ShortsAutomationService
 
         $sceneCount = count($sceneImagePaths);
         $transitionDuration = 0.45;
-        $sceneDuration = max(4.5, $duration / $sceneCount);
-        $clipDuration = $sceneDuration + $transitionDuration;
+        $baseClipDuration = max(4.5, ($duration + ($transitionDuration * max(0, $sceneCount - 1))) / $sceneCount);
         $inputs = [];
         $filterParts = [];
 
         foreach ($sceneImagePaths as $index => $sceneImagePath) {
-            $inputs[] = '-loop 1 -t ' . escapeshellarg(number_format($clipDuration, 2, '.', '')) . ' -i ' . escapeshellarg($sceneImagePath);
+            $inputs[] = '-loop 1 -t ' . escapeshellarg(number_format($baseClipDuration, 2, '.', '')) . ' -i ' . escapeshellarg($sceneImagePath);
             $zoomDirection = $index % 2 === 0 ? "min(zoom+0.0011,1.14)" : "if(lte(zoom,1.0),1.12,max(1.0,zoom-0.0007))";
             $filterParts[] = sprintf(
                 '[%d:v]scale=1080:1920,zoompan=z=\'%s\':x=\'iw/2-(iw/zoom/2)\':y=\'ih/2-(ih/zoom/2)\':d=1:s=1080x1920:fps=30,eq=contrast=1.05:saturation=1.1:brightness=0.01,format=yuv420p,setpts=PTS-STARTPTS[v%d]',
@@ -297,7 +343,7 @@ class ShortsAutomationService
         }
 
         $lastLabel = '[v0]';
-        $currentOffset = $sceneDuration;
+        $currentOffset = $baseClipDuration - $transitionDuration;
         for ($i = 1; $i < $sceneCount; $i++) {
             $nextLabel = sprintf('[v%d]', $i);
             $outLabel = sprintf('[vx%d]', $i);
@@ -312,7 +358,7 @@ class ShortsAutomationService
                 $outLabel
             );
             $lastLabel = $outLabel;
-            $currentOffset += $sceneDuration - $transitionDuration;
+            $currentOffset += $baseClipDuration - $transitionDuration;
         }
 
         $filterComplex = implode(';', $filterParts);
@@ -331,32 +377,88 @@ class ShortsAutomationService
         }
     }
 
-    private function prepareAudioTrack(string $voicePath, string $mixedAudioPath): string
+    private function renderStillClip(string $imagePath, string $clipPath, float $duration): void
+    {
+        $command = sprintf(
+            '%s -y -loop 1 -t %s -i %s -vf %s -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p %s 2>&1',
+            escapeshellarg($this->ffmpegPath),
+            escapeshellarg(number_format($duration, 2, '.', '')),
+            escapeshellarg($imagePath),
+            escapeshellarg('scale=1080:1920,format=yuv420p'),
+            escapeshellarg($clipPath)
+        );
+
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0 || !is_file($clipPath)) {
+            throw new RuntimeException("인트로/아웃트로 클립 생성 실패.\n" . trim(implode("\n", $output)));
+        }
+    }
+
+    private function concatVideoClips(array $clipPaths, string $listPath, string $outputPath): void
+    {
+        $body = '';
+        foreach ($clipPaths as $clipPath) {
+            $body .= "file '" . str_replace("'", "'\\''", str_replace('\\', '/', $clipPath)) . "'\n";
+        }
+
+        if (file_put_contents($listPath, $body) === false) {
+            throw new RuntimeException('타임라인 목록 저장에 실패했습니다.');
+        }
+
+        $command = sprintf(
+            '%s -y -f concat -safe 0 -i %s -c copy %s 2>&1',
+            escapeshellarg($this->ffmpegPath),
+            escapeshellarg($listPath),
+            escapeshellarg($outputPath)
+        );
+
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0 || !is_file($outputPath)) {
+            throw new RuntimeException("타임라인 결합 실패.\n" . trim(implode("\n", $output)));
+        }
+    }
+
+    private function prepareAudioTrack(string $voicePath, string $mixedAudioPath, string $timedAudioPath, float $introDuration, float $outroDuration): string
     {
         if (!is_file($voicePath)) {
             throw new RuntimeException('보이스 파일이 없습니다: ' . $voicePath);
         }
 
-        if ($this->bgmPath === '' || !is_file($this->bgmPath)) {
-            return $voicePath;
+        $baseAudioPath = $voicePath;
+        if ($this->bgmPath !== '' && is_file($this->bgmPath)) {
+            $command = sprintf(
+                '%s -y -stream_loop -1 -i %s -i %s -filter_complex %s -map %s -c:a aac -b:a 192k -ar 48000 %s 2>&1',
+                escapeshellarg($this->ffmpegPath),
+                escapeshellarg($this->bgmPath),
+                escapeshellarg($voicePath),
+                escapeshellarg('[0:a]volume=0.08,atrim=0:3600,asetpts=PTS-STARTPTS[bgm];[1:a]loudnorm=I=-16:TP=-1.5:LRA=11,asetpts=PTS-STARTPTS[voice];[bgm][voice]amix=inputs=2:duration=shortest:dropout_transition=2[aout]'),
+                escapeshellarg('[aout]'),
+                escapeshellarg($mixedAudioPath)
+            );
+
+            exec($command, $output, $exitCode);
+            if ($exitCode !== 0 || !is_file($mixedAudioPath)) {
+                throw new RuntimeException("배경음악 믹싱 실패.\n" . trim(implode("\n", $output)));
+            }
+            $baseAudioPath = $mixedAudioPath;
         }
 
+        $delayMs = (int)round($introDuration * 1000);
+        $padDuration = number_format($outroDuration, 2, '.', '');
         $command = sprintf(
-            '%s -y -stream_loop -1 -i %s -i %s -filter_complex %s -map %s -c:a aac -b:a 192k -ar 48000 %s 2>&1',
+            '%s -y -i %s -af %s -c:a aac -b:a 192k -ar 48000 %s 2>&1',
             escapeshellarg($this->ffmpegPath),
-            escapeshellarg($this->bgmPath),
-            escapeshellarg($voicePath),
-            escapeshellarg('[0:a]volume=0.08,atrim=0:3600,asetpts=PTS-STARTPTS[bgm];[1:a]loudnorm=I=-16:TP=-1.5:LRA=11,asetpts=PTS-STARTPTS[voice];[bgm][voice]amix=inputs=2:duration=shortest:dropout_transition=2[aout]'),
-            escapeshellarg('[aout]'),
-            escapeshellarg($mixedAudioPath)
+            escapeshellarg($baseAudioPath),
+            escapeshellarg("loudnorm=I=-16:TP=-1.5:LRA=11,adelay={$delayMs}:all=1,apad=pad_dur={$padDuration}"),
+            escapeshellarg($timedAudioPath)
         );
 
         exec($command, $output, $exitCode);
-        if ($exitCode !== 0 || !is_file($mixedAudioPath)) {
-            throw new RuntimeException("배경음악 믹싱 실패.\n" . trim(implode("\n", $output)));
+        if ($exitCode !== 0 || !is_file($timedAudioPath)) {
+            throw new RuntimeException("오디오 타이밍 보정 실패.\n" . trim(implode("\n", $output)));
         }
 
-        return $mixedAudioPath;
+        return $timedAudioPath;
     }
 
     private function drawWrappedText($image, int $fontSize, float $angle, int $x, int $y, int $color, string $fontPath, string $text, int $maxWidth = 900, float $lineHeight = 1.35): void
@@ -412,7 +514,7 @@ class ShortsAutomationService
         return $matches[0] ?? [];
     }
 
-    private function createAssSubtitleFile(string $targetPath, array $captionLines, array $captionHighlights, float $duration): void
+    private function createAssSubtitleFile(string $targetPath, array $captionLines, array $captionHighlights, float $duration, float $startOffset): void
     {
         $captionLines = array_values(array_filter(array_map(
             static fn ($line) => trim((string)$line),
@@ -442,7 +544,7 @@ class ShortsAutomationService
 
         $chunkCount = count($captionLines);
         $segmentDuration = max(1.2, $duration / max(1, $chunkCount));
-        $cursor = 0.0;
+        $cursor = $startOffset;
 
         foreach ($captionLines as $index => $line) {
             $start = $cursor;
