@@ -50,7 +50,15 @@ class ShortsAutomationService
         $manifestPath = $jobDir . '/manifest.json';
 
         $this->createCoverImage($coverPath, $keyword, $script);
+        if (!is_file($coverPath)) {
+            throw new RuntimeException('커버 이미지 생성 후 파일을 찾을 수 없습니다: ' . $coverPath);
+        }
+
         $this->openAI->synthesizeSpeech($script['narration'], $audioPath, $payload['voice'] ?? null);
+        if (!is_file($audioPath)) {
+            throw new RuntimeException('음성 생성 후 파일을 찾을 수 없습니다: ' . $audioPath);
+        }
+
         $this->renderVideo($coverPath, $audioPath, $videoPath);
 
         $manifest = [
@@ -118,13 +126,23 @@ class ShortsAutomationService
         $result = imagepng($image, $targetPath);
         imagedestroy($image);
 
-        if ($result === false) {
+        clearstatcache(true, $targetPath);
+
+        if ($result === false || !is_file($targetPath) || filesize($targetPath) === 0) {
             throw new RuntimeException('커버 이미지 저장에 실패했습니다.');
         }
     }
 
     private function renderVideo(string $coverPath, string $audioPath, string $videoPath): void
     {
+        if (!is_file($coverPath)) {
+            throw new RuntimeException('ffmpeg 입력용 커버 이미지가 없습니다: ' . $coverPath);
+        }
+
+        if (!is_file($audioPath)) {
+            throw new RuntimeException('ffmpeg 입력용 음성 파일이 없습니다: ' . $audioPath);
+        }
+
         $command = sprintf(
             '%s -y -loop 1 -framerate 30 -i %s -i %s -vf %s -c:v libx264 -tune stillimage -c:a aac -b:a 192k -pix_fmt yuv420p -shortest %s 2>&1',
             escapeshellarg($this->ffmpegPath),
@@ -235,7 +253,14 @@ class ShortsAutomationService
 
     private function slugify(string $text): string
     {
-        $slug = preg_replace('/[^a-zA-Z0-9가-힣]+/u', '-', trim($text));
+        $text = trim($text);
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        if (is_string($ascii) && trim($ascii) !== '') {
+            $slug = preg_replace('/[^a-zA-Z0-9]+/', '-', $ascii);
+        } else {
+            $slug = preg_replace('/[^\p{L}\p{N}]+/u', '-', $text);
+        }
+
         $slug = trim((string)$slug, '-');
 
         if ($slug === '') {
