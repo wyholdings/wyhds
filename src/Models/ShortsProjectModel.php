@@ -41,6 +41,9 @@ class ShortsProjectModel
                 content_format,
                 source_platform,
                 automation_stack,
+                reference_image_url,
+                reference_side_image_url,
+                reference_expression_image_url,
                 publishing_frequency,
                 avg_length_seconds,
                 cta_text,
@@ -60,6 +63,9 @@ class ShortsProjectModel
                 :content_format,
                 :source_platform,
                 :automation_stack,
+                :reference_image_url,
+                :reference_side_image_url,
+                :reference_expression_image_url,
                 :publishing_frequency,
                 :avg_length_seconds,
                 :cta_text,
@@ -82,6 +88,9 @@ class ShortsProjectModel
             ':content_format' => $data['content_format'],
             ':source_platform' => $data['source_platform'],
             ':automation_stack' => $data['automation_stack'],
+            ':reference_image_url' => $data['reference_image_url'],
+            ':reference_side_image_url' => $data['reference_side_image_url'],
+            ':reference_expression_image_url' => $data['reference_expression_image_url'],
             ':publishing_frequency' => $data['publishing_frequency'],
             ':avg_length_seconds' => $data['avg_length_seconds'],
             ':cta_text' => $data['cta_text'],
@@ -105,6 +114,9 @@ class ShortsProjectModel
                 content_format = :content_format,
                 source_platform = :source_platform,
                 automation_stack = :automation_stack,
+                reference_image_url = :reference_image_url,
+                reference_side_image_url = :reference_side_image_url,
+                reference_expression_image_url = :reference_expression_image_url,
                 publishing_frequency = :publishing_frequency,
                 avg_length_seconds = :avg_length_seconds,
                 cta_text = :cta_text,
@@ -127,6 +139,9 @@ class ShortsProjectModel
             ':content_format' => $data['content_format'],
             ':source_platform' => $data['source_platform'],
             ':automation_stack' => $data['automation_stack'],
+            ':reference_image_url' => $data['reference_image_url'],
+            ':reference_side_image_url' => $data['reference_side_image_url'],
+            ':reference_expression_image_url' => $data['reference_expression_image_url'],
             ':publishing_frequency' => $data['publishing_frequency'],
             ':avg_length_seconds' => $data['avg_length_seconds'],
             ':cta_text' => $data['cta_text'],
@@ -180,6 +195,9 @@ class ShortsProjectModel
                 content_format VARCHAR(80) DEFAULT 'facts',
                 source_platform VARCHAR(80) DEFAULT 'reddit',
                 automation_stack VARCHAR(255) DEFAULT NULL,
+                reference_image_url VARCHAR(255) DEFAULT NULL,
+                reference_side_image_url VARCHAR(255) DEFAULT NULL,
+                reference_expression_image_url VARCHAR(255) DEFAULT NULL,
                 publishing_frequency VARCHAR(80) DEFAULT NULL,
                 avg_length_seconds INT UNSIGNED DEFAULT 30,
                 cta_text VARCHAR(255) DEFAULT NULL,
@@ -197,5 +215,34 @@ class ShortsProjectModel
                 INDEX idx_monetization_model (monetization_model)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
+
+        $this->ensureColumnExists(
+            'reference_image_url',
+            "ALTER TABLE shorts_projects ADD COLUMN reference_image_url VARCHAR(255) DEFAULT NULL AFTER automation_stack"
+        );
+        $this->ensureColumnExists(
+            'reference_side_image_url',
+            "ALTER TABLE shorts_projects ADD COLUMN reference_side_image_url VARCHAR(255) DEFAULT NULL AFTER reference_image_url"
+        );
+        $this->ensureColumnExists(
+            'reference_expression_image_url',
+            "ALTER TABLE shorts_projects ADD COLUMN reference_expression_image_url VARCHAR(255) DEFAULT NULL AFTER reference_side_image_url"
+        );
+    }
+
+    private function ensureColumnExists(string $columnName, string $sql): void
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'shorts_projects'
+              AND COLUMN_NAME = :column_name
+        ");
+        $stmt->execute([':column_name' => $columnName]);
+
+        if ((int)$stmt->fetchColumn() === 0) {
+            $this->db->exec($sql);
+        }
     }
 }

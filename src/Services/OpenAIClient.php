@@ -11,6 +11,7 @@ class OpenAIClient
     private string $textModel;
     private string $ttsModel;
     private string $ttsVoice;
+    private string $imageModel;
 
     public function __construct()
     {
@@ -19,6 +20,7 @@ class OpenAIClient
         $this->textModel = trim((string)($_ENV['OPENAI_MODEL'] ?? 'gpt-5'));
         $this->ttsModel = trim((string)($_ENV['OPENAI_TTS_MODEL'] ?? 'gpt-4o-mini-tts'));
         $this->ttsVoice = trim((string)($_ENV['OPENAI_TTS_VOICE'] ?? 'alloy'));
+        $this->imageModel = trim((string)($_ENV['OPENAI_IMAGE_MODEL'] ?? 'gpt-image-1'));
 
         if ($this->apiKey === '') {
             throw new RuntimeException('OPENAI_API_KEY가 설정되어 있지 않습니다.');
@@ -38,15 +40,30 @@ The JSON schema is:
   "hook": "string",
   "narration": "string",
   "caption_lines": ["string", "string"],
+  "caption_highlights": ["string", "string"],
+  "scene_prompts": ["string", "string"],
   "hashtags": ["string", "string"],
   "visual_style": "string",
+  "visual_anchor": "string",
+  "camera_language": "string",
+  "lighting_style": "string",
+  "color_palette": "string",
   "cover_title": "string",
   "cover_subtitle": "string",
   "cta": "string"
 }
 Rules:
-- narration must be 120 to 220 Korean characters.
-- caption_lines must contain 4 to 8 short lines.
+- narration should be long enough for the target duration, usually 350 to 650 Korean characters for 60 seconds.
+- caption_lines must contain 6 to 8 short lines when target duration is 60 seconds.
+- caption_highlights must contain the same number of items as caption_lines.
+- Each caption_highlights item should be one short keyword or phrase from the matching caption line.
+- scene_prompts must contain the same number of items as caption_lines.
+- Each scene prompt must describe a single visual moment for an image model.
+- Scene prompts must avoid letters, captions, logos, UI, watermark, collage, split screen.
+- visual_anchor must define one consistent visual identity shared across all generated scenes.
+- camera_language should describe framing and lens feel like close-up, medium shot, 35mm, shallow depth of field.
+- lighting_style should describe lighting like soft cinematic light, rim light, moody contrast, daylight documentary.
+- color_palette should describe a controlled color direction like teal and orange, warm neutral, muted blue and gold.
 - hashtags must contain 3 to 6 items without # symbols.
 - cover_title must be 18 characters or less.
 - cover_subtitle must be 24 characters or less.
@@ -94,8 +111,14 @@ PROMPT;
                             'hook',
                             'narration',
                             'caption_lines',
+                            'caption_highlights',
+                            'scene_prompts',
                             'hashtags',
                             'visual_style',
+                            'visual_anchor',
+                            'camera_language',
+                            'lighting_style',
+                            'color_palette',
                             'cover_title',
                             'cover_subtitle',
                             'cta',
@@ -107,7 +130,19 @@ PROMPT;
                             'caption_lines' => [
                                 'type' => 'array',
                                 'items' => ['type' => 'string'],
-                                'minItems' => 4,
+                                'minItems' => 6,
+                                'maxItems' => 8,
+                            ],
+                            'caption_highlights' => [
+                                'type' => 'array',
+                                'items' => ['type' => 'string'],
+                                'minItems' => 6,
+                                'maxItems' => 8,
+                            ],
+                            'scene_prompts' => [
+                                'type' => 'array',
+                                'items' => ['type' => 'string'],
+                                'minItems' => 6,
                                 'maxItems' => 8,
                             ],
                             'hashtags' => [
@@ -117,6 +152,10 @@ PROMPT;
                                 'maxItems' => 6,
                             ],
                             'visual_style' => ['type' => 'string'],
+                            'visual_anchor' => ['type' => 'string'],
+                            'camera_language' => ['type' => 'string'],
+                            'lighting_style' => ['type' => 'string'],
+                            'color_palette' => ['type' => 'string'],
                             'cover_title' => ['type' => 'string'],
                             'cover_subtitle' => ['type' => 'string'],
                             'cta' => ['type' => 'string'],
@@ -130,9 +169,11 @@ PROMPT;
         $payload = $this->decodeJsonObject($text);
 
         $payload['caption_lines'] = array_values(array_filter((array)($payload['caption_lines'] ?? []), static fn ($line) => trim((string)$line) !== ''));
+        $payload['caption_highlights'] = array_values(array_filter((array)($payload['caption_highlights'] ?? []), static fn ($line) => trim((string)$line) !== ''));
+        $payload['scene_prompts'] = array_values(array_filter((array)($payload['scene_prompts'] ?? []), static fn ($line) => trim((string)$line) !== ''));
         $payload['hashtags'] = array_values(array_filter((array)($payload['hashtags'] ?? []), static fn ($tag) => trim((string)$tag) !== ''));
 
-        if (($payload['narration'] ?? '') === '' || empty($payload['caption_lines'])) {
+        if (($payload['narration'] ?? '') === '' || empty($payload['caption_lines']) || empty($payload['caption_highlights']) || empty($payload['scene_prompts'])) {
             throw new RuntimeException('스크립트 생성 결과가 비어 있습니다.');
         }
 
@@ -150,6 +191,64 @@ PROMPT;
 
         if (file_put_contents($targetPath, $binary) === false) {
             throw new RuntimeException('음성 파일 저장에 실패했습니다.');
+        }
+    }
+
+    public function generateImage(string $prompt, string $targetPath): void
+    {
+        $response = $this->requestJson('/images/generations', [
+            'model' => $this->imageModel,
+            'prompt' => $prompt,
+            'size' => '1024x1536',
+        ]);
+
+        $this->storeGeneratedImage($response, $targetPath);
+    }
+
+    public function generateImageFromReference(string $prompt, array $referenceImagePaths, string $targetPath): void
+    {
+        $imageFiles = [];
+        foreach ($referenceImagePaths as $referenceImagePath) {
+            if (!is_string($referenceImagePath) || !is_file($referenceImagePath)) {
+                continue;
+            }
+
+            $imageFiles[] = new \CURLFile($referenceImagePath);
+        }
+
+        if ($imageFiles === []) {
+            throw new RuntimeException('참조 이미지 파일을 찾을 수 없습니다.');
+        }
+
+        $fields = [
+            'model' => $this->imageModel,
+            'prompt' => $prompt,
+            'size' => '1024x1536',
+            'input_fidelity' => 'high',
+        ];
+        foreach ($imageFiles as $index => $imageFile) {
+            $fields['image[' . $index . ']'] = $imageFile;
+        }
+
+        $response = $this->requestMultipart('/images/edits', $fields);
+
+        $this->storeGeneratedImage($response, $targetPath);
+    }
+
+    private function storeGeneratedImage(array $response, string $targetPath): void
+    {
+        $imageData = $response['data'][0]['b64_json'] ?? null;
+        if (!is_string($imageData) || $imageData === '') {
+            throw new RuntimeException('이미지 생성 결과가 비어 있습니다.');
+        }
+
+        $binary = base64_decode($imageData, true);
+        if ($binary === false) {
+            throw new RuntimeException('이미지 디코딩에 실패했습니다.');
+        }
+
+        if (file_put_contents($targetPath, $binary) === false) {
+            throw new RuntimeException('이미지 파일 저장에 실패했습니다.');
         }
     }
 
@@ -179,6 +278,45 @@ PROMPT;
         }
 
         return $response;
+    }
+
+    private function requestMultipart(string $path, array $fields): array
+    {
+        $ch = curl_init($this->baseUrl . $path);
+        if ($ch === false) {
+            throw new RuntimeException('cURL 초기화에 실패했습니다.');
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $this->apiKey,
+            ],
+            CURLOPT_POSTFIELDS => $fields,
+            CURLOPT_TIMEOUT => 300,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            throw new RuntimeException('OpenAI 멀티파트 요청 실패: ' . $error);
+        }
+
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            throw new RuntimeException('OpenAI 멀티파트 응답을 JSON으로 해석하지 못했습니다.');
+        }
+
+        if ($httpCode >= 400) {
+            $message = $decoded['error']['message'] ?? ('HTTP ' . $httpCode);
+            throw new RuntimeException('OpenAI 이미지 편집 실패: ' . $message);
+        }
+
+        return $decoded;
     }
 
     private function sendRequest(string $path, array $payload, bool $binary): string

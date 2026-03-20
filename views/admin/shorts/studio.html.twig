@@ -4,7 +4,7 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
         <h1 class="h3 mb-0 text-gray-800">쇼츠 스튜디오</h1>
-        <p class="text-muted mb-0">키워드 하나로 스크립트, 음성, 커버, MP4까지 한 번에 생성합니다.</p>
+        <p class="text-muted mb-0">키워드 하나로 스크립트, AI 장면 이미지, 음성, 자막, MP4까지 한 번에 생성합니다.</p>
     </div>
     <a href="/admin/shorts/list" class="btn btn-sm btn-outline-secondary">프로젝트 목록</a>
 </div>
@@ -20,7 +20,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">즉시 생성</h6>
             </div>
             <div class="card-body">
-                <form method="post" action="/admin/shorts/studio">
+                <form method="post" enctype="multipart/form-data" action="/admin/shorts/studio">
                     <div class="form-group">
                         <label>프로젝트 템플릿</label>
                         <select name="project_id" class="form-control">
@@ -45,11 +45,24 @@
                     </div>
                     <div class="form-group">
                         <label>목표 길이(초)</label>
-                        <input type="number" min="15" max="60" name="duration" class="form-control date-input" value="{{ form.duration }}">
+                        <input type="number" min="30" max="90" name="duration" class="form-control date-input" value="{{ form.duration }}">
                     </div>
                     <div class="form-group">
                         <label>TTS 보이스</label>
                         <input type="text" name="voice" class="form-control" value="{{ form.voice }}" placeholder="예: alloy">
+                    </div>
+                    <div class="form-group">
+                        <label>정면 참조 이미지 덮어쓰기</label>
+                        <input type="file" name="reference_image" class="form-control-file" accept=".jpg,.jpeg,.png,.webp">
+                    </div>
+                    <div class="form-group">
+                        <label>측면 참조 이미지 덮어쓰기</label>
+                        <input type="file" name="reference_side_image" class="form-control-file" accept=".jpg,.jpeg,.png,.webp">
+                    </div>
+                    <div class="form-group">
+                        <label>표정 참조 이미지 덮어쓰기</label>
+                        <input type="file" name="reference_expression_image" class="form-control-file" accept=".jpg,.jpeg,.png,.webp">
+                        <small class="form-text text-muted">정면, 측면, 표정 순서로 우선 적용됩니다. 첫 이미지가 가장 강하게 반영됩니다.</small>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">영상 생성 실행</button>
                 </form>
@@ -65,7 +78,8 @@
                 <div class="mb-2"><strong>TTS 모델:</strong> {{ tts_model }}</div>
                 <div class="mb-2"><strong>출력 루트:</strong> {{ output_root }}</div>
                 <div class="mb-2"><strong>FFmpeg 경로:</strong> {{ ffmpeg_path ?: '미설정' }}</div>
-                <div class="text-muted">OPENAI_API_KEY, FFMPEG_PATH, SHORTS_OUTPUT_ROOT를 확인하세요. 출력 루트는 공개 링크를 쓰려면 public 내부 경로여야 합니다.</div>
+                <div class="mb-2"><strong>BGM 경로:</strong> {{ bgm_path ?: '미설정' }}</div>
+                <div class="text-muted">OPENAI_API_KEY, FFMPEG_PATH, SHORTS_OUTPUT_ROOT를 확인하세요. SHORTS_BGM_PATH가 있으면 배경음악을 자동으로 섞습니다.</div>
             </div>
         </div>
     </div>
@@ -90,6 +104,17 @@
                         <a href="{{ result.audio_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-block">음성 파일 열기</a>
                     </div>
                 </div>
+                {% if result.scene_image_urls %}
+                <div class="row mb-3">
+                    {% for image_url in result.scene_image_urls %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ image_url }}" target="_blank" rel="noopener noreferrer">
+                            <img src="{{ image_url }}" alt="scene {{ loop.index }}" class="img-fluid rounded border">
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div class="form-group">
                     <label><strong>제목</strong></label>
                     <div class="prompt-box">{{ result.script.video_title }}</div>

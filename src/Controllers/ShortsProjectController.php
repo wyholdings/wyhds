@@ -40,7 +40,7 @@ class ShortsProjectController
             'project_id' => '',
             'keyword' => '',
             'tone' => 'clickable',
-            'duration' => 30,
+            'duration' => 60,
             'voice' => (string)($_ENV['OPENAI_TTS_VOICE'] ?? 'alloy'),
         ];
 
@@ -49,12 +49,13 @@ class ShortsProjectController
                 'project_id' => trim((string)($_POST['project_id'] ?? '')),
                 'keyword' => trim((string)($_POST['keyword'] ?? '')),
                 'tone' => trim((string)($_POST['tone'] ?? 'clickable')),
-                'duration' => max(15, min(60, (int)($_POST['duration'] ?? 30))),
+                'duration' => max(30, min(90, (int)($_POST['duration'] ?? 60))),
                 'voice' => trim((string)($_POST['voice'] ?? ((string)($_ENV['OPENAI_TTS_VOICE'] ?? 'alloy')))),
             ];
 
             $projectId = $form['project_id'] !== '' ? (int)$form['project_id'] : null;
             $project = $projectId ? $projectModel->getById($projectId) : null;
+            $referenceImagePaths = $this->resolveStudioReferenceImages($_FILES, $project);
 
             $renderId = $renderModel->create([
                 'project_id' => $projectId,
@@ -76,6 +77,7 @@ class ShortsProjectController
                     'duration' => $form['duration'],
                     'voice' => $form['voice'],
                     'project' => $project,
+                    'reference_image_paths' => $referenceImagePaths,
                 ]);
 
                 $renderModel->update($renderId, [
@@ -124,6 +126,7 @@ class ShortsProjectController
             'form' => $form,
             'output_root' => (string)($_ENV['SHORTS_OUTPUT_ROOT'] ?? '/public/generated/shorts'),
             'ffmpeg_path' => (string)($_ENV['FFMPEG_PATH'] ?? ''),
+            'bgm_path' => (string)($_ENV['SHORTS_BGM_PATH'] ?? ''),
             'openai_model' => (string)($_ENV['OPENAI_MODEL'] ?? 'gpt-5'),
             'tts_model' => (string)($_ENV['OPENAI_TTS_MODEL'] ?? 'gpt-4o-mini-tts'),
         ]);
@@ -133,7 +136,7 @@ class ShortsProjectController
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $model = new ShortsProjectModel();
-            $model->insert($this->normalizeData($_POST));
+            $model->insert($this->normalizeData($_POST, $_FILES));
 
             header('Location: /admin/shorts/list');
             exit;
@@ -163,7 +166,8 @@ class ShortsProjectController
         $model = new ShortsProjectModel();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $model->update((int)$id, $this->normalizeData($_POST));
+            $project = $model->getById((int)$id);
+            $model->update((int)$id, $this->normalizeData($_POST, $_FILES, $project));
             header("Location: /admin/shorts/{$id}/view");
             exit;
         }
@@ -189,9 +193,35 @@ class ShortsProjectController
         exit;
     }
 
-    private function normalizeData(array $input): array
+    private function normalizeData(array $input, array $files = [], ?array $existingProject = null): array
     {
         $avgLength = (int)($input['avg_length_seconds'] ?? 30);
+        $referenceImageUrl = $existingProject['reference_image_url'] ?? null;
+        $referenceSideImageUrl = $existingProject['reference_side_image_url'] ?? null;
+        $referenceExpressionImageUrl = $existingProject['reference_expression_image_url'] ?? null;
+
+        if (($input['remove_reference_image'] ?? '') === '1') {
+            $referenceImageUrl = null;
+        }
+        if (($input['remove_reference_side_image'] ?? '') === '1') {
+            $referenceSideImageUrl = null;
+        }
+        if (($input['remove_reference_expression_image'] ?? '') === '1') {
+            $referenceExpressionImageUrl = null;
+        }
+
+        $uploadedReference = $this->storeUploadedReferenceImage($files['reference_image'] ?? null);
+        $uploadedSideReference = $this->storeUploadedReferenceImage($files['reference_side_image'] ?? null);
+        $uploadedExpressionReference = $this->storeUploadedReferenceImage($files['reference_expression_image'] ?? null);
+        if ($uploadedReference !== null) {
+            $referenceImageUrl = $uploadedReference;
+        }
+        if ($uploadedSideReference !== null) {
+            $referenceSideImageUrl = $uploadedSideReference;
+        }
+        if ($uploadedExpressionReference !== null) {
+            $referenceExpressionImageUrl = $uploadedExpressionReference;
+        }
 
         return [
             'channel_name' => trim((string)($input['channel_name'] ?? '')),
@@ -200,6 +230,9 @@ class ShortsProjectController
             'content_format' => trim((string)($input['content_format'] ?? 'facts')),
             'source_platform' => trim((string)($input['source_platform'] ?? 'reddit')),
             'automation_stack' => trim((string)($input['automation_stack'] ?? '')),
+            'reference_image_url' => $referenceImageUrl,
+            'reference_side_image_url' => $referenceSideImageUrl,
+            'reference_expression_image_url' => $referenceExpressionImageUrl,
             'publishing_frequency' => trim((string)($input['publishing_frequency'] ?? '')),
             'avg_length_seconds' => $avgLength > 0 ? $avgLength : 30,
             'cta_text' => trim((string)($input['cta_text'] ?? '')),
@@ -222,5 +255,82 @@ class ShortsProjectController
         unset($render);
 
         return $renders;
+    }
+
+    private function storeUploadedReferenceImage(?array $file): ?string
+    {
+        if (!$file || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        if ((int)$file['error'] !== UPLOAD_ERR_OK) {
+            throw new \RuntimeException('참조 이미지 업로드에 실패했습니다.');
+        }
+
+        $tmpPath = (string)($file['tmp_name'] ?? '');
+        if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+            throw new \RuntimeException('업로드된 참조 이미지가 올바르지 않습니다.');
+        }
+
+        $mime = mime_content_type($tmpPath) ?: '';
+        $extension = null;
+        switch ($mime) {
+            case 'image/jpeg':
+                $extension = 'jpg';
+                break;
+            case 'image/png':
+                $extension = 'png';
+                break;
+            case 'image/webp':
+                $extension = 'webp';
+                break;
+        }
+
+        if ($extension === null) {
+            throw new \RuntimeException('참조 이미지는 jpg, png, webp만 가능합니다.');
+        }
+
+        $publicRoot = realpath(__DIR__ . '/../../public');
+        $uploadDir = $publicRoot . '/uploads/shorts-refs';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
+            throw new \RuntimeException('참조 이미지 저장 폴더 생성에 실패했습니다.');
+        }
+
+        $filename = 'ref_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+        $targetPath = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file($tmpPath, $targetPath)) {
+            throw new \RuntimeException('참조 이미지 저장에 실패했습니다.');
+        }
+
+        return '/uploads/shorts-refs/' . $filename;
+    }
+
+    private function resolveStudioReferenceImages(array $files, ?array $project): array
+    {
+        $uploadedFront = $this->storeUploadedReferenceImage($files['reference_image'] ?? null);
+        $uploadedSide = $this->storeUploadedReferenceImage($files['reference_side_image'] ?? null);
+        $uploadedExpression = $this->storeUploadedReferenceImage($files['reference_expression_image'] ?? null);
+
+        $urls = [
+            $uploadedFront ?? ($project['reference_image_url'] ?? null),
+            $uploadedSide ?? ($project['reference_side_image_url'] ?? null),
+            $uploadedExpression ?? ($project['reference_expression_image_url'] ?? null),
+        ];
+
+        $paths = [];
+        $publicRoot = realpath(__DIR__ . '/../../public');
+        foreach ($urls as $url) {
+            if (!$url) {
+                continue;
+            }
+
+            $fullPath = $publicRoot . str_replace('/', DIRECTORY_SEPARATOR, $url);
+            if (is_file($fullPath)) {
+                $paths[] = $fullPath;
+            }
+        }
+
+        return $paths;
     }
 }
