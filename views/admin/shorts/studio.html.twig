@@ -63,8 +63,9 @@
             <div class="card-body small">
                 <div class="mb-2"><strong>텍스트 모델:</strong> {{ openai_model }}</div>
                 <div class="mb-2"><strong>TTS 모델:</strong> {{ tts_model }}</div>
+                <div class="mb-2"><strong>출력 루트:</strong> {{ output_root }}</div>
                 <div class="mb-2"><strong>FFmpeg 경로:</strong> {{ ffmpeg_path ?: '미설정' }}</div>
-                <div class="text-muted">OPENAI_API_KEY와 FFMPEG_PATH가 없으면 생성이 실패합니다.</div>
+                <div class="text-muted">OPENAI_API_KEY, FFMPEG_PATH, SHORTS_OUTPUT_ROOT를 확인하세요. 출력 루트는 공개 링크를 쓰려면 public 내부 경로여야 합니다.</div>
             </div>
         </div>
     </div>

@@ -10,6 +10,7 @@ class ShortsAutomationService
     private string $fontPath;
     private string $publicRoot;
     private string $outputRoot;
+    private string $outputRootLabel;
     private string $ffmpegPath;
 
     public function __construct()
@@ -17,7 +18,11 @@ class ShortsAutomationService
         $this->openAI = new OpenAIClient();
         $this->fontPath = (string)($_ENV['SHORTS_FONT_PATH'] ?? 'C:/Windows/Fonts/malgun.ttf');
         $this->publicRoot = realpath(__DIR__ . '/../../public') ?: (__DIR__ . '/../../public');
-        $this->outputRoot = $this->publicRoot . '/generated/shorts';
+        $configuredOutputRoot = trim((string)($_ENV['SHORTS_OUTPUT_ROOT'] ?? ''));
+        $this->outputRoot = $configuredOutputRoot !== ''
+            ? $this->normalizePath($configuredOutputRoot)
+            : $this->publicRoot . '/generated/shorts';
+        $this->outputRootLabel = $configuredOutputRoot !== '' ? $configuredOutputRoot : $this->outputRoot;
         $this->ffmpegPath = trim((string)($_ENV['FFMPEG_PATH'] ?? 'ffmpeg'));
     }
 
@@ -191,11 +196,23 @@ class ShortsAutomationService
     private function ensureDirectory(string $path): void
     {
         if (is_dir($path)) {
+            if (!is_writable($path)) {
+                throw new RuntimeException('출력 폴더에 쓰기 권한이 없습니다: ' . $path);
+            }
             return;
         }
 
+        $parent = dirname($path);
+        if (!is_dir($parent)) {
+            $this->ensureDirectory($parent);
+        }
+
+        if (!is_writable($parent)) {
+            throw new RuntimeException('상위 폴더에 쓰기 권한이 없습니다: ' . $parent);
+        }
+
         if (!mkdir($path, 0777, true) && !is_dir($path)) {
-            throw new RuntimeException('출력 폴더 생성에 실패했습니다: ' . $path);
+            throw new RuntimeException('출력 폴더 생성에 실패했습니다: ' . $path . ' (output root: ' . $this->outputRootLabel . ')');
         }
     }
 
@@ -209,6 +226,11 @@ class ShortsAutomationService
         }
 
         return substr($normalized, strlen($publicRoot));
+    }
+
+    private function normalizePath(string $path): string
+    {
+        return rtrim(str_replace('\\', '/', $path), '/');
     }
 
     private function slugify(string $text): string

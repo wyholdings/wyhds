@@ -122,6 +122,7 @@ class ShortsProjectController
             'flash' => $flash,
             'result' => $result,
             'form' => $form,
+            'output_root' => (string)($_ENV['SHORTS_OUTPUT_ROOT'] ?? '/public/generated/shorts'),
             'ffmpeg_path' => (string)($_ENV['FFMPEG_PATH'] ?? ''),
             'openai_model' => (string)($_ENV['OPENAI_MODEL'] ?? 'gpt-5'),
             'tts_model' => (string)($_ENV['OPENAI_TTS_MODEL'] ?? 'gpt-4o-mini-tts'),
