@@ -378,6 +378,44 @@
     background: #005bac;
 }
 
+.csv-preview {
+    overflow: auto;
+    max-height: 360px;
+    border: 1px solid #dfe6f2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.csv-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 520px;
+}
+
+.csv-preview th,
+.csv-preview td {
+    border-bottom: 1px solid #edf1f7;
+    border-right: 1px solid #edf1f7;
+    padding: 10px 12px;
+    color: #101828;
+    font-size: 14px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.csv-preview th {
+    background: #f5f8fc;
+    font-weight: 800;
+}
+
+.wy-tools.is-dark .csv-preview,
+.wy-tools.is-dark .csv-preview th,
+.wy-tools.is-dark .csv-preview td {
+    background: #11182a;
+    color: #edf3ff;
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
 @media screen and (max-width: 1280px) {
     .tools-list ul {
         grid-template-columns: repeat(3, minmax(0, 1fr));

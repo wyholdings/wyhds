@@ -111,9 +111,9 @@ return [
     'compress-pdf' => $tool('compress-pdf', 'Compress PDF', 'pdf', 'PDF 파일 용량을 줄입니다.', ['related' => ['merge-pdf', 'split-pdf']]),
     'rotate-pdf' => $tool('rotate-pdf', 'Rotate PDF', 'pdf', 'PDF 페이지 방향을 회전합니다.', ['related' => ['split-pdf', 'merge-pdf']]),
 
-    'json-csv' => $tool('json-csv', 'JSON to CSV Converter', 'converter', 'JSON 데이터를 CSV 형식으로 변환합니다.', ['related' => ['json-formatter', 'csv-viewer', 'json-xml']]),
-    'json-xml' => $tool('json-xml', 'JSON to XML Converter', 'converter', 'JSON과 XML 데이터를 상호 변환합니다.', ['related' => ['json-formatter', 'json-csv']]),
-    'csv-viewer' => $tool('csv-viewer', 'CSV Viewer', 'converter', 'CSV 데이터를 표 형태로 확인합니다.', ['related' => ['json-csv', 'sql-formatter']]),
+    'json-csv' => $tool('json-csv', 'JSON to CSV Converter', 'converter', 'JSON 데이터를 CSV 형식으로 변환합니다.', ['widget' => 'json-csv', 'related' => ['json-formatter', 'csv-viewer', 'json-xml']]),
+    'json-xml' => $tool('json-xml', 'JSON to XML Converter', 'converter', 'JSON과 XML 데이터를 상호 변환합니다.', ['widget' => 'json-xml', 'related' => ['json-formatter', 'json-csv']]),
+    'csv-viewer' => $tool('csv-viewer', 'CSV Viewer', 'converter', 'CSV 데이터를 표 형태로 확인합니다.', ['widget' => 'csv-viewer', 'related' => ['json-csv', 'sql-formatter']]),
     'timestamp' => $tool('timestamp', 'Timestamp Converter', 'date-time', 'Unix timestamp를 로컬 시간과 UTC 날짜로 변환합니다.', [
         'widget' => 'timestamp',
         'is_popular' => true,
@@ -128,7 +128,7 @@ return [
         'related' => ['uuid', 'sha256', 'bcrypt'],
     ]),
     'sha256' => $tool('sha256', 'SHA256 Generator', 'security', '텍스트를 SHA-256 해시 값으로 변환합니다.', ['widget' => 'hash-generator', 'related' => ['hash-generator', 'md5', 'bcrypt']]),
-    'md5' => $tool('md5', 'MD5 Generator', 'security', '텍스트의 MD5 해시 값을 생성합니다.', ['related' => ['sha256', 'hash-generator']]),
+    'md5' => $tool('md5', 'MD5 Generator', 'security', '텍스트의 MD5 해시 값을 생성합니다.', ['widget' => 'md5', 'related' => ['sha256', 'hash-generator']]),
     'bcrypt' => $tool('bcrypt', 'bcrypt Hash Generator', 'security', '비밀번호 저장에 자주 쓰이는 bcrypt 해시를 생성합니다.', ['related' => ['password-generator', 'sha256']]),
     'hash-generator' => $tool('hash-generator', 'Hash Generator', 'security', '텍스트를 SHA-1, SHA-256, SHA-384, SHA-512 해시 값으로 변환합니다.', [
         'widget' => 'hash-generator',

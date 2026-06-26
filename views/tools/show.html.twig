@@ -134,6 +134,49 @@
                         </div>
                         <label for="tool-output">Result</label>
                         <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'json-csv' %}
+                        <label for="tool-input">JSON Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder='[{"name":"WY Tools","type":"platform"}]'></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="json-to-csv">JSON to CSV</button>
+                            <button type="button" class="tool-btn" data-action="csv-to-json">CSV to JSON</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'json-xml' %}
+                        <label for="tool-input">JSON or XML Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder='{"tool":"WY Tools","free":true}'></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="json-to-xml">JSON to XML</button>
+                            <button type="button" class="tool-btn" data-action="xml-to-json">XML to JSON</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'csv-viewer' %}
+                        <label for="tool-input">CSV Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="name,type&#10;WY Tools,platform"></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="csv-view">View CSV</button>
+                            <button type="button" class="tool-btn" data-action="csv-to-json">CSV to JSON</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy JSON</button>
+                        </div>
+                        <div class="csv-preview" id="csv-preview"></div>
+                        <label for="tool-output">JSON Result</label>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'md5' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="md5-generate">Generate MD5</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">MD5 Hash</label>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'timestamp' %}
                         <div class="tool-current"><span>Current Unix Timestamp</span><strong id="current-timestamp">-</strong></div>
                         <label for="timestamp-input">Timestamp</label>
