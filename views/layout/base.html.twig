@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     {% include 'partials/_header.html.twig' %}
+    {% block styles %}{% endblock %}
 </head>
 <body>
     {% include 'partials/_navbar.html.twig' %}
@@ -18,5 +19,6 @@
         <script>window.VISIT_LOG_ID = null;</script>
     {% endif %}
     <script src="/assets/js/visit.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -5,6 +5,8 @@ $router->get('/demo', [App\Controllers\HomeController::class, 'demo']);
 $router->get('/services', [App\Controllers\HomeController::class, 'services']);
 $router->get('/about', [App\Controllers\HomeController::class, 'about']);
 $router->get('/contact', [App\Controllers\HomeController::class, 'contact']);
+$router->get('/tools', [App\Controllers\ToolsController::class, 'index']);
+$router->get('/tools/{slug}', [App\Controllers\ToolsController::class, 'show']);
 $router->get('/login', [App\Controllers\AuthController::class, 'showLoginForm']);
 $router->post('/login', [App\Controllers\AuthController::class, 'login']);
 $router->get('/logout', [App\Controllers\AuthController::class, 'logout']);
