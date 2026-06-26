@@ -2,6 +2,36 @@
 
 {% block styles %}
     <link href="/assets/css/tools.css" rel="stylesheet" />
+    <script type="application/ld+json">
+{{ {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': tool.faqs|map(faq => {
+        '@type': 'Question',
+        'name': faq.q,
+        'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': faq.a
+        }
+    })
+}|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
+    </script>
+    <script type="application/ld+json">
+{{ {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    'name': tool.name,
+    'url': canonical_url,
+    'description': tool.description,
+    'applicationCategory': 'DeveloperApplication',
+    'operatingSystem': 'Any',
+    'offers': {
+        '@type': 'Offer',
+        'price': '0',
+        'priceCurrency': 'KRW'
+    }
+}|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
+    </script>
 {% endblock %}
 
 {% block body %}

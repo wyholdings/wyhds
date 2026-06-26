@@ -28,6 +28,61 @@
   <priority>0.80</priority>
 </url>
 <url>
+  <loc>https://wyhds.com/tools</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/json-formatter</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/base64</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/url-encode</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/timestamp</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/uuid</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/password-generator</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/hash-generator</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/qr-code</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/cron-helper</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
+  <loc>https://wyhds.com/tools/color-converter</loc>
+  <lastmod>2026-06-26T00:00:00+00:00</lastmod>
+  <priority>0.72</priority>
+</url>
+<url>
   <loc>https://wyhds.com/portfolio/5</loc>
   <lastmod>2026-05-06T05:28:00+00:00</lastmod>
   <priority>0.64</priority>

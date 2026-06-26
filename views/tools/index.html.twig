@@ -2,6 +2,23 @@
 
 {% block styles %}
     <link href="/assets/css/tools.css" rel="stylesheet" />
+    <script type="application/ld+json">
+{{ {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    'name': '개발자 도구 모음',
+    'url': canonical_url,
+    'description': description,
+    'hasPart': tools|map(item => {
+        '@type': 'WebApplication',
+        'name': item.name,
+        'url': 'https://wyhds.com' ~ item.url,
+        'description': item.description,
+        'applicationCategory': 'DeveloperApplication',
+        'operatingSystem': 'Any'
+    })
+}|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
+    </script>
 {% endblock %}
 
 {% block body %}
