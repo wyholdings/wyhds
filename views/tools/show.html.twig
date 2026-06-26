@@ -177,6 +177,46 @@
                         </div>
                         <label for="tool-output">MD5 Hash</label>
                         <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'prompt-formatter' %}
+                        <label for="tool-input">Prompt Draft</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="AI에게 요청할 내용을 자유롭게 입력하세요."></textarea>
+                        <label for="prompt-role">Role</label>
+                        <input id="prompt-role" class="tool-input" type="text" value="You are a helpful assistant.">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="prompt-format">Format Prompt</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Formatted Prompt</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'prompt-optimizer' %}
+                        <label for="tool-input">Original Prompt</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="개선할 프롬프트를 입력하세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="opt-role" checked> Role</label>
+                            <label><input type="checkbox" id="opt-context" checked> Context</label>
+                            <label><input type="checkbox" id="opt-output" checked> Output format</label>
+                            <label><input type="checkbox" id="opt-constraints" checked> Constraints</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="prompt-optimize">Optimize Prompt</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Optimized Prompt</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'token-counter' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="토큰 수를 추정할 텍스트를 입력하세요."></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="token-count">Count Tokens</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Estimated tokens</span><strong id="token-estimate">0</strong></div>
+                            <div><span>Characters</span><strong id="token-chars">0</strong></div>
+                            <div><span>Words</span><strong id="token-words">0</strong></div>
+                        </div>
+                        <p class="tool-note">모델별 실제 토큰 수와 다를 수 있는 브라우저 기반 추정치입니다.</p>
                     {% elseif tool.widget == 'timestamp' %}
                         <div class="tool-current"><span>Current Unix Timestamp</span><strong id="current-timestamp">-</strong></div>
                         <label for="timestamp-input">Timestamp</label>

@@ -250,6 +250,12 @@
     font-size: 14px;
 }
 
+.tool-note {
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
 .tool-status.is-error {
     color: #d13b3b;
 }

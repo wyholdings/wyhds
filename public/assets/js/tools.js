@@ -758,6 +758,70 @@
         setStatus('나이를 계산했습니다.', 'success');
     }
 
+    function formatPrompt() {
+        const draft = getValue('#tool-input').trim();
+        const role = getValue('#prompt-role').trim() || 'You are a helpful assistant.';
+        if (!draft) throw new Error('프롬프트 내용을 입력해 주세요.');
+        const output = [
+            '# Role',
+            role,
+            '',
+            '# Task',
+            draft,
+            '',
+            '# Context',
+            '- Add relevant background information here.',
+            '',
+            '# Requirements',
+            '- Be specific and practical.',
+            '- Ask clarifying questions only when required.',
+            '',
+            '# Output Format',
+            '- Use clear headings and concise bullet points when helpful.'
+        ].join('\n');
+        setValue('#tool-output', output);
+        setStatus('프롬프트를 구조화했습니다.', 'success');
+    }
+
+    function optimizePrompt() {
+        const prompt = getValue('#tool-input').trim();
+        if (!prompt) throw new Error('개선할 프롬프트를 입력해 주세요.');
+        const sections = [];
+        if (document.getElementById('opt-role')?.checked) {
+            sections.push(['# Role', 'You are an expert assistant for this task.']);
+        }
+        sections.push(['# Goal', prompt]);
+        if (document.getElementById('opt-context')?.checked) {
+            sections.push(['# Context', '- Audience:\n- Current situation:\n- Important background:']);
+        }
+        if (document.getElementById('opt-constraints')?.checked) {
+            sections.push(['# Constraints', '- Avoid unsupported assumptions.\n- Be accurate and actionable.\n- Keep the response easy to scan.']);
+        }
+        if (document.getElementById('opt-output')?.checked) {
+            sections.push(['# Output Format', '- Summary\n- Step-by-step answer\n- Risks or notes\n- Next action']);
+        }
+        setValue('#tool-output', sections.map(function (section) {
+            return section[0] + '\n' + section[1];
+        }).join('\n\n'));
+        setStatus('프롬프트 개선안을 만들었습니다.', 'success');
+    }
+
+    function estimateTokens(text) {
+        if (!text) return 0;
+        const cjk = (text.match(/[\u3131-\uD79D\u3040-\u30ff\u3400-\u9fff]/g) || []).length;
+        const latinWords = (text.replace(/[\u3131-\uD79D\u3040-\u30ff\u3400-\u9fff]/g, ' ').match(/[A-Za-z0-9_]+|[^\sA-Za-z0-9_]/g) || []).length;
+        return Math.max(1, Math.ceil(cjk * 1.1 + latinWords * 1.3));
+    }
+
+    function countTokens() {
+        const text = getValue('#tool-input');
+        const words = text.trim() ? text.trim().split(/\s+/).filter(Boolean).length : 0;
+        document.getElementById('token-estimate').textContent = formatNumber(estimateTokens(text));
+        document.getElementById('token-chars').textContent = formatNumber(text.length);
+        document.getElementById('token-words').textContent = formatNumber(words);
+        setStatus('토큰 수를 추정했습니다.', 'success');
+    }
+
     document.addEventListener('click', function (event) {
         const shareButton = event.target.closest('[data-share]');
         if (shareButton) {
@@ -900,6 +964,12 @@
                 calculateDday();
             } else if (action === 'age-calculate') {
                 calculateAge();
+            } else if (action === 'prompt-format') {
+                formatPrompt();
+            } else if (action === 'prompt-optimize') {
+                optimizePrompt();
+            } else if (action === 'token-count') {
+                countTokens();
             } else if (action === 'generic-copy') {
                 setValue('#tool-output', getValue('#tool-input'));
                 setStatus('입력값을 결과 영역에 준비했습니다.', 'success');
@@ -936,5 +1006,10 @@
     if (slug === 'age-calculator') {
         const baseDate = document.getElementById('age-base-date');
         if (baseDate) baseDate.value = new Date().toISOString().slice(0, 10);
+    }
+    if (slug === 'token-counter') {
+        const input = document.getElementById('tool-input');
+        if (input) input.addEventListener('input', countTokens);
+        countTokens();
     }
 })();

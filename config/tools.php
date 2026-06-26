@@ -141,9 +141,9 @@ return [
     'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['widget' => 'd-day-calculator', 'related' => ['date-calculator', 'age-calculator']]),
     'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['widget' => 'age-calculator', 'related' => ['date-calculator', 'd-day-calculator']]),
 
-    'prompt-formatter' => $tool('prompt-formatter', 'Prompt Formatter', 'ai', 'AI 프롬프트를 구조화하고 읽기 좋게 정리합니다.', ['is_recent' => true, 'related' => ['prompt-optimizer', 'token-counter']]),
-    'prompt-optimizer' => $tool('prompt-optimizer', 'Prompt Optimizer', 'ai', '목표와 조건에 맞게 AI 프롬프트를 개선합니다.', ['related' => ['prompt-formatter', 'token-counter']]),
-    'token-counter' => $tool('token-counter', 'Token Counter', 'ai', 'AI 입력 텍스트의 토큰 사용량을 추정합니다.', ['is_popular' => true, 'related' => ['prompt-formatter', 'word-counter']]),
+    'prompt-formatter' => $tool('prompt-formatter', 'Prompt Formatter', 'ai', 'AI 프롬프트를 구조화하고 읽기 좋게 정리합니다.', ['widget' => 'prompt-formatter', 'is_recent' => true, 'related' => ['prompt-optimizer', 'token-counter']]),
+    'prompt-optimizer' => $tool('prompt-optimizer', 'Prompt Optimizer', 'ai', '목표와 조건에 맞게 AI 프롬프트를 개선합니다.', ['widget' => 'prompt-optimizer', 'related' => ['prompt-formatter', 'token-counter']]),
+    'token-counter' => $tool('token-counter', 'Token Counter', 'ai', 'AI 입력 텍스트의 토큰 사용량을 추정합니다.', ['widget' => 'token-counter', 'is_popular' => true, 'related' => ['prompt-formatter', 'word-counter']]),
 
     'url-encode' => $tool('url-encode', 'URL Encode / Decode', 'encoding', 'URL 파라미터와 쿼리 문자열을 인코딩하거나 원래 텍스트로 디코딩합니다.', [
         'widget' => 'url-encode',
