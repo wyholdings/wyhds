@@ -156,24 +156,30 @@
         const text = getValue('#tool-input').trim();
         if (!text) throw new Error('QR 코드로 만들 값을 입력해 주세요.');
         if (!window.QRCode) throw new Error('QR 코드 라이브러리를 불러오지 못했습니다.');
-        window.QRCode.toCanvas(document.getElementById('qr-canvas'), text, {
+        const preview = document.getElementById('qr-preview');
+        preview.textContent = '';
+        new window.QRCode(preview, {
+            text: text,
             width: 240,
-            margin: 2,
-            errorCorrectionLevel: 'M'
-        }, function (error) {
-            if (error) {
-                setStatus(error.message, 'error');
-                return;
-            }
-            setStatus('QR 코드가 생성되었습니다.', 'success');
+            height: 240,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: window.QRCode.CorrectLevel.M
         });
+        setStatus('QR 코드가 생성되었습니다.', 'success');
     }
 
     function downloadQr() {
-        const canvas = document.getElementById('qr-canvas');
-        if (!canvas) return;
+        const preview = document.getElementById('qr-preview');
+        const canvas = preview ? preview.querySelector('canvas') : null;
+        const image = preview ? preview.querySelector('img') : null;
+        const dataUrl = canvas ? canvas.toDataURL('image/png') : (image ? image.src : '');
+        if (!dataUrl) {
+            setStatus('먼저 QR 코드를 생성해 주세요.', 'error');
+            return;
+        }
         const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
+        link.href = dataUrl;
         link.download = 'qr-code.png';
         link.click();
     }

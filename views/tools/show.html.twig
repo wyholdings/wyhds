@@ -78,7 +78,7 @@
                     <label for="tool-input">URL or Text</label>
                     <textarea id="tool-input" class="tool-textarea small" spellcheck="false" placeholder="https://wyhds.com"></textarea>
                     <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="qr-generate">Generate</button><button type="button" class="tool-btn" data-action="qr-download">Download PNG</button></div>
-                    <div class="qr-preview"><canvas id="qr-canvas" width="240" height="240"></canvas></div>
+                    <div class="qr-preview" id="qr-preview"></div>
                 {% elseif tool.slug == 'cron-helper' %}
                     <label for="cron-input">Cron Expression</label>
                     <input id="cron-input" class="tool-input mono" type="text" value="0 9 * * 1-5">
@@ -116,7 +116,7 @@
 
 {% block scripts %}
     {% if tool.slug == 'qr-code' %}
-        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     {% endif %}
     <script src="/assets/js/tools.js"></script>
 {% endblock %}
