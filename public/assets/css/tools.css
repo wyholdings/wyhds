@@ -832,11 +832,9 @@
 }
 
 .wy-ad-slot {
-    display: flex;
+    display: block;
     max-width: 1180px;
     min-height: 92px;
-    align-items: center;
-    justify-content: center;
     margin: 26px auto;
     border: 1px dashed rgba(0, 91, 172, 0.28);
     border-radius: 16px;
@@ -846,6 +844,12 @@
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    padding: 12px;
+}
+
+.wy-ad-slot .adsbygoogle {
+    display: block;
+    min-height: 90px;
 }
 
 .wy-tools.is-dark .wy-ad-slot {
