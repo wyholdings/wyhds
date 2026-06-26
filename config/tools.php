@@ -94,10 +94,10 @@ return [
         'related' => ['cron-generator', 'timestamp', 'date-calculator'],
     ]),
 
-    'lorem-ipsum' => $tool('lorem-ipsum', 'Lorem Ipsum Generator', 'text', '디자인 시안과 문서 작업에 사용할 더미 텍스트를 생성합니다.', ['is_recent' => true, 'related' => ['word-counter', 'case-converter']]),
-    'word-counter' => $tool('word-counter', 'Word Counter', 'text', '글자 수, 단어 수, 줄 수를 계산합니다.', ['is_popular' => true, 'related' => ['case-converter', 'remove-duplicate-lines', 'text-diff']]),
-    'case-converter' => $tool('case-converter', 'Case Converter', 'text', '영문 텍스트를 대문자, 소문자, 제목 케이스 등으로 변환합니다.', ['related' => ['word-counter', 'lorem-ipsum']]),
-    'remove-duplicate-lines' => $tool('remove-duplicate-lines', 'Remove Duplicate Lines', 'text', '중복된 줄을 제거하고 고유한 목록만 남깁니다.', ['related' => ['text-diff', 'word-counter']]),
+    'lorem-ipsum' => $tool('lorem-ipsum', 'Lorem Ipsum Generator', 'text', '디자인 시안과 문서 작업에 사용할 더미 텍스트를 생성합니다.', ['widget' => 'lorem-ipsum', 'is_recent' => true, 'related' => ['word-counter', 'case-converter']]),
+    'word-counter' => $tool('word-counter', 'Word Counter', 'text', '글자 수, 단어 수, 줄 수를 계산합니다.', ['widget' => 'word-counter', 'is_popular' => true, 'related' => ['case-converter', 'remove-duplicate-lines', 'text-diff']]),
+    'case-converter' => $tool('case-converter', 'Case Converter', 'text', '영문 텍스트를 대문자, 소문자, 제목 케이스 등으로 변환합니다.', ['widget' => 'case-converter', 'related' => ['word-counter', 'lorem-ipsum']]),
+    'remove-duplicate-lines' => $tool('remove-duplicate-lines', 'Remove Duplicate Lines', 'text', '중복된 줄을 제거하고 고유한 목록만 남깁니다.', ['widget' => 'remove-duplicate-lines', 'related' => ['text-diff', 'word-counter']]),
     'text-diff' => $tool('text-diff', 'Text Diff', 'text', '두 텍스트의 차이를 비교합니다.', ['related' => ['remove-duplicate-lines', 'regex-tester']]),
 
     'image-compress' => $tool('image-compress', 'Image Compress', 'image', '이미지 용량을 줄여 웹 업로드와 공유에 적합하게 만듭니다.', ['is_popular' => true, 'related' => ['image-resize', 'webp-converter']]),
@@ -135,11 +135,11 @@ return [
         'related' => ['sha256', 'md5', 'password-generator'],
     ]),
 
-    'vat-calculator' => $tool('vat-calculator', 'VAT 계산기', 'calculator', '공급가액과 부가세, 합계 금액을 계산합니다.', ['is_recent' => true, 'related' => ['percent-calculator']]),
-    'percent-calculator' => $tool('percent-calculator', '퍼센트 계산기', 'calculator', '비율, 증감률, 할인율을 계산합니다.', ['is_popular' => true, 'related' => ['vat-calculator']]),
+    'vat-calculator' => $tool('vat-calculator', 'VAT 계산기', 'calculator', '공급가액과 부가세, 합계 금액을 계산합니다.', ['widget' => 'vat-calculator', 'is_recent' => true, 'related' => ['percent-calculator']]),
+    'percent-calculator' => $tool('percent-calculator', '퍼센트 계산기', 'calculator', '비율, 증감률, 할인율을 계산합니다.', ['widget' => 'percent-calculator', 'is_popular' => true, 'related' => ['vat-calculator']]),
     'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 차이나 특정 날짜 이후의 날짜를 계산합니다.', ['related' => ['d-day-calculator', 'age-calculator', 'timestamp']]),
-    'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['related' => ['date-calculator', 'age-calculator']]),
-    'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['related' => ['date-calculator', 'd-day-calculator']]),
+    'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['widget' => 'd-day-calculator', 'related' => ['date-calculator', 'age-calculator']]),
+    'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['widget' => 'age-calculator', 'related' => ['date-calculator', 'd-day-calculator']]),
 
     'prompt-formatter' => $tool('prompt-formatter', 'Prompt Formatter', 'ai', 'AI 프롬프트를 구조화하고 읽기 좋게 정리합니다.', ['is_recent' => true, 'related' => ['prompt-optimizer', 'token-counter']]),
     'prompt-optimizer' => $tool('prompt-optimizer', 'Prompt Optimizer', 'ai', '목표와 조건에 맞게 AI 프롬프트를 개선합니다.', ['related' => ['prompt-formatter', 'token-counter']]),

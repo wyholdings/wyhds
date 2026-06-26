@@ -140,6 +140,100 @@
                         <button type="button" class="tool-btn primary" data-action="color-convert">Convert</button>
                         <div class="color-preview" id="color-preview"></div>
                         <div class="result-grid three"><div><span>HEX</span><strong id="color-hex">-</strong></div><div><span>RGB</span><strong id="color-rgb">-</strong></div><div><span>HSL</span><strong id="color-hsl">-</strong></div></div>
+                    {% elseif tool.widget == 'word-counter' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="분석할 텍스트를 입력하세요."></textarea>
+                        <div class="result-grid three">
+                            <div><span>Characters</span><strong id="wc-chars">0</strong></div>
+                            <div><span>Words</span><strong id="wc-words">0</strong></div>
+                            <div><span>Lines</span><strong id="wc-lines">0</strong></div>
+                            <div><span>Sentences</span><strong id="wc-sentences">0</strong></div>
+                            <div><span>Paragraphs</span><strong id="wc-paragraphs">0</strong></div>
+                            <div><span>Bytes</span><strong id="wc-bytes">0</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'case-converter' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="변환할 텍스트를 입력하세요."></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="case-upper">UPPERCASE</button>
+                            <button type="button" class="tool-btn" data-action="case-lower">lowercase</button>
+                            <button type="button" class="tool-btn" data-action="case-title">Title Case</button>
+                            <button type="button" class="tool-btn" data-action="case-sentence">Sentence case</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'remove-duplicate-lines' %}
+                        <label for="tool-input">Lines</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="중복 제거할 줄 목록을 입력하세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="dedupe-trim" checked> Trim lines</label>
+                            <label><input type="checkbox" id="dedupe-case"> Case sensitive</label>
+                            <label><input type="checkbox" id="dedupe-empty"> Keep empty lines</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="dedupe-lines">Remove Duplicates</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'lorem-ipsum' %}
+                        <label for="lorem-count">Paragraphs</label>
+                        <input id="lorem-count" class="tool-input" type="number" min="1" max="20" value="3">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="lorem-generate">Generate</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'percent-calculator' %}
+                        <label for="percent-base">Base value</label>
+                        <input id="percent-base" class="tool-input" type="number" step="any" placeholder="10000">
+                        <label for="percent-rate">Percent (%)</label>
+                        <input id="percent-rate" class="tool-input" type="number" step="any" placeholder="15">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="percent-calculate">Calculate</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Percent value</span><strong id="percent-value">-</strong></div>
+                            <div><span>Added total</span><strong id="percent-added">-</strong></div>
+                            <div><span>Discounted total</span><strong id="percent-discounted">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'vat-calculator' %}
+                        <label for="vat-amount">Amount</label>
+                        <input id="vat-amount" class="tool-input" type="number" step="any" placeholder="100000">
+                        <label for="vat-rate">VAT Rate (%)</label>
+                        <input id="vat-rate" class="tool-input" type="number" step="any" value="10">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="vat-from-supply">Supply + VAT</button>
+                            <button type="button" class="tool-btn" data-action="vat-from-total">Total includes VAT</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Supply</span><strong id="vat-supply">-</strong></div>
+                            <div><span>VAT</span><strong id="vat-tax">-</strong></div>
+                            <div><span>Total</span><strong id="vat-total">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'd-day-calculator' %}
+                        <label for="dday-date">Target date</label>
+                        <input id="dday-date" class="tool-input" type="date">
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="dday-calculate">Calculate</button></div>
+                        <div class="result-grid">
+                            <div><span>D-Day</span><strong id="dday-result">-</strong></div>
+                            <div><span>Target</span><strong id="dday-target">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'age-calculator' %}
+                        <label for="birth-date">Birth date</label>
+                        <input id="birth-date" class="tool-input" type="date">
+                        <label for="age-base-date">Base date</label>
+                        <input id="age-base-date" class="tool-input" type="date">
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="age-calculate">Calculate</button></div>
+                        <div class="result-grid three">
+                            <div><span>Age</span><strong id="age-years">-</strong></div>
+                            <div><span>Months lived</span><strong id="age-months">-</strong></div>
+                            <div><span>Days lived</span><strong id="age-days">-</strong></div>
+                        </div>
                     {% else %}
                         <label for="tool-input">Input</label>
                         <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="{{ tool.name }} 기능은 단계적으로 고도화됩니다."></textarea>
