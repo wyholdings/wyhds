@@ -1,0 +1,46 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}포트폴리오 상세{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">포트폴리오 상세</h1>
+    <div>
+        <a href="/portfolio/{{ portfolio.id }}" target="_blank" class="btn btn-info btn-sm">프론트 보기</a>
+        <a href="/admin/portfolio/{{ portfolio.id }}/edit" class="btn btn-warning btn-sm">수정</a>
+        <a href="/admin/portfolio/list" class="btn btn-secondary btn-sm">목록</a>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <h4>{{ portfolio.title }}</h4>
+        <p class="text-muted">{{ portfolio.subtitle }}</p>
+        <hr>
+        <dl class="row">
+            <dt class="col-sm-2">사이트 링크</dt>
+            <dd class="col-sm-10">
+                {% if portfolio.site_link %}
+                    <a href="{{ portfolio.site_link }}" target="_blank">{{ portfolio.site_link }}</a>
+                {% endif %}
+            </dd>
+            <dt class="col-sm-2">클라이언트</dt>
+            <dd class="col-sm-10">{{ portfolio.client }}</dd>
+            <dt class="col-sm-2">일자</dt>
+            <dd class="col-sm-10">{{ portfolio.project_date }}</dd>
+            <dt class="col-sm-2">키워드</dt>
+            <dd class="col-sm-10">{{ portfolio.keywords }}</dd>
+            <dt class="col-sm-2">설명</dt>
+            <dd class="col-sm-10">{{ portfolio.description|nl2br }}</dd>
+        </dl>
+        {% if portfolio.thumbnail_image|default('') %}
+            <h5>썸네일 이미지</h5>
+            <img src="{{ portfolio.thumbnail_image }}" alt="" style="max-width:320px; height:auto;">
+            <hr>
+        {% endif %}
+        {% if portfolio.body_image %}
+            <img src="{{ portfolio.body_image }}" alt="" style="max-width:100%; height:auto;">
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

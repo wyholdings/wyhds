@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\PortfolioModel;
+use Throwable;
 use Twig\Environment;
 
 class HomeController
@@ -27,6 +29,17 @@ class HomeController
         $contactToken = $this->ensureContactFormToken();
         echo $this->twig->render('portfolio/portfolio.html.twig', [
             'contact_form_token' => $contactToken,
+            'portfolios' => $this->getPortfolios(),
+        ]);
+    }
+
+    function portfolioView($id): void
+    {
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('portfolio/portfolio_view.html.twig', [
+            'contact_form_token' => $contactToken,
+            'project_id' => $id,
+            'portfolio' => $this->getPortfolio((int)$id),
         ]);
     }
 
@@ -34,6 +47,22 @@ class HomeController
     {
         $contactToken = $this->ensureContactFormToken();
         echo $this->twig->render('services/services.html.twig', [
+            'contact_form_token' => $contactToken,
+        ]);
+    }
+
+    public function contact(): void
+    {
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('contact.html.twig', [
+            'contact_form_token' => $contactToken,
+        ]);
+    }
+
+    public function about(): void
+    {
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('about/about.html.twig', [
             'contact_form_token' => $contactToken,
         ]);
     }
@@ -57,6 +86,24 @@ class HomeController
         $_SESSION['contact_form_issued_at'] = time();
 
         return $_SESSION['contact_form_token'];
+    }
+
+    private function getPortfolios(): array
+    {
+        try {
+            return (new PortfolioModel())->all();
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+
+    private function getPortfolio(int $id): ?array
+    {
+        try {
+            return (new PortfolioModel())->find($id);
+        } catch (Throwable $e) {
+            return null;
+        }
     }
 }
 

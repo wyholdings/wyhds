@@ -15,20 +15,85 @@
     });
 </script>
 
-<header class="site-header">
-    <div class="site-container header-inner">
-        <a class="logo" href="/"><img src="/images/logo.jpg" alt="WYHDS"></a>
-        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span class="sr-only">메뉴 열기</span>
-        </button>
-        <nav class="site-nav" id="site-nav">
-            <a class="nav-link" href="/">홈</a>
-            <a class="nav-link" href="/services">서비스</a>
-            <a class="nav-link" href="/portfolio">포트폴리오</a>
-            <a class="nav-cta" href="/#contact">프로젝트 문의</a>
-        </nav>
-    </div>
-</header>
+<div id="wrapper">
+    <div id="header"class="{% if isMain is not defined or not isMain %}subheader{% endif %}"  data-aos="fade-down" data-aos-duration="1200"  >
+        <div class="header_in"> 
+            <h1><a href="/">우용디앤에스로고</a></h1>
+            <a href="/contact" class="header-quick">빠른 견적 문의</a>
+            <a href="#none" class="burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </a>
+        </div>
+              <div id="gnb">
+            <ul>
+                <li><a href="/about">회사소개</a></li>
+                <li><a href="/services">서비스</a></li>
+                <li><a href="/portfolio">구축사례</a></li>
+                <li><a href="/contact">문의하기</a></li>
+            </ul>
+        </div> 
+    </div>           
+
+
+    
+	<!-- 모바일 Menu -->
+	<div id="menuArea" class="header_mobile" >
+		<div class="menuList">
+			<button type="button" class="btnMenu_mClose" title="Close">Close</button>
+			<ul class="list">	
+                <li><a href="/about">회사소개</a></li>
+                <li>
+					<a class="dropdown-toggle" href="/services">서비스</a>
+					{# <ul class="sMenu">
+						<li><a href="">서브메뉴</a></li>
+						<li><a href="">서브메뉴</a></li>
+					</ul> #}
+				</li>
+				<li>
+					<a class="dropdown-toggle" href="/portfolio">구축사례</a>
+				</li>
+				<li>
+					<a class="dropdown-toggle" href="/contact">문의하기</a>
+				</li>
+            </ul>	
+            <div class="navfoot">
+                <h6>이메일 문의</h6>
+                <p>help@wyhds.com</p>			
+            </div>
+		</div>
+	</div>
+	<!-- //모바일 Menu -->
+
+
+<script>
+    $(function () {
+        $('.burger').click(function () {
+            $('#menuArea').addClass('on');
+            $("body").append("<div id='grayLayer'><a href='#'></a></div>");
+		    $("#grayLayer").show();
+        });
+
+        $("body").on("click ", "#menuArea .btnMenu_mClose", function(){
+            $("#menuArea").removeClass("on");
+            $("#grayLayer").remove();
+        });
+
+        $("body").on("click ", "#grayLayer", function(){
+            $("#menuArea").removeClass("on");
+            $("#grayLayer").remove();
+	    });  
+    });
+
+   window.addEventListener('scroll', function () {
+  const header = document.getElementById('header');
+
+    if (window.scrollY > 100) {
+        header.classList.add('onheader');
+    } else {
+        header.classList.remove('onheader');
+    }
+    });
+
+</script>

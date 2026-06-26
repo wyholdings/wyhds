@@ -25,6 +25,8 @@ class EbookController
         $ebooks = $ebookModel->getAll($perPage, $offset);
         $total = $ebookModel->countAll();
         $totalPages = max(1, (int)ceil($total / $perPage));
+        $flash = $_SESSION['flash'] ?? null;
+        unset($_SESSION['flash']);
 
         if ($page > $totalPages) {
             $page = $totalPages;
@@ -38,6 +40,7 @@ class EbookController
             'per_page' => $perPage,
             'total' => $total,
             'total_pages' => $totalPages,
+            'flash' => $flash,
         ]);
     }
 
@@ -75,6 +78,7 @@ class EbookController
 
             $pdfFile = $_FILES['pdf']['tmp_name'];
             $originalFileName = $_FILES['pdf']['name'];
+            $storedPdfName = 'source.pdf';
             $ebookId = uniqid('ebook_');
             $uploadBase = __DIR__ . '/../../public/ebooks/';
             $outputDir = rtrim($uploadBase, '/').'/'.$ebookId.'/';
@@ -86,9 +90,14 @@ class EbookController
                 throw new \RuntimeException('eBook 폴더 생성 실패');
             }
 
+            $storedPdfPath = $outputDir . $storedPdfName;
+            if (!move_uploaded_file($pdfFile, $storedPdfPath)) {
+                throw new \RuntimeException('원본 PDF 저장 실패');
+            }
+
             // 페이지 수 파악은 ping으로(저메모리)
             $ping = new \Imagick();
-            $ping->pingImage($pdfFile);
+            $ping->pingImage($storedPdfPath);
             $totalPages = $ping->getNumberImages();
             $ping->clear(); $ping->destroy();
 
@@ -102,7 +111,7 @@ class EbookController
                 $im = new \Imagick();
                 $im->setResolution(150, 150);
                 // 특정 페이지만 로드
-                $im->readImage(sprintf('%s[%d]', $pdfFile, $i));
+                $im->readImage(sprintf('%s[%d]', $storedPdfPath, $i));
 
                 // 투명 배경 이슈 방지(필요시)
                 $im->setImageBackgroundColor('white');
@@ -120,22 +129,8 @@ class EbookController
             }
 
             // index.html 생성
-            $html = $this->buildIndexHtml($totalPages); // 아래 헬퍼 함수 예시 참고
+            $html = $this->buildIndexHtml($totalPages, [], $storedPdfName); // 아래 헬퍼 함수 예시 참고
             file_put_contents($outputDir.'index.html', $html);
-
-            // ZIP 생성
-            $zipPath = rtrim($uploadBase, '/').'/'.$ebookId.'.zip';
-            $zip = new \ZipArchive();
-            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-                throw new \RuntimeException('ZIP 생성 실패');
-            }
-            // eBook 폴더 통째로 넣기
-            $files = scandir($outputDir);
-            foreach ($files as $file) {
-                if ($file === '.' || $file === '..') continue;
-                $zip->addFile($outputDir.$file, $ebookId.'/'.$file);
-            }
-            $zip->close();
 
             // DB 저장
             $ebookModel = new EbookModel();
@@ -144,33 +139,14 @@ class EbookController
                 'folder_name' => $ebookId
             ]);
 
-            // 모든 출력버퍼 제거(바이너리 전송 전 필수)
-            while (ob_get_level() > 0) { @ob_end_clean(); }
-
-            // 안전한 헤더
-            header('Content-Description: File Transfer');
-            header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename="'.$ebookId.'.zip"');
-            header('Content-Transfer-Encoding: binary');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
-            header('Content-Length: '.filesize($zipPath));
-
-            // 청크 스트리밍(대용량 안전)
-            $fp = fopen($zipPath, 'rb');
-            if ($fp === false) {
-                throw new \RuntimeException('ZIP 읽기 실패');
+            if (session_status() !== PHP_SESSION_ACTIVE) {
+                @session_start();
             }
-            $chunk = 8192;
-            while (!feof($fp)) {
-                $buffer = fread($fp, $chunk);
-                echo $buffer;
-                flush();
-                if (connection_status() != CONNECTION_NORMAL) {
-                    break;
-                }
-            }
-            fclose($fp);
+            $_SESSION['flash'] = [
+                'message' => 'eBook 변환이 완료되었습니다.',
+                'error' => false,
+            ];
+            header('Location: /admin/ebook/list');
             exit;
 
         } catch (\Throwable $e) {
@@ -185,10 +161,14 @@ class EbookController
      * 페이지 수를 받아 index.html 문자열을 생성하는 헬퍼.
      * (질문에 주신 HTML/JS를 그대로 사용하되 문자열 리터럴로 분리)
      */
-    function buildIndexHtml(int $totalPages, array $linkMap = []): string
+    function buildIndexHtml(int $totalPages, array $linkMap = [], string $sourcePdfFile = 'source.pdf'): string
     {
         $linkMapJson = json_encode(
             $linkMap,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+        $sourcePdfJson = json_encode(
+            $sourcePdfFile,
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         );
 
@@ -218,6 +198,7 @@ class EbookController
                     width: 100vw;
                     height: 90vh;
                     background: #f4f4f4;
+                    position: relative;
                 }
                 #flipbook {
                     width: 90%;
@@ -241,6 +222,19 @@ class EbookController
                 #controls {
                     text-align: center;
                     margin-top: 10px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    padding: 0 16px 14px;
+                }
+                #controls-nav {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
                 }
                 button {
                     font-size: 1rem;
@@ -262,10 +256,122 @@ class EbookController
                 }
                 #page-display {
                     font-size: 0.9rem;
-                    padding: 8px 10px;
+                    padding: 0;
                     min-width: 78px;
                     text-align: center;
                     display: inline-block;
+                    font-weight: 600;
+                }
+                #viewer-overlay {
+                    position: absolute;
+                    top: 14px;
+                    right: 14px;
+                    z-index: 30;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    gap: 8px;
+                }
+                #menu-toggle {
+                    width: 42px;
+                    height: 42px;
+                    padding: 0;
+                    margin: 0;
+                    font-size: 20px;
+                    line-height: 1;
+                    background: rgba(34,34,34,0.92);
+                    color: #fff;
+                    border-color: rgba(34,34,34,0.92);
+                    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+                }
+                #viewer-panel {
+                    width: min(360px, calc(100vw - 28px));
+                    padding: 10px;
+                    background: rgba(255,255,255,0.98);
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+                    display: none;
+                }
+                #viewer-panel.is-open {
+                    display: block;
+                }
+                #btn-toggle-search {
+                    width: 100%;
+                    margin: 0;
+                    text-align: left;
+                    background: #fff;
+                }
+                #search-panel {
+                    display: none;
+                    margin-top: 10px;
+                }
+                #search-panel.is-open {
+                    display: block;
+                }
+                #search-form {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+                #search-query {
+                    flex: 1;
+                    min-width: 0;
+                    font-size: 0.9rem;
+                    padding: 8px 10px;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    box-sizing: border-box;
+                }
+                #btn-search {
+                    margin: 0;
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+                #search-status {
+                    display: block;
+                    margin-top: 8px;
+                    font-size: 0.85rem;
+                    color: #666;
+                    text-align: left;
+                }
+                #search-results {
+                    max-height: min(52vh, 420px);
+                    margin-top: 10px;
+                    overflow: auto;
+                    background: #fff;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+                    display: none;
+                }
+                .search-result-item {
+                    display: block;
+                    width: 100%;
+                    padding: 12px 14px;
+                    text-align: left;
+                    border: 0;
+                    border-bottom: 1px solid #eee;
+                    background: #fff;
+                    margin: 0;
+                    border-radius: 0;
+                }
+                .search-result-item:last-child {
+                    border-bottom: 0;
+                }
+                .search-result-item strong {
+                    display: block;
+                    margin-bottom: 4px;
+                }
+                .search-result-item mark {
+                    background: #ffe58f;
+                    padding: 0 1px;
+                }
+                .search-empty {
+                    padding: 14px;
+                    color: #666;
+                    font-size: 0.9rem;
                 }
 
                 @media (max-width: 768px) {
@@ -283,6 +389,27 @@ class EbookController
                     width: 100%;
                     height: 100%;
                     object-fit: contain;
+                }
+                #viewer-overlay {
+                    z-index: 9999;
+                    top: 10px;
+                    right: 10px;
+                }
+                #viewer-panel {
+                    width: min(340px, calc(100vw - 20px));
+                }
+                #search-form {
+                    flex-wrap: wrap;
+                }
+                #search-query,
+                #btn-search {
+                    width: 100%;
+                }
+                #btn-search {
+                    margin-top: 0;
+                }
+                #search-results {
+                    max-height: 42vh;
                 }
                 }
 
@@ -336,6 +463,7 @@ class EbookController
             </style>
             <script>
                 window.linkMap = {$linkMapJson};
+                window.sourcePdfFile = {$sourcePdfJson};
 
                 window.imageMeta = {
                     default: { naturalWidth: 763, naturalHeight: 1079 }
@@ -345,9 +473,25 @@ class EbookController
                 
     <script src='https://code.jquery.com/jquery-3.6.0.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'></script>
     </head>
     <body>
-    <div id='flipbook-wrapper'><div id='flipbook'>
+    <div id='flipbook-wrapper'>
+    <div id='viewer-overlay'>
+    <button type='button' id='menu-toggle' aria-expanded='false' aria-controls='viewer-panel'>☰</button>
+    <div id='viewer-panel'>
+    <button type='button' id='btn-toggle-search'>검색창 열기</button>
+    <div id='search-panel'>
+    <div id='search-form'>
+    <input id='search-query' type='search' placeholder='내용 검색' aria-label='내용 검색'>
+    <button type='button' id='btn-search'>검색</button>
+    </div>
+    <span id='search-status'>검색 준비 중</span>
+    <div id='search-results' aria-live='polite'></div>
+    </div>
+    </div>
+    </div>
+    <div id='flipbook'>
     HTML;
 
         $pages = '';
@@ -361,13 +505,15 @@ class EbookController
 
         $tail = <<<HTML
     </div></div>
-    <span id='page-display'></span>
     <div id='controls'>
+    <span id='page-display'></span>
+    <div id='controls-nav'>
     <button type='button' id='btn-first'>⏮</button>
     <button type='button' id='btn-prev'>◀</button>
     <input id='page-info' type='number' min='1' placeholder='페이지 입력' aria-label='페이지 입력 후 Enter로 이동'>
     <button type='button' id='btn-next'>▶</button>
     <button type='button' id='btn-last'>⏭</button>
+    </div>
     <div id="admin-save-panel">
         링크 좌표 편집 중
         <button id="btn-save-links">DB 저장</button>
@@ -590,6 +736,164 @@ class EbookController
 
 
     <script>
+        const searchState = {
+            ready: false,
+            loading: false,
+            error: null,
+            pages: []
+        };
+
+        function setMenuOpen(isOpen){
+            const panel = document.getElementById('viewer-panel');
+            const toggle = document.getElementById('menu-toggle');
+            if (panel) panel.classList.toggle('is-open', isOpen);
+            if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        function setSearchPanelOpen(isOpen){
+            const panel = document.getElementById('search-panel');
+            const button = document.getElementById('btn-toggle-search');
+            if (panel) panel.classList.toggle('is-open', isOpen);
+            if (button) button.textContent = isOpen ? '검색창 닫기' : '검색창 열기';
+        }
+
+        function escapeHtml(value){
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeText(value){
+            return String(value || '')
+                .replace(/[\u0000-\u001F\u007F\uFFFD]/g, ' ')
+                .replace(/[◆◇■□�]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function escapeRegExp(value){
+            const specials = '\\\\^$.*+?()[]{}|';
+            return String(value).split('').map((char) => {
+                return specials.indexOf(char) !== -1 ? '\\\\' + char : char;
+            }).join('');
+        }
+
+        function updateSearchStatus(message){
+            const el = document.getElementById('search-status');
+            if (el) el.textContent = message;
+        }
+
+        function renderSearchResults(results, query){
+            const wrap = document.getElementById('search-results');
+            if (!wrap) return;
+            setMenuOpen(true);
+            setSearchPanelOpen(true);
+
+            if (!results.length) {
+                wrap.style.display = 'block';
+                wrap.innerHTML = `<div class="search-empty">'\${escapeHtml(query)}' 검색 결과가 없습니다.</div>`;
+                return;
+            }
+
+            const pattern = new RegExp(escapeRegExp(query), 'ig');
+            wrap.style.display = 'block';
+            wrap.innerHTML = results.map((item) => {
+                const snippet = escapeHtml(item.snippet).replace(pattern, (match) => `<mark>\${match}</mark>`);
+                return `
+                    <button type="button" class="search-result-item" data-page="\${item.page}">
+                        <strong>\${item.page}페이지</strong>
+                        <span>\${snippet}</span>
+                    </button>
+                `;
+            }).join('');
+
+            wrap.querySelectorAll('.search-result-item').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const targetPage = parseInt(button.dataset.page || '1', 10);
+                    $('#flipbook').turn('page', targetPage);
+                    setMenuOpen(false);
+                });
+            });
+        }
+
+        async function loadSearchIndex(totalPages){
+            if (searchState.ready || searchState.loading) return;
+            searchState.loading = true;
+            updateSearchStatus('원본 PDF 분석 중');
+
+            try {
+                if (!window.pdfjsLib) throw new Error('pdf.js 로드 실패');
+
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const pdf = await pdfjsLib.getDocument(window.sourcePdfFile || 'source.pdf').promise;
+                const pageLimit = Math.min(totalPages, pdf.numPages);
+                const pages = [];
+
+                for (let pageNo = 1; pageNo <= pageLimit; pageNo++) {
+                    const page = await pdf.getPage(pageNo);
+                    const textContent = await page.getTextContent();
+                    const text = normalizeText(textContent.items.map((item) => item.str || '').join(' '));
+                    pages.push({ page: pageNo, text });
+                    updateSearchStatus(`검색 인덱스 생성 중 \${pageNo}/\${pageLimit}`);
+                }
+
+                searchState.pages = pages;
+                searchState.ready = true;
+                updateSearchStatus('검색 가능');
+            } catch (error) {
+                console.error(error);
+                searchState.error = error;
+                updateSearchStatus('검색 인덱스 생성 실패');
+            } finally {
+                searchState.loading = false;
+            }
+        }
+
+        async function runSearch(){
+            const input = document.getElementById('search-query');
+            const query = normalizeText(input ? input.value : '');
+            const resultsWrap = document.getElementById('search-results');
+
+            if (!query) {
+                if (resultsWrap) {
+                    resultsWrap.style.display = 'none';
+                    resultsWrap.innerHTML = '';
+                }
+                updateSearchStatus(searchState.ready ? '검색 가능' : '검색어를 입력하세요');
+                return;
+            }
+
+            if (!searchState.ready) {
+                await loadSearchIndex($('#flipbook .page').length);
+            }
+
+            if (!searchState.ready) {
+                renderSearchResults([], query);
+                return;
+            }
+
+            const normalizedQuery = query.toLowerCase();
+            const results = searchState.pages
+                .filter((item) => item.text.toLowerCase().includes(normalizedQuery))
+                .slice(0, 100)
+                .map((item) => {
+                    const lowerText = item.text.toLowerCase();
+                    const hitIndex = lowerText.indexOf(normalizedQuery);
+                    const start = Math.max(0, hitIndex - 45);
+                    const end = Math.min(item.text.length, hitIndex + query.length + 90);
+                    return {
+                        page: item.page,
+                        snippet: item.text.slice(start, end).trim() || item.text.slice(0, 120)
+                    };
+                });
+
+            updateSearchStatus(`검색 결과 \${results.length}건`);
+            renderSearchResults(results, query);
+        }
+
         function getPageByNumber(page){
             const img = document.querySelector(`#flipbook img.link_area_\${page}`);
             if (img) {
@@ -736,6 +1040,26 @@ class EbookController
             const btnPrev = document.getElementById('btn-prev');
             const btnNext = document.getElementById('btn-next');
             const btnLast = document.getElementById('btn-last');
+            const btnSearch = document.getElementById('btn-search');
+            const searchInput = document.getElementById('search-query');
+            const menuToggle = document.getElementById('menu-toggle');
+            const btnToggleSearch = document.getElementById('btn-toggle-search');
+
+            const syncPageUi = (viewOverride) => {
+                const view = Array.isArray(viewOverride) && viewOverride.length
+                    ? viewOverride.filter(Boolean)
+                    : (($('#flipbook').turn('view') || []).filter(Boolean));
+
+                if (!view.length) return;
+
+                if (pageInput) {
+                    pageInput.value = view[0];
+                }
+
+                if (pageDisplay) {
+                    pageDisplay.textContent = view[1] ? `\${view[0]}-\${view[1]}` : `\${view[0]}`;
+                }
+            };
 
             if (pageInput) {
                 pageInput.max = totalPages;
@@ -753,11 +1077,39 @@ class EbookController
                 pageInput.addEventListener('change', goToInputPage);
             }
 
-            const goTo = (p) => $('#flipbook').turn('page', Math.max(1, Math.min(totalPages, p)));
+            const goTo = (p) => {
+                const target = Math.max(1, Math.min(totalPages, p));
+                $('#flipbook').turn('page', target);
+                setTimeout(() => syncPageUi(), 0);
+            };
             if (btnFirst) btnFirst.addEventListener('click', () => goTo(1));
             if (btnLast) btnLast.addEventListener('click', () => goTo(totalPages));
             if (btnPrev) btnPrev.addEventListener('click', () => $('#flipbook').turn('previous'));
             if (btnNext) btnNext.addEventListener('click', () => $('#flipbook').turn('next'));
+            if (btnSearch) btnSearch.addEventListener('click', runSearch);
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    const isOpen = document.getElementById('viewer-panel').classList.contains('is-open');
+                    setMenuOpen(!isOpen);
+                });
+            }
+            if (btnToggleSearch) {
+                btnToggleSearch.addEventListener('click', () => {
+                    const isOpen = document.getElementById('search-panel').classList.contains('is-open');
+                    setSearchPanelOpen(!isOpen);
+                    if (!isOpen && searchInput) {
+                        setTimeout(() => searchInput.focus(), 10);
+                    }
+                });
+            }
+            if (searchInput) {
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        runSearch();
+                    }
+                });
+            }
 
             $('#flipbook').turn({
                 width,
@@ -782,13 +1134,11 @@ class EbookController
                     flipbook.style.left = '';
                     }
 
+                    syncPageUi(view);
+
                     if (view[0] && view[1]) {
-                    if (pageInput) pageInput.value = view[0];
-                    if (pageDisplay) pageDisplay.textContent = `\${view[0]}-\${view[1]}`;
                     flipbook.classList.remove('single-page');
                     } else if (view[0]) {
-                    if (pageInput) pageInput.value = view[0];
-                    if (pageDisplay) pageDisplay.textContent = `\${view[0]}`;
                     flipbook.classList.add('single-page');
                     flipbook.style.left = isNarrow() ? '' : '14%';
                     }
@@ -798,12 +1148,10 @@ class EbookController
                 }
             });
 
-            if (pageInput) pageInput.value = 1;
-            if (pageDisplay) {
-                const view = $('#flipbook').turn('view') || [];
-                if (view[0] && view[1]) pageDisplay.textContent = `\${view[0]}-\${view[1]}`;
-                else if (view[0]) pageDisplay.textContent = `\${view[0]}`;
-            }
+            syncPageUi();
+            loadSearchIndex(totalPages);
+            setSearchPanelOpen(false);
+            setMenuOpen(false);
             requestAnimationFrame(applyLinks);
 
             const reflow = () => {
@@ -822,13 +1170,17 @@ class EbookController
 
             if (!isNarrow()) {
                 let scrollDebounce = false;
-                window.addEventListener('wheel', function (e) {
-                if (scrollDebounce) return;
-                scrollDebounce = true;
-                setTimeout(() => (scrollDebounce = false), 400);
-                if (e.deltaY > 0) $('#flipbook').turn('next');
-                else $('#flipbook').turn('previous');
-                });
+                const flipbookEl = document.getElementById('flipbook');
+                if (flipbookEl) {
+                    flipbookEl.addEventListener('wheel', function (e) {
+                        if (scrollDebounce) return;
+                        scrollDebounce = true;
+                        setTimeout(() => (scrollDebounce = false), 400);
+                        e.preventDefault();
+                        if (e.deltaY > 0) $('#flipbook').turn('next');
+                        else $('#flipbook').turn('previous');
+                    }, { passive: false });
+                }
             }
         });
     </script>
@@ -837,56 +1189,6 @@ class EbookController
     HTML;
 
         return $head.$pages.$tail;
-    }
-
-    // 예: EbookController 안에 exportZip 같은 액션이 있다고 치고
-    public function exportZip(string $ebookId)
-    {
-        $uploadBase = __DIR__ . '/../../public/ebooks/';
-        $outputDir  = rtrim($uploadBase, '/').'/'.$ebookId.'/';
-
-        // 1) 페이지 수 파악 (이미 생성된 PNG 기준)
-        $files = glob($outputDir.'*.png');
-        $totalPages = count($files);
-
-        // 2) DB에서 링크 가져오기
-        $ebookModel = new EbookModel();
-        $rows = $ebookModel->getLinksByEbook($ebookId); // ebook_links 조회
-
-        $linkMap = [];
-        foreach ($rows as $r) {
-            $page = (int)$r['page'];
-            if (!isset($linkMap[$page])) $linkMap[$page] = [];
-
-            $linkMap[$page][] = [
-                'href'  => $r['target_type'] === 'url'  ? $r['target'] : null,
-                'goto'  => $r['target_type'] === 'page' ? (int)$r['target'] : null,
-                'x'     => (int)$r['x'],
-                'y'     => (int)$r['y'],
-                'w'     => (int)$r['w'],
-                'h'     => (int)$r['h'],
-                'title' => $r['title'] ?? '',
-            ];
-        }
-
-        // 3) linkMap까지 포함된 index.html 생성/덮어쓰기
-        $html = $this->buildIndexHtml($totalPages, $linkMap);
-        file_put_contents($outputDir.'index.html', $html);
-
-        // 4) ZIP 생성 (지금 upload()에서 하던 흐름 그대로)
-        $zipPath = rtrim($uploadBase, '/').'/'.$ebookId.'.zip';
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            throw new \RuntimeException('ZIP 생성 실패');
-        }
-        $files = scandir($outputDir);
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
-            $zip->addFile($outputDir.$file, $ebookId.'/'.$file);
-        }
-        $zip->close();
-
-        // 나머지: header 내보내고 다운로드 응답하는 부분은 기존 코드 재활용
     }
 
     public function download(string $ebookId)
@@ -925,13 +1227,20 @@ class EbookController
         }
 
         // 최신 index.html 재생성 (linkMap 포함)
-        $html = $this->buildIndexHtml($totalPages, $linkMap);
+        $html = $this->buildIndexHtml($totalPages, $linkMap, 'source.pdf');
         file_put_contents($ebookDir . 'index.html', $html);
 
-        // ZIP 생성
-        $zipPath = rtrim($uploadBase, '/') . '/' . $ebookId . '.zip';
+        // ZIP은 다운로드 요청 시점에만 임시 생성
+        $zipPath = tempnam(sys_get_temp_dir(), 'ebook_');
+        if ($zipPath === false) {
+            http_response_code(500);
+            echo "임시 ZIP 파일 생성 실패";
+            return;
+        }
+
         $zip = new \ZipArchive();
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            @unlink($zipPath);
             http_response_code(500);
             echo "ZIP 생성 실패";
             return;
@@ -950,6 +1259,8 @@ class EbookController
         header('Content-Length: ' . filesize($zipPath));
 
         readfile($zipPath);
+        @unlink($zipPath);
+        exit;
     }
 
     public function saveLinks(string $ebookId)

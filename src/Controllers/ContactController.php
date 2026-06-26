@@ -58,6 +58,7 @@ class ContactController
         $email   = trim((string)($_POST['email'] ?? ''));
         $phone   = trim((string)($_POST['phone'] ?? ''));
         $budget  = (int)($_POST['money'] ?? 0);
+        $dueDate = trim((string)($_POST['due_date'] ?? ''));
         $message = trim((string)($_POST['message'] ?? ''));
 
         if (
@@ -65,6 +66,7 @@ class ContactController
             $this->stringLength($name) > 80 ||
             $this->stringLength($email) > 120 ||
             $this->stringLength($phone) > 30 ||
+            $this->stringLength($dueDate) > 80 ||
             $this->stringLength($message) > 2000
         ) {
             echo json_encode(['success' => false, 'message' => '입력값을 확인해주세요.']);
@@ -78,6 +80,9 @@ class ContactController
         }
 
         if ($company && $name && filter_var($email, FILTER_VALIDATE_EMAIL) && $phone && $budget > 0 && $message) {
+            if ($dueDate !== '') {
+                $message = "[희망 완료일자] {$dueDate}\n\n{$message}";
+            }
             $contact = new Contact();
             $contact->save($company, $name, $email, $phone, $budget, $message);
             $receiverNumber = '010-4928-4236'; // 문의 접수 받을 번호

@@ -1,0 +1,54 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}포트폴리오 게시판{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">포트폴리오 게시판</h1>
+    <a href="/admin/portfolio/add" class="btn btn-primary btn-sm">게시글 등록</a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        {% if error|default(null) %}
+            <div class="alert alert-danger">
+                포트폴리오 데이터를 불러오지 못했습니다. {{ error }}
+            </div>
+        {% endif %}
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">번호</th>
+                        <th>제목</th>
+                        <th>클라이언트</th>
+                        <th>일자</th>
+                        <th>키워드</th>
+                        <th style="width:180px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for portfolio in portfolios %}
+                        <tr>
+                            <td>{{ portfolio.id }}</td>
+                            <td>{{ portfolio.title }}</td>
+                            <td>{{ portfolio.client }}</td>
+                            <td>{{ portfolio.project_date }}</td>
+                            <td>{{ portfolio.keywords }}</td>
+                            <td>
+                                <a class="btn btn-info btn-sm" href="/admin/portfolio/{{ portfolio.id }}/view">보기</a>
+                                <a class="btn btn-warning btn-sm" href="/admin/portfolio/{{ portfolio.id }}/edit">수정</a>
+                                <a class="btn btn-danger btn-sm" href="/admin/portfolio/{{ portfolio.id }}/delete" onclick="return confirm('삭제하시겠습니까?');">삭제</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">등록된 포트폴리오가 없습니다.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,12 +3,16 @@
 $router->get('/', [App\Controllers\HomeController::class, 'index']);
 $router->get('/demo', [App\Controllers\HomeController::class, 'demo']);
 $router->get('/services', [App\Controllers\HomeController::class, 'services']);
+$router->get('/about', [App\Controllers\HomeController::class, 'about']);
+$router->get('/contact', [App\Controllers\HomeController::class, 'contact']);
 $router->get('/login', [App\Controllers\AuthController::class, 'showLoginForm']);
 $router->post('/login', [App\Controllers\AuthController::class, 'login']);
 $router->get('/logout', [App\Controllers\AuthController::class, 'logout']);
 
 //portfolio
 $router->get('/portfolio', [App\Controllers\HomeController::class, 'portfolio']);
+$router->get('/portfolio/{id}', [App\Controllers\HomeController::class, 'portfolioView']);
+$router->get('/portfolio/{id}/view', [App\Controllers\HomeController::class, 'portfolioView']);
 
 // 견적 문의
 $router->post('/contact/submit', [App\Controllers\ContactController::class, 'submit']);
@@ -44,6 +48,15 @@ $router->get('/admin/project/{id}/view', [App\Controllers\ProjectController::cla
 $router->get('/admin/project/{id}/edit', [App\Controllers\ProjectController::class, 'edit']);
 $router->post('/admin/project/{id}/edit', [App\Controllers\ProjectController::class, 'edit']);
 $router->get('/admin/project/{id}/delete', [App\Controllers\ProjectController::class, 'delete']);
+
+//포트폴리오 게시판 관리
+$router->get('/admin/portfolio/list', [App\Controllers\PortfolioController::class, 'list']);
+$router->get('/admin/portfolio/add', [App\Controllers\PortfolioController::class, 'add']);
+$router->post('/admin/portfolio/add', [App\Controllers\PortfolioController::class, 'add']);
+$router->get('/admin/portfolio/{id}/view', [App\Controllers\PortfolioController::class, 'view']);
+$router->get('/admin/portfolio/{id}/edit', [App\Controllers\PortfolioController::class, 'edit']);
+$router->post('/admin/portfolio/{id}/edit', [App\Controllers\PortfolioController::class, 'edit']);
+$router->get('/admin/portfolio/{id}/delete', [App\Controllers\PortfolioController::class, 'delete']);
 
 //유튜브 쇼츠 자동화
 $router->get('/admin/shorts/list', [App\Controllers\ShortsProjectController::class, 'list']);

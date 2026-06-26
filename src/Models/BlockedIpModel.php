@@ -21,6 +21,10 @@ class BlockedIpModel
             return false;
         }
 
+        if ($this->isExceptedIp($ip)) {
+            return false;
+        }
+
         $this->cleanupExpired();
 
         $stmt = $this->db->prepare("
@@ -45,6 +49,10 @@ class BlockedIpModel
             return;
         }
 
+        if ($this->isExceptedIp($ip)) {
+            return;
+        }
+
         if ($this->isBlocked($ip)) {
             return;
         }
@@ -63,6 +71,28 @@ class BlockedIpModel
     private function cleanupExpired(): void
     {
         $this->db->exec("DELETE FROM blocked_ips WHERE blocked_until <= NOW()");
+    }
+
+    private function isExceptedIp(string $ip): bool
+    {
+        if ($ip === '') {
+            return false;
+        }
+
+        return in_array($ip, $this->getExceptedIps(), true);
+    }
+
+    private function getExceptedIps(): array
+    {
+        $raw = (string)($_ENV['BLOCK_IP_EXCEPTIONS'] ?? $_ENV['BLOCK_IP_ALLOWLIST'] ?? '');
+        if ($raw === '') {
+            return [];
+        }
+
+        $ips = array_map('trim', explode(',', $raw));
+        $ips = array_filter($ips, static fn ($candidate) => $candidate !== '');
+
+        return array_values(array_filter($ips, static fn ($candidate) => (bool)filter_var($candidate, FILTER_VALIDATE_IP)));
     }
 
     private function createTableIfNotExists(): void

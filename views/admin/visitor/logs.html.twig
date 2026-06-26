@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h3 mb-0 text-gray-800">접속 로그</h1>
-    <a href="/admin/visitor/logs{% if keyword %}?q={{ keyword|url_encode }}{% if show_all %}&show_all=1{% endif %}{% elseif show_all %}?show_all=1{% endif %}" class="btn btn-sm btn-outline-secondary">새로고침</a>
+    <a href="/admin/visitor/logs{% if keyword or show_all or show_office_ip %}?{% if keyword %}q={{ keyword|url_encode }}{% if show_all or show_office_ip %}&{% endif %}{% endif %}{% if show_all %}show_all=1{% if show_office_ip %}&{% endif %}{% endif %}{% if show_office_ip %}show_office_ip=1{% endif %}{% endif %}" class="btn btn-sm btn-outline-secondary">새로고침</a>
 </div>
 
 <form class="form-inline mb-3" method="get" action="/admin/visitor/logs">
@@ -17,15 +17,21 @@
         <input type="checkbox" class="custom-control-input" id="showAll" name="show_all" value="1" {% if show_all %}checked{% endif %}>
         <label class="custom-control-label" for="showAll">전체보기</label>
     </div>
+    <div class="custom-control custom-checkbox ml-3">
+        <input type="checkbox" class="custom-control-input" id="showOfficeIp" name="show_office_ip" value="1" {% if show_office_ip %}checked{% endif %}>
+        <label class="custom-control-label" for="showOfficeIp">사무실 IP 보기</label>
+    </div>
     {% if keyword %}
-        <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs{% if show_all %}?show_all=1{% endif %}">초기화</a>
+        <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs{% if show_all or show_office_ip %}?{% if show_all %}show_all=1{% if show_office_ip %}&{% endif %}{% endif %}{% if show_office_ip %}show_office_ip=1{% endif %}{% endif %}">초기화</a>
     {% elseif show_all %}
+        <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs{% if show_office_ip %}?show_office_ip=1{% endif %}">초기화</a>
+    {% elseif show_office_ip %}
         <a class="btn btn-sm btn-outline-secondary ml-2" href="/admin/visitor/logs">초기화</a>
     {% endif %}
 </form>
 
 
-<p class="text-muted mb-3">총 {{ total }}건 ({{ page }}/{{ total_pages }} 페이지)</p>
+<p class="text-muted mb-3">총 {{ total }}건 ({{ page }}/{{ total_pages }} 페이지) {% if not show_office_ip %}<span class="ml-2">사무실 IP {{ office_ip }} 제외</span>{% endif %}</p>
 
 <div class="card">
     <div class="card-body p-0">
@@ -45,6 +51,7 @@
                 </thead>
                 <tbody>
                     {% for log in logs %}
+                        {% if show_office_ip or (log.ip|default('')|trim != office_ip) %}
                         <tr>
                             <td>{{ log.id }}</td>
                             <td>{{ log.visited_at|date('Y-m-d H:i:s') }}</td>
@@ -57,6 +64,7 @@
                             <td class="small text-muted text-truncate" style="max-width: 260px;">{{ log.referer ?? '' }}</td>
                             <td class="small text-muted text-truncate" style="max-width: 320px;">{{ log.user_agent ?? '' }}</td>
                         </tr>
+                        {% endif %}
                     {% else %}
                         <tr>
                             <td colspan="8" class="text-center text-muted p-4">로그가 없습니다.</td>
@@ -74,19 +82,19 @@
             {% set prev = page - 1 %}
             {% set next = page + 1 %}
             <li class="page-item {{ page == 1 ? 'disabled' : '' }}">
-                <a class="page-link" href="/admin/visitor/logs?page={{ prev }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}">이전</a>
+                <a class="page-link" href="/admin/visitor/logs?page={{ prev }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}{% if show_office_ip %}&show_office_ip=1{% endif %}">이전</a>
             </li>
             {% for p in 1..total_pages %}
                 {% if p == page or (p <= 3) or (p > total_pages-3) or (p >= page-2 and p <= page+2) %}
                     <li class="page-item {{ p == page ? 'active' : '' }}">
-                        <a class="page-link" href="/admin/visitor/logs?page={{ p }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}">{{ p }}</a>
+                        <a class="page-link" href="/admin/visitor/logs?page={{ p }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}{% if show_office_ip %}&show_office_ip=1{% endif %}">{{ p }}</a>
                     </li>
                 {% elseif loop.index0 == 3 or loop.index0 == total_pages-3 %}
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
             {% endfor %}
             <li class="page-item {{ page == total_pages ? 'disabled' : '' }}">
-                <a class="page-link" href="/admin/visitor/logs?page={{ next }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}">다음</a>
+                <a class="page-link" href="/admin/visitor/logs?page={{ next }}{% if keyword %}&q={{ keyword|url_encode }}{% endif %}{% if show_all %}&show_all=1{% endif %}{% if show_office_ip %}&show_office_ip=1{% endif %}">다음</a>
             </li>
         </ul>
     </nav>

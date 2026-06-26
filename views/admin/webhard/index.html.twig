@@ -35,6 +35,65 @@
 </nav>
 
 <div class="card mb-4">
+    <div class="card-header">외부 공유 링크</div>
+    <div class="card-body">
+        <form action="/admin/webhard/share" method="POST" class="form-inline mb-3">
+            <input type="hidden" name="path" value="{{ current_path }}">
+            <label class="mr-2 mb-2">권한</label>
+            <div class="form-check mr-3 mb-2">
+                <input class="form-check-input" type="checkbox" name="can_download" id="share-can-download" checked>
+                <label class="form-check-label" for="share-can-download">다운로드</label>
+            </div>
+            <div class="form-check mr-3 mb-2">
+                <input class="form-check-input" type="checkbox" name="can_upload" id="share-can-upload">
+                <label class="form-check-label" for="share-can-upload">업로드</label>
+            </div>
+            <input type="number" name="expires_days" class="form-control mr-2 mb-2" value="7" min="0" style="width: 100px;" title="0 입력 시 만료 없음">
+            <input type="password" name="password" class="form-control mr-2 mb-2" placeholder="비밀번호 선택" autocomplete="new-password">
+            <button type="submit" class="btn btn-primary mb-2">공유 링크 생성</button>
+        </form>
+
+        {% if shares %}
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>링크</th>
+                            <th>권한</th>
+                            <th>만료일</th>
+                            <th style="width: 90px;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for share in shares %}
+                            <tr>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" value="{{ share_base_url }}/share/webhard/{{ share.token }}" readonly onclick="this.select();">
+                                </td>
+                                <td>
+                                    {{ share.can_download ? '다운로드' : '' }}{% if share.can_download and share.can_upload %}, {% endif %}{{ share.can_upload ? '업로드' : '' }}
+                                    {% if share.password_hash %}<span class="badge badge-secondary ml-1">비밀번호</span>{% endif %}
+                                </td>
+                                <td>{{ share.expires_at ?: '만료 없음' }}</td>
+                                <td>
+                                    <form action="/admin/webhard/share/revoke" method="POST" class="m-0">
+                                        <input type="hidden" name="path" value="{{ current_path }}">
+                                        <input type="hidden" name="share_id" value="{{ share.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">해제</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-muted">현재 폴더에 활성화된 공유 링크가 없습니다.</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-4">
     <div class="card-body">
         <div class="row">
             <div class="col-md-6 border-right">
@@ -47,9 +106,10 @@
             </div>
             <div class="col-md-6">
                 <h5 class="mb-3">파일 업로드</h5>
-                <form action="/admin/webhard/upload" method="POST" enctype="multipart/form-data" class="form-inline">
+                <form action="/admin/webhard/upload" method="POST" enctype="multipart/form-data" class="form-inline single-upload-form" data-chunk-url="/admin/webhard/upload-chunk">
                     <input type="hidden" name="path" value="{{ current_path }}">
-                    <input type="file" name="file" class="form-control-file mr-2 mb-2" required>
+                    <input type="file" name="file" id="single-file-input" class="form-control-file d-none" required>
+                    <button type="button" id="single-file-picker-btn" class="btn btn-outline-success mb-2 mr-2">파일 선택</button>
                     <button type="submit" class="btn btn-success mb-2">업로드</button>
                 </form>
                 <hr>
@@ -57,8 +117,9 @@
                 <form id="folder-upload-form" class="form-inline">
                     <input type="hidden" name="path" value="{{ current_path }}">
                     <input type="file" name="files[]" id="folder-upload-input" class="form-control-file mr-2 mb-2" webkitdirectory directory multiple>
+                    <button type="button" id="folder-picker-btn" class="btn btn-outline-info mb-2 mr-2" style="display: none;">폴더 선택</button>
                     <button type="submit" class="btn btn-info mb-2">폴더 통째로 업로드</button>
-                    <small class="form-text text-muted">브라우저에서 지원하는 경우 하위 폴더 구조가 유지됩니다.</small>
+                    <small class="form-text text-muted w-100">브라우저에서 지원하는 경우 하위 폴더 구조와 빈 폴더가 유지됩니다.</small>
                 </form>
             </div>
         </div>
@@ -75,7 +136,7 @@
                     <tr>
                         <th>이름</th>
                         <th>수정일</th>
-                        <th style="width: 260px;">관리</th>
+                        <th style="width: 520px;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,17 +149,18 @@
                             </td>
                             <td>{{ folder.modified }}</td>
                             <td>
-                                <div class="d-flex align-items-center">
-                                    <form class="form-inline mr-2" action="/admin/webhard/rename" method="POST">
+                                <div class="d-flex align-items-center justify-content-end flex-nowrap">
+                                    <form class="form-inline flex-nowrap mr-2" action="/admin/webhard/rename" method="POST">
                                         <input type="hidden" name="path" value="{{ current_path }}">
                                         <input type="hidden" name="old_name" value="{{ folder.name }}">
                                         <input type="text" name="new_name" value="{{ folder.name }}" class="form-control form-control-sm mr-2" style="width: 140px;">
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary">이름 변경</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">이름 변경</button>
                                     </form>
+                                    <a href="/admin/webhard/download-folder?path={{ folder.path|url_encode }}" class="btn btn-sm btn-outline-primary text-nowrap mr-2">다운로드</a>
                                     <form class="delete-form" data-name="{{ folder.name }}" action="/admin/webhard/delete" method="POST">
                                         <input type="hidden" name="path" value="{{ current_path }}">
                                         <input type="hidden" name="target_name" value="{{ folder.name }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">삭제</button>
                                     </form>
                                 </div>
                             </td>
@@ -114,52 +176,87 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">파일 ({{ file_count }}개)</div>
+<div class="card mb-5">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span>파일 ({{ file_count }}개)</span>
+        <button type="button" id="selected-download-btn" class="btn btn-sm btn-primary">선택 다운로드</button>
+    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table mb-0">
+            <table class="table mb-0" id="webhard-file-table" data-current-path="{{ current_path }}">
                 <thead class="thead-light">
                     <tr>
+                        <th style="width: 44px;"><input type="checkbox" id="select-all-files" aria-label="전체 선택"></th>
                         <th>이름</th>
+                        <th style="width: 90px;">미리보기</th>
                         <th>크기</th>
                         <th>수정일</th>
-                        <th style="width: 260px;">관리</th>
+                        <th style="width: 340px;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for file in files %}
                         <tr>
+                            <td><input type="checkbox" class="file-select" value="{{ file.name }}" aria-label="{{ file.name }} 선택"></td>
                             <td>
                                 <a href="{{ file.url }}" target="_blank">
-                                    <i class="fas fa-file-alt text-secondary mr-1"></i>{{ file.name }}
+                                    <i class="fas {{ file.is_image ? 'fa-file-image' : 'fa-file-alt' }} text-secondary mr-1"></i>{{ file.name }}
                                 </a>
+                            </td>
+                            <td>
+                                {% if file.is_image %}
+                                    <button type="button" class="btn btn-link p-0 preview-btn" data-src="{{ file.preview_url }}" data-download="{{ file.url }}" data-name="{{ file.name }}">
+                                        <img src="{{ file.preview_url }}" alt="{{ file.name }}" class="img-thumbnail" style="width: 56px; height: 56px; object-fit: cover;">
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
                             </td>
                             <td>{{ (file.size / 1024)|number_format(1, '.', ',') }} KB</td>
                             <td>{{ file.modified }}</td>
                             <td>
-                                <div class="d-flex align-items-center">
-                                    <form class="form-inline mr-2" action="/admin/webhard/rename" method="POST">
+                                <div class="d-flex align-items-center justify-content-end flex-nowrap">
+                                    <form class="form-inline flex-nowrap mr-2" action="/admin/webhard/rename" method="POST">
                                         <input type="hidden" name="path" value="{{ current_path }}">
                                         <input type="hidden" name="old_name" value="{{ file.name }}">
                                         <input type="text" name="new_name" value="{{ file.name }}" class="form-control form-control-sm mr-2" style="width: 140px;">
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary">이름 변경</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">이름 변경</button>
                                     </form>
                                     <form class="delete-form" data-name="{{ file.name }}" action="/admin/webhard/delete" method="POST">
                                         <input type="hidden" name="path" value="{{ current_path }}">
                                         <input type="hidden" name="target_name" value="{{ file.name }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">삭제</button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="4" class="text-center text-muted p-4">파일이 없습니다.</td>
+                            <td colspan="6" class="text-center text-muted p-4">파일이 없습니다.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="image-preview-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="image-preview-title">이미지 미리보기</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="닫기">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center bg-light">
+                <img id="image-preview-img" src="" alt="" class="img-fluid" style="max-height: 75vh;">
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="image-preview-download" class="btn btn-primary">다운로드</a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+            </div>
         </div>
     </div>
 </div>
@@ -177,12 +274,142 @@
         });
     });
 
+    var singleFileInput = document.getElementById('single-file-input');
+    var singleFilePickerBtn = document.getElementById('single-file-picker-btn');
+    var singleUploadForm = document.querySelector('.single-upload-form');
+    if (singleFileInput && singleFilePickerBtn) {
+        singleFilePickerBtn.addEventListener('click', function() {
+            singleFileInput.click();
+        });
+    }
+    if (singleUploadForm && singleFileInput) {
+        singleUploadForm.addEventListener('submit', function(e) {
+            var file = singleFileInput.files && singleFileInput.files[0] ? singleFileInput.files[0] : null;
+            if (!file) {
+                return;
+            }
+
+            e.preventDefault();
+            var submitBtn = singleUploadForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '업로드 중...';
+            }
+
+            uploadSingleFileInChunks(
+                singleUploadForm.dataset.chunkUrl,
+                singleUploadForm.querySelector('input[name="path"]').value || '',
+                file,
+                file.name,
+                function(done, total) {
+                    if (submitBtn) {
+                        submitBtn.textContent = '업로드 중... ' + done + '/' + total;
+                    }
+                }
+            ).then(function() {
+                alert('파일 업로드가 완료되었습니다.');
+                window.location.reload();
+            }).catch(function() {
+                alert('파일 업로드에 실패했습니다.');
+            }).finally(function() {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '업로드';
+                }
+            });
+        });
+    }
+
+    var selectAll = document.getElementById('select-all-files');
+    var selectedDownloadBtn = document.getElementById('selected-download-btn');
+    var fileTable = document.getElementById('webhard-file-table');
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.file-select').forEach(function(checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+        });
+    }
+
+    if (selectedDownloadBtn && fileTable) {
+        selectedDownloadBtn.addEventListener('click', function() {
+            var checked = Array.from(document.querySelectorAll('.file-select:checked'));
+            if (checked.length === 0) {
+                alert('다운로드할 파일을 선택해 주세요.');
+                return;
+            }
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/webhard/download-selected';
+
+            var pathInput = document.createElement('input');
+            pathInput.type = 'hidden';
+            pathInput.name = 'path';
+            pathInput.value = fileTable.dataset.currentPath || '';
+            form.appendChild(pathInput);
+
+            checked.forEach(function(checkbox) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_files[]';
+                input.value = checkbox.value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            form.remove();
+        });
+    }
+
+    document.querySelectorAll('.preview-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            var img = document.getElementById('image-preview-img');
+            var title = document.getElementById('image-preview-title');
+            var download = document.getElementById('image-preview-download');
+            if (img) {
+                img.src = button.dataset.src || '';
+                img.alt = button.dataset.name || '';
+            }
+            if (title) {
+                title.textContent = button.dataset.name || '이미지 미리보기';
+            }
+            if (download) {
+                download.href = button.dataset.download || '#';
+            }
+            if (window.jQuery) {
+                window.jQuery('#image-preview-modal').modal('show');
+            } else {
+                window.open(button.dataset.src || '', '_blank');
+            }
+        });
+    });
+
     var folderForm = document.getElementById('folder-upload-form');
     var folderInput = document.getElementById('folder-upload-input');
+    var folderPickerBtn = document.getElementById('folder-picker-btn');
+    var selectedFolderHandle = null;
     if (folderForm && folderInput) {
+        if (folderPickerBtn && window.showDirectoryPicker) {
+            folderPickerBtn.style.display = '';
+            folderInput.style.display = 'none';
+            folderPickerBtn.addEventListener('click', function() {
+                window.showDirectoryPicker()
+                    .then(function(handle) {
+                        selectedFolderHandle = handle;
+                        folderPickerBtn.textContent = handle.name;
+                    })
+                    .catch(function() {
+                        selectedFolderHandle = null;
+                    });
+            });
+        }
+
         folderForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (!folderInput.files || folderInput.files.length === 0) {
+            if (!selectedFolderHandle && (!folderInput.files || folderInput.files.length === 0)) {
                 alert('업로드할 폴더를 선택하세요.');
                 return;
             }
@@ -193,32 +420,247 @@
                 submitBtn.textContent = '업로드 중...';
             }
 
-            var formData = new FormData();
-            formData.append('path', folderForm.querySelector('input[name="path"]').value || '');
-            Array.from(folderInput.files).forEach(function(file) {
-                formData.append('files[]', file);
-                formData.append('paths[]', file.webkitRelativePath || file.name);
-            });
+            var basePath = folderForm.querySelector('input[name="path"]').value || '';
+            var collectUploadItems = selectedFolderHandle
+                ? collectFolderHandleEntries(selectedFolderHandle, selectedFolderHandle.name)
+                : Promise.resolve(collectInputFolderEntries(folderInput.files));
 
-            fetch('/admin/webhard/upload-folder', {
-                method: 'POST',
-                body: formData
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(json) {
-                alert(json.message || '완료');
-                window.location.reload();
-            })
-            .catch(function() {
-                alert('업로드에 실패했습니다.');
-            })
-            .finally(function() {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = '폴더 통째로 업로드';
-                }
+            collectUploadItems
+                .then(function(payload) {
+                    return uploadFolderBatches(basePath, payload.files, payload.directories, function(done, total) {
+                        if (submitBtn) {
+                            submitBtn.textContent = '업로드 중... ' + done + '/' + total;
+                        }
+                    });
+                })
+                .then(function(result) {
+                    alert(result.message);
+                    window.location.reload();
+                })
+                .catch(function() {
+                    alert('업로드에 실패했습니다.');
+                })
+                .finally(function() {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '폴더 통째로 업로드';
+                    }
+                });
+        });
+    }
+
+    function collectInputFolderEntries(fileList) {
+        var files = [];
+        var directories = {};
+
+        Array.from(fileList).forEach(function(file) {
+            var relativePath = file.webkitRelativePath || file.name;
+            files.push({ file: file, path: relativePath });
+
+            var parts = relativePath.split('/');
+            parts.pop();
+            var current = '';
+            parts.forEach(function(part) {
+                current = current ? current + '/' + part : part;
+                directories[current] = true;
             });
         });
+
+        return {
+            files: files,
+            directories: Object.keys(directories)
+        };
+    }
+
+    async function collectFolderHandleEntries(directoryHandle, relativePath) {
+        var payload = {
+            files: [],
+            directories: [relativePath]
+        };
+
+        await appendFolderHandleEntries(payload, directoryHandle, relativePath);
+        return payload;
+    }
+
+    async function appendFolderHandleEntries(payload, directoryHandle, relativePath) {
+        for await (var entry of directoryHandle.values()) {
+            var childPath = relativePath + '/' + entry.name;
+            if (entry.kind === 'directory') {
+                payload.directories.push(childPath);
+                await appendFolderHandleEntries(payload, entry, childPath);
+                continue;
+            }
+
+            if (entry.kind === 'file') {
+                var file = await entry.getFile();
+                payload.files.push({ file: file, path: childPath });
+            }
+        }
+    }
+
+    function uploadFolderBatches(basePath, files, directories, onProgress) {
+        var fileBatchSize = 15;
+        var fileBatchBytes = 25 * 1024 * 1024;
+        var directoryBatchSize = 200;
+        var fileBatches = makeFileBatches(files, fileBatchSize, fileBatchBytes);
+        var totalSteps = Math.ceil(directories.length / directoryBatchSize) + fileBatches.length;
+        var doneSteps = 0;
+        var uploadedFiles = 0;
+        var createdDirs = 0;
+        var chain = Promise.resolve();
+
+        for (var d = 0; d < directories.length; d += directoryBatchSize) {
+            (function(batch) {
+                chain = chain.then(function() {
+                    return uploadFolderBatch(basePath, [], batch).then(function(json) {
+                        if (!json.success) {
+                            throw new Error(json.message || 'directory batch failed');
+                        }
+                        createdDirs += Number(json.created_dirs || 0);
+                        doneSteps++;
+                        if (onProgress) {
+                            onProgress(doneSteps, totalSteps);
+                        }
+                    });
+                });
+            })(directories.slice(d, d + directoryBatchSize));
+        }
+
+        fileBatches.forEach(function(batch) {
+            (function(batch) {
+                chain = chain.then(function() {
+                    return uploadFolderFileBatch(basePath, batch).then(function(count) {
+                        uploadedFiles += count;
+                        doneSteps++;
+                        if (onProgress) {
+                            onProgress(doneSteps, totalSteps);
+                        }
+                    });
+                });
+            })(batch);
+        });
+
+        return chain.then(function() {
+            return {
+                message: uploadedFiles + '개 파일 업로드, ' + createdDirs + '개 폴더 생성 완료'
+            };
+        });
+    }
+
+    function makeFileBatches(files, maxCount, maxBytes) {
+        var batches = [];
+        var current = [];
+        var currentBytes = 0;
+
+        files.forEach(function(item) {
+            var size = item.file && item.file.size ? item.file.size : 0;
+            if (current.length > 0 && (current.length >= maxCount || currentBytes + size > maxBytes)) {
+                batches.push(current);
+                current = [];
+                currentBytes = 0;
+            }
+
+            current.push(item);
+            currentBytes += size;
+        });
+
+        if (current.length > 0) {
+            batches.push(current);
+        }
+
+        return batches;
+    }
+
+    function uploadFolderBatch(basePath, files, directories) {
+        var formData = new FormData();
+        formData.append('path', basePath);
+
+        directories.forEach(function(directory) {
+            formData.append('directories[]', directory);
+        });
+
+        files.forEach(function(item) {
+            formData.append('files[]', item.file);
+            formData.append('paths[]', item.path);
+        });
+
+        return fetch('/admin/webhard/upload-folder', {
+            method: 'POST',
+            body: formData
+        }).then(function(res) {
+            return res.json();
+        });
+    }
+
+    function uploadFolderFileBatch(basePath, files) {
+        var chunkThreshold = 25 * 1024 * 1024;
+        var normalFiles = files.filter(function(item) { return item.file.size <= chunkThreshold; });
+        var largeFiles = files.filter(function(item) { return item.file.size > chunkThreshold; });
+        var uploaded = 0;
+        var chain = Promise.resolve();
+
+        if (normalFiles.length > 0) {
+            chain = chain.then(function() {
+                return uploadFolderBatch(basePath, normalFiles, []).then(function(json) {
+                    if (!json.success) {
+                        throw new Error(json.message || 'file batch failed');
+                    }
+                    uploaded += Number(json.uploaded_files || 0);
+                });
+            });
+        }
+
+        largeFiles.forEach(function(item) {
+            chain = chain.then(function() {
+                return uploadSingleFileInChunks('/admin/webhard/upload-chunk', basePath, item.file, item.path).then(function() {
+                    uploaded++;
+                });
+            });
+        });
+
+        return chain.then(function() {
+            return uploaded;
+        });
+    }
+
+    function uploadSingleFileInChunks(url, basePath, file, relativePath, onProgress) {
+        var chunkSize = 20 * 1024 * 1024;
+        var totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
+        var uploadId = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+        var chain = Promise.resolve();
+
+        for (var i = 0; i < totalChunks; i++) {
+            (function(index) {
+                chain = chain.then(function() {
+                    var start = index * chunkSize;
+                    var end = Math.min(start + chunkSize, file.size);
+                    var formData = new FormData();
+                    formData.append('path', basePath);
+                    formData.append('upload_id', uploadId);
+                    formData.append('file_name', file.name);
+                    formData.append('relative_path', relativePath || file.name);
+                    formData.append('chunk_index', index);
+                    formData.append('total_chunks', totalChunks);
+                    formData.append('chunk', file.slice(start, end), file.name + '.part');
+
+                    return fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    }).then(function(res) {
+                        return res.json();
+                    }).then(function(json) {
+                        if (!json.success) {
+                            throw new Error(json.message || 'chunk failed');
+                        }
+                        if (onProgress) {
+                            onProgress(index + 1, totalChunks);
+                        }
+                    });
+                });
+            })(i);
+        }
+
+        return chain;
     }
 })();
 </script>

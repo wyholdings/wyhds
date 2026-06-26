@@ -96,9 +96,9 @@ class VisitorLogModel
         $blockModel->blockIfNotBlocked($ip, $blockMinutes, "Auto block: {$threshold}+ 404s in {$windowMinutes}m");
     }
 
-    public function getLogs(int $limit = 100, int $offset = 0, string $keyword = '', bool $onlyWithDuration = false): array
+    public function getLogs(int $limit = 100, int $offset = 0, string $keyword = '', bool $onlyWithDuration = false, bool $includeOfficeIp = true): array
     {
-        [$whereSql, $params] = $this->buildWhere($keyword, $onlyWithDuration);
+        [$whereSql, $params] = $this->buildWhere($keyword, $onlyWithDuration, $includeOfficeIp);
         $stmt = $this->db->prepare("
             SELECT id, path, query_string, referer, user_agent, ip, session_id, duration_seconds, status_code, visited_at
             FROM visitor_logs
@@ -115,9 +115,9 @@ class VisitorLogModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function countLogs(string $keyword = '', bool $onlyWithDuration = false): int
+    public function countLogs(string $keyword = '', bool $onlyWithDuration = false, bool $includeOfficeIp = true): int
     {
-        [$whereSql, $params] = $this->buildWhere($keyword, $onlyWithDuration);
+        [$whereSql, $params] = $this->buildWhere($keyword, $onlyWithDuration, $includeOfficeIp);
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM visitor_logs {$whereSql}");
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value, PDO::PARAM_STR);
@@ -150,13 +150,18 @@ class VisitorLogModel
         $this->ensureIndexExists('idx_ip_status_time', 'ip, status_code, visited_at');
     }
 
-    private function buildWhere(string $keyword, bool $onlyWithDuration): array
+    private function buildWhere(string $keyword, bool $onlyWithDuration, bool $includeOfficeIp): array
     {
         $conditions = [];
         $params = [];
 
         if ($onlyWithDuration) {
             $conditions[] = 'duration_seconds IS NOT NULL AND duration_seconds > 0';
+        }
+
+        if (!$includeOfficeIp) {
+            $conditions[] = "TRIM(COALESCE(ip, '')) <> :office_ip";
+            $params[':office_ip'] = '218.148.208.139';
         }
 
         $keyword = trim($keyword);

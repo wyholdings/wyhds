@@ -1,0 +1,600 @@
+{% extends 'layout/base.html.twig' %}
+{% set isMain = true %} {# 메인이랑 서브에 header 클래스명 구분하려고 #}
+
+{% block body %}
+
+
+    <!-- mainvisual // S -->
+    <div id="mainvisual">
+        <p class="v_symbol"><img src="../images/visual_symbol.png" alt="logo symbol bg"></p>
+        <p class="v_circle"><img src="../images/visual_circle.png" alt="circle bg"></p>
+        
+        <div class="swiper">
+            <!-- Additional required wrapper -->
+            <div class="swiper-wrapper">
+                <!-- Slides -->
+                <div class="swiper-slide">
+                    <div class="inner">
+                        <div class="textbox">
+                            <p class="tit">HOMEPAGE</p>
+                            <h3 class="title">
+                                대한방사선방어학회 학술행사 시스템
+                            </h3>
+                            <div class="desc">
+                                전자결제 시스템<br/>
+                                학술대회 관리 시스템<Br/>
+                                초록접수 및 관리 시스템
+                            </div>                            
+                        </div>
+                        <div class="imgbox">
+                            <p><img src="../images/visual_item01.png" alt="대한방사선방어학회 홈페이지"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">                
+                    <div class="inner">
+                        <div class="textbox">
+                            <p class="tit">DESIGN</p>
+                            <h3 class="title">
+                                대한방사선방어학회<br/>
+                                하계 워크숍 제작물 
+                            </h3>
+                            <div class="desc">
+                               키비주얼 디자인<br/>
+                               자료집, 논문집 제작<br/>
+                               현수막, X배너, 포스터 디자인
+                            </div>                            
+                        </div>
+                        <div class="imgbox">
+                            <p><img src="../images/visual_item02.png" alt="대한방사선방어학회 제작물 일체"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">                
+                    <div class="inner">
+                        <div class="textbox">
+                            <p class="tit">DESIGN</p>
+                            <h3 class="title">
+                                E-BOOK 제작<br/>
+                                카달로그, 뉴스레터
+                            </h3>
+                            <div class="desc">
+                              카달로그, 뉴스레터<BR/>
+                              책자 등 PDF기반<BR/>
+                              E-BOOK제작
+                            </div>                            
+                        </div>
+                        <div class="imgbox">
+                            <p><img src="../images/visual_item03.png" alt="이북제작"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- If we need pagination -->
+            <div class="slide-option">
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+            </div>
+        </div>
+
+        <div class="scrollDown">
+            <p>SCROLL</p>
+            <div class="barbg">
+                <div class="bar"></div>
+            </div>
+        </div>
+    </div>
+    <!-- mainvisual // E -->
+
+    <script>
+          const swiper = new Swiper('.swiper', {
+            // Optional parameters
+
+            loop: true,
+            autoplay:true,
+            slidesPerView:1,
+            delay:3000,
+            speed : 1500,
+            
+            // If we need pagination
+            pagination: {
+                el: '.swiper-pagination',
+            },
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+
+            // And if we need scrollbar
+            scrollbar: {
+                el: '.swiper-scrollbar',
+            },
+            });
+
+
+            gsap.registerPlugin(ScrollTrigger);
+
+                gsap.from(".swiper", {
+                scrollTrigger: {
+                    trigger: ".swiper",
+                    start: "top 80%",
+                    toggleActions: "play none none reverse",
+                },
+                filter: "blur(20px)",
+                opacity: 0,
+                duration: 1.4,
+                y:50,
+                ease: "power3.out",
+                });
+    </script>
+
+
+    
+    <!-- Service  // S -->
+    <div id="service">       
+        <div class="bgtext">
+		<p>
+		<span>WY</span>DESIGN & SYSTEMS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		<span>WY</span>DESIGN & SYSTEMS  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		</p> 
+	</div>
+        <div class="title">
+            <h3 data-aos="fade-up" data-aos-delay="300">SERVICE</h3>
+            <p>홈페이지 제작부터 편집 디자인까지 토탈솔루션을 제공합니다</p>
+        </div>
+        <div class="service_list" data-aos="fade-up" data-aos-duration="800" data-aos-delay="300">
+            <div class="card01">
+                <a href="/services">
+                    <span><img src="../images/s_icon01.png" alt=""></span>
+                    <div class="tbox">
+                        <p class="tit">SOLUTION</p>
+                        <h3><b>학회·협회</b> 홈페이지 제작</h3>
+                        <p class="txt">
+                            기획부터 개발까지 전문 웹사이트 구축<br/>
+                            관리자 페이지 (초록제출, 사전등록 등)<br/>
+                            학술대회 솔루션 제공
+                        </p>
+
+                    </div>
+                </a>
+            </div>
+            
+            <div class="card02">
+                <a href="/services">
+                    <span><img src="../images/s_icon02.png" alt=""></span>
+                    <div class="tbox">
+                        <p class="tit">WEBSITE</p>
+                        <h3><b>기업 기관</b> 홈페이지 제작</h3>
+                        <p class="txt">
+                           브랜드 아이덴티티를 담은 웹사이트 설계, 맞춤형 웹사이트 제작
+                        </p>
+
+                    </div>
+                </a>
+            </div>
+            
+            <div class="card03">
+                <a href="/services">
+                    <span><img src="../images/s_icon03.png" alt=""></span>
+                    <div class="tbox">
+                        <p class="tit">DESIGN</p>
+                        <h3><b>키비주얼 디자인</b>부터 인쇄까지</h3>
+                        <p class="txt">
+                          행사의 메인 키비주얼, 각종 제작물 디자인부터 최종인쇄까지 풀패키지 제작<br/>
+                            토탈 디자인 솔루션 제공
+                        </p>
+
+                    </div>
+                </a>
+            </div>
+
+            <div class="card04">
+                <a href="/services">
+                    <span><img src="../images/s_icon04.png" alt=""></span>
+                    <div class="tbox">
+                        <p class="tit">DESIGN</p>
+                        <h3><b>E-BOOK</b> 제작</h3>
+                        <p class="txt">
+                          카달로그, 뉴스레터, 책자 등<br/>
+                          PDF 기반 E-BOOK 제작
+                        </p>
+
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Service  // E -->
+  
+
+
+    <!-- portfolio   // S -->
+    <div id="portfolio">
+        <video class="bg-video" autoplay muted loop playsinline>
+            <source src="../images/portfolio_bg.mp4" type="video/mp4">
+        </video>
+
+        <div class="portfolio_inner">
+            <div class="title">
+                <h3>PORTFOLIO</h3>
+                <p>우용디앤에스와 함께라면 가능합니다</p>
+            </div>
+
+            <div class="port_list"  data-aos="fade-up" data-aos-delay="300" data-aos-duration="1000">
+                <div class="box">
+                    <a href="/portfolio">
+                        <div class="hover">
+                            <h4>대한방사선방어학회</h4>
+                            <p class="tag">#학회홈페이지 #학술대회</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images/work02.png" alt="대한방사선방어학회">
+                        </div>
+                        <span class="arrow"><img src="../images/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="/portfolio">
+                        <div class="hover">
+                            <h4>온자박푸드몰</h4>
+                            <p class="tag">#쇼핑몰 #회사홈페이지</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images/work03.png" alt="온자박푸드몰">
+                        </div>
+                        <span class="arrow"><img src="../images/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="/portfolio">
+                        <div class="hover">
+                            <h4>2025 개발협력주간</h4>
+                            <p class="tag">#행사홈페이지 #등록시스템</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images/work04.png" alt="개발협력주간">
+                        </div>
+                        <span class="arrow"><img src="../images/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="/portfolio">
+                        <div class="hover">
+                            <h4>글로벌평생학습 리더십 컨퍼런스</h4>
+                            <p class="tag">#행사홈페이지 #컨퍼런스 #등록시스템</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images/work05.png" alt="GLLC">
+                        </div>
+                        <span class="arrow"><img src="../images/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="/portfolio">
+                        <div class="hover">
+                            <h4>사기방지 국제 컨퍼런스</h4>
+                            <p class="tag">#국제학술행사 #컨퍼런스 #등록시스템</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images/work06.png" alt="GLLC">
+                        </div>
+                        <span class="arrow"><img src="../images/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+                <div class="box">
+                    <a href="/portfolio">
+                        <div class="hover">
+                            <h4>(주)시온텍</h4>
+                            <p class="tag">#기업홈페이지 #반응형 #제품소개</p>
+                        </div>
+                        <div class="inner">
+                            <img src="../images/work01.png" alt="시온텍">
+                        </div>
+                        <span class="arrow"><img src="../images/arrow_white.png" alt=""></span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="btnbox">
+                <a href="/portfolio">VIEW MORE</a>
+            </div>
+        </div>
+    </div>
+    <!-- portfolio   // E -->
+
+
+
+    <!-- benefit   // S -->
+    <div class="" id="benefit">
+        <div class="title">
+            <h3>OUR BENEFIT</h3>
+            <p>최고의 기술력을 바탕으로 솔루션을 제공합니다</p>
+        </div>
+
+        <div class="swiper-container" >
+            <div class="swiper-wrapper"  >
+                <div class="swiper-slide" >
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">01</p>
+                            <p class="icon"><img src="../images/benefit01.png" alt=""></p>
+                            <h4>반응형 웹 구현</h4>
+                            <h5>PC·태블릿·모바일 최적화 지원</h5>
+                        </div>
+                    </div>
+                </div> 
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">02</p>
+                            <p class="icon"><img src="../images/benefit02.png" alt=""></p>
+                            <h4>관리자 페이지 제공</h4>
+                            <h5>직관적인 CMS 관리 기능</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">03</p>
+                            <p class="icon"><img src="../images/benefit03.png" alt=""></p>
+                            <h4>데이터 백업 지원</h4>
+                            <h5>정기 백업 시스템 무상 제공</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">04</p>
+                            <p class="icon"><img src="../images/benefit04.png" alt=""></p>
+                            <h4>안정적인 서버 운영</h4>
+                            <h5>24시간 모니터링 환경</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">05</p>
+                            <p class="icon"><img src="../images/benefit05.png" alt=""></p>
+                            <h4>트래픽/디비 용량 세팅</h4>
+                            <h5>트레픽/디비 무제한 제공</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">06</p>
+                            <p class="icon"><img src="../images/benefit06.png" alt=""></p>
+                            <h4>검색엔진 최적화(SEO)</h4>
+                            <h5>네이버·구글 노출 최적화</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">07</p>
+                            <p class="icon"><img src="../images/benefit07.png" alt=""></p>
+                            <h4>성능 최적화 설계</h4>
+                            <h5>빠르고 가벼운 웹사이트 구축</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">08</p>
+                            <p class="icon"><img src="../images/benefit08.png" alt=""></p>
+                            <h4>프로젝트 100% 내부 진행</h4>
+                            <h5>외주 없이 전 과정 자체 제작</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">09</p>
+                            <p class="icon"><img src="../images/benefit09.png" alt=""></p>
+                            <h4>체계적인 일정 관리</h4>
+                            <h5>기획 → 디자인 → 개발 원스톱</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">10</p>
+                            <p class="icon"><img src="../images/benefit10.png" alt=""></p>
+                            <h4>고객 맞춤 커스터마이징</h4>
+                            <h5>기성 템플릿이 아닌 맞춤 제작</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">11</p>
+                            <p class="icon"><img src="../images/benefit11.png" alt=""></p>
+                            <h4>안정적인 유지보수 지원</h4>
+                            <h5>프로젝트 이후 지속 관리</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="card">
+                        <div class="tbox">
+                            <p class="num">12</p>
+                            <p class="icon"><img src="../images/benefit12.png" alt=""></p>
+                            <h4>서버 보안 강화</h4>
+                            <h5>보안 취약점 사전 차단</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 스크롤바 -->
+            <div class="swiper-scrollbar"></div>
+        </div>
+    </div>    
+    <!-- benefit   // E -->
+
+    <script>
+        new Swiper('.swiper-container', {
+
+        slidesPerView : 6,
+        spaceBetween : 30,
+        slidesPerGroup : 1,
+        loop:true,
+        autoplay:true,
+        centeredSlides: true,
+        // 스크롤바 설정하기
+        scrollbar : {
+            el : '.swiper-scrollbar',
+            draggable: true,
+        },
+        breakpoints:{
+            0 : {
+                slidesPerView : 2,
+                spaceBetween : 15
+            },
+            768 : {
+                slidesPerView : 3,
+                spaceBetween : 15
+            },
+            1024 : {
+            slidesPerView : 4
+            },
+            1280 : {
+            slidesPerView : 5
+            },
+            1800 : {
+            slidesPerView : 6
+            }
+        }
+    });
+    </script>
+
+
+   
+    <!-- PARTNER   // S -->
+    <div id="partner">
+        <div class="title">
+            <h3>OUR PRTNERS</h3>
+            <p>우용디앤에스와 함께 해주시는 고객사</p>
+        </div>
+
+        <div class="gra_box">
+            <div class="partner_wrap partner_wrap1">
+                <ul class="partner_list partner_list1">
+                    <li><img src="../images/partner02.png" alt=""></li>
+                    <li><img src="../images/partner03.png" alt=""></li>
+                    <li><img src="../images/partner04.png" alt=""></li>
+                    <li><img src="../images/partner05.png" alt=""></li>
+                    <li><img src="../images/partner06.png" alt=""></li>
+                    <li><img src="../images/partner14.png" alt=""></li>
+                    <li><img src="../images/partner15.png" alt=""></li>
+                </ul>
+            </div>
+            
+            <div class="partner_wrap partner_wrap2">
+                <ul class="partner_list partner_list2">
+                    <li><img src="../images/partner07.png" alt=""></li>
+                    <li><img src="../images/partner08.png" alt=""></li>
+                    <li><img src="../images/partner09.png" alt=""></li>
+                    <li><img src="../images/partner10.png" alt=""></li>
+                    <li><img src="../images/partner11.png" alt=""></li>
+                    <li><img src="../images/partner12.png" alt=""></li>
+                    <li><img src="../images/partner13.png" alt=""></li>
+                    <li><img src="../images/partner16.png" alt=""></li>
+                    <li><img src="../images/partner17.png" alt=""></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        $(window).on('load', function () {
+            setFlowBanner('.partner_wrap1', '.partner_list1', 60, 'flowRolling');
+            setFlowBanner('.partner_wrap2', '.partner_list2', 60, 'flowRolling2');
+        });
+
+        function setFlowBanner(wrapSelector, listSelector, speed, animationName) {
+        const $wrap = $(wrapSelector);
+        let $list = $(listSelector);
+        let $clone = $list.clone();
+        let wrapWidth = '';
+        let listWidth = '';
+
+        $wrap.append($clone);
+        initBanner();
+
+
+        let oldWChk = getDeviceType();
+        $(window).on('resize', function () {
+            let newWChk = getDeviceType();
+            if (newWChk !== oldWChk) {
+                oldWChk = newWChk;
+                initBanner();
+            }
+        });
+
+
+        function initBanner() {
+            if (wrapWidth !== '') {
+                $wrap.find(listSelector).css('animation', 'none');
+                $wrap.find(listSelector).slice(2).remove();
+            }
+            wrapWidth = $wrap.width();
+            listWidth = $list.width();
+
+            if (listWidth < wrapWidth) {
+                const listCount = Math.ceil(wrapWidth * 2 / listWidth);
+                for (let i = 2; i < listCount; i++) {
+                    let $cloned = $clone.clone();
+                    $wrap.append($cloned);
+                }
+            }
+
+            $wrap.find(listSelector).css({
+                'animation': `${listWidth / speed}s linear infinite ${animationName}`
+            });
+        }
+
+
+        $wrap
+            .on('mouseleave', function () {
+                $wrap.find(listSelector).css('animation-play-state', 'running');
+            });
+        }
+
+
+        function getDeviceType() {
+            const w = window.innerWidth;
+            if (w > 1501) return 'pc';
+            else if (w > 681) return 'ta';
+            else return 'mo';
+        }
+
+    </script>
+    <!-- PARTNER   // E -->
+
+    {% include 'partials/_contact.html.twig' %}
+
+
+
+
+
+{% endblock %}

@@ -4,6 +4,12 @@
 <h1>eBook 목록</h1>
 <p class="text-muted mb-3">총 {{ total|default(0) }}건 ({{ page|default(1) }}/{{ total_pages|default(1) }} 페이지)</p>
 
+{% if flash %}
+    <div class="alert alert-{{ flash.error ? 'danger' : 'success' }}">
+        {{ flash.message }}
+    </div>
+{% endif %}
+
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -71,9 +77,10 @@
 <hr>
 
 <h3>새 eBook 업로드</h3>
+<p class="text-muted">업로드한 원본 PDF는 eBook 폴더에 함께 저장되며, 뷰어 검색은 이 원본 PDF 텍스트를 기준으로 동작합니다.</p>
 <form method="POST" enctype="multipart/form-data" action="/admin/ebook/upload">
     <label>eBook PDF 파일 업로드:</label><br>
     <input type="file" name="pdf" accept="application/pdf" required>
-    <button class="btn btn-primary mt-2" type="submit">변환 및 다운로드</button>
+    <button class="btn btn-primary mt-2" type="submit">변환</button>
 </form>
 {% endblock %}

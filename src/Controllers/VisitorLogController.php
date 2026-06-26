@@ -41,6 +41,7 @@ class VisitorLogController
         $page = max(1, (int)($_GET['page'] ?? 1));
         $keyword = trim((string)($_GET['q'] ?? ''));
         $showAll = (string)($_GET['show_all'] ?? '') === '1';
+        $showOfficeIp = (string)($_GET['show_office_ip'] ?? '') === '1';
         if ($showAll) {
             $onlyWithDuration = false;
         } elseif (array_key_exists('real_only', $_GET)) {
@@ -52,8 +53,8 @@ class VisitorLogController
         }
         $perPage = 50;
         $offset = ($page - 1) * $perPage;
-        $logs = $this->logModel->getLogs($perPage, $offset, $keyword, $onlyWithDuration);
-        $total = $this->logModel->countLogs($keyword, $onlyWithDuration);
+        $logs = $this->logModel->getLogs($perPage, $offset, $keyword, $onlyWithDuration, $showOfficeIp);
+        $total = $this->logModel->countLogs($keyword, $onlyWithDuration, $showOfficeIp);
         $totalPages = max(1, (int)ceil($total / $perPage));
 
         echo $this->twig->render('admin/visitor/logs.html.twig', [
@@ -66,6 +67,8 @@ class VisitorLogController
             'keyword'     => $keyword,
             'only_with_duration' => $onlyWithDuration,
             'show_all'    => !$onlyWithDuration,
+            'show_office_ip' => $showOfficeIp,
+            'office_ip'   => '218.148.208.139',
         ]);
     }
 }

@@ -7,10 +7,12 @@
     <thead>
         <tr>
             <th>ID</th>
-            <th>상호</th>
+            <th>기관명/학회명/회사명</th>
             <th>성함</th>
             <th>이메일</th>
             <th>전화번호</th>
+            <th>예산</th>
+            <th>문의내용</th>
             <th>등록일</th>
             <th>관리</th>
         </tr>
@@ -23,6 +25,16 @@
             <td>{{ inquiry.name }}</td>
             <td>{{ inquiry.email }}</td>
             <td>{{ inquiry.phone }}</td>
+            <td>
+                {% if inquiry.budget %}
+                    {{ inquiry.budget|number_format }}만원
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td style="max-width: 320px;">
+                {{ inquiry.message|striptags|slice(0, 80) }}{% if inquiry.message|length > 80 %}...{% endif %}
+            </td>
             <td>{{ inquiry.created_at|date('Y-m-d') }}</td>
             <td>
                 <a href="/admin/inquiry/{{ inquiry.id }}/view" class="btn btn-sm btn-info">보기</a>
@@ -30,7 +42,7 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="7">등록된 문의가 없습니다.</td></tr>
+        <tr><td colspan="9">등록된 문의가 없습니다.</td></tr>
         {% endfor %}
     </tbody>
 </table>

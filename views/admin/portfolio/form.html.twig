@@ -1,0 +1,77 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% set is_edit = mode == 'edit' %}
+
+{% block title %}포트폴리오 {{ is_edit ? '수정' : '등록' }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4 text-gray-800">포트폴리오 {{ is_edit ? '수정' : '등록' }}</h1>
+
+{% if upload_errors|default([])|length > 0 %}
+    <div class="alert alert-danger">
+        {% for error in upload_errors %}
+            <div>{{ error }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" action="{{ is_edit ? '/admin/portfolio/' ~ portfolio.id ~ '/edit' : '/admin/portfolio/add' }}">
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="form-group">
+                <label for="title">제목</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ portfolio.title|default('') }}" required>
+            </div>
+            <div class="form-group">
+                <label for="subtitle">부제목</label>
+                <input type="text" class="form-control" id="subtitle" name="subtitle" value="{{ portfolio.subtitle|default('') }}">
+            </div>
+            <div class="form-group">
+                <label for="description">설명</label>
+                <textarea class="form-control" id="description" name="description" rows="8">{{ portfolio.description|default('') }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="site_link">사이트 링크</label>
+                <input type="url" class="form-control" id="site_link" name="site_link" value="{{ portfolio.site_link|default('') }}" placeholder="https://example.com">
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="client">클라이언트</label>
+                    <input type="text" class="form-control" id="client" name="client" value="{{ portfolio.client|default('') }}">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="project_date">일자</label>
+                    <input type="date" class="form-control" id="project_date" name="project_date" value="{{ portfolio.project_date|default('') }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="keywords">키워드</label>
+                <input type="text" class="form-control" id="keywords" name="keywords" value="{{ portfolio.keywords|default('') }}" placeholder="기업, 반응형, 홈페이지">
+            </div>
+            <div class="form-group">
+                <label for="thumbnail_image">썸네일 이미지</label>
+                <input type="file" class="form-control-file" id="thumbnail_image" name="thumbnail_image" accept="image/*">
+                {% if portfolio.thumbnail_image|default('') %}
+                    <div class="mt-3">
+                        <img src="{{ portfolio.thumbnail_image }}" alt="" style="max-width:320px; height:auto;">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="body_image">body 이미지</label>
+                <input type="file" class="form-control-file" id="body_image" name="body_image" accept="image/*">
+                {% if portfolio.body_image|default('') %}
+                    <div class="mt-3">
+                        <img src="{{ portfolio.body_image }}" alt="" style="max-width:320px; height:auto;">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <button type="submit" class="btn btn-primary">{{ is_edit ? '수정' : '등록' }}</button>
+        <a href="/admin/portfolio/list" class="btn btn-secondary">목록</a>
+    </div>
+</form>
+{% endblock %}

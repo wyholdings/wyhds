@@ -1,0 +1,76 @@
+{% extends 'layout/base.html.twig' %}
+
+{% block body %}
+<div id="wrap" >
+
+
+    <section class="subcon about">
+        {# <p class="bgtxt"><span>WY</span>D&S</p>
+        <div class="title">
+            <h3>
+                <span>INTRODUCTION</span>
+                회사소개
+            </h3>
+        </div> #}
+
+        <div class="greet_wrap">
+            <video class="bg-video" autoplay muted loop playsinline>
+                <source src="../images/about2.mp4" type="video/mp4">
+            </video>
+            <div class="greet">
+                <h4 data-aos="fade-up" data-aos-duration="2000">
+                    우용디앤에스는<br/>
+                    <b>기획부터 개발, 디자인, 운영</b>까지<br/>
+                    완성도 높은 디지털 서비스를 제공합니다.
+                </h4>
+
+                <p>
+                우용디앤에스는 웹 시스템 개발과 디자인을 전문으로 하는 기업입니다.
+                </p>
+                <p> 
+                다년간의 경험을 바탕으로 학회 및 협회 홈페이지 구축 분야에 특화된 서비스를<br/>
+                제공하고 있으며, 기관 운영에 필요한 다양한 기능과 안정적인 시스템을 설계합니다.
+                </p>
+                <p>
+                또한 웹사이트뿐만 아니라,<br/>
+                브랜드 아이덴티티를 반영한 웹 디자인 및 각종 제작물 디자인을 통해<br/>
+                기관과 기업의 가치를 효과적으로 전달합니다.
+                </p>
+            </div>
+        </div>
+
+        <div class="gayo">
+            <div >
+                <p class="icon"><img src="../images/about01.png" alt="" data-aos="flip-left" data-aos-duration="600" data-aos-delay="300"></p>
+                <h5>COMPANY</h5>
+                <h6>우용디앤에스<Br/>WY D&S</h6>
+            </div>
+            <div>
+                <p class="icon"><img src="../images/about02.png" alt=""data-aos="flip-left" data-aos-duration="600" data-aos-delay="600"></p>
+                <h5>CEO</h5>
+                <h6>최우용</h6>
+            </div>
+            <div>
+                <p class="icon"><img src="../images/about03.png" alt=""data-aos="flip-left" data-aos-duration="600" data-aos-delay="900"></p>
+                <h5>BUSINESS AREA</h5>
+                <h6>웹사이트 제작, 모바일/앱 제작,<br/>
+                웹/편집 디자인, E-Book 제작</h6>
+            </div>
+            <div>
+                <p class="icon"><img src="../images/about04.png" alt=""data-aos="flip-left" data-aos-duration="600" data-aos-delay="1200"></p>
+                <h5>ADDRESS</h5>
+                <h6>경기도 고양시 일산동구 장백로 26, 103동 203호</h6>
+            </div>
+            <div>
+                <p class="icon"><img src="../images/about05.png" alt=""data-aos="flip-left" data-aos-duration="600" data-aos-delay="1500"></p>
+                <h5>EMAIL</h5>
+                <h6>help@wyhds.com</h6>
+            </div>
+        </div>
+
+    </section>
+
+    {# {% include 'partials/_contact.html.twig' %} #}
+</div>
+
+{% endblock %}

@@ -4,7 +4,7 @@
 <h1>업체 정보</h1>
 
 <div class="form-group">
-    <label><strong>상호:</strong></label>
+    <label><strong>기관명/학회명/회사명:</strong></label>
     <p class="form-control-plaintext">{{ inquiry.company }}</p>
 </div>
 
@@ -25,7 +25,13 @@
 
 <div class="form-group">
     <label><strong>예산:</strong></label>
-    <p class="form-control-plaintext">{{ inquiry.budget }}</p>
+    <p class="form-control-plaintext">
+        {% if inquiry.budget %}
+            {{ inquiry.budget|number_format }}만원
+        {% else %}
+            -
+        {% endif %}
+    </p>
 </div>
 
 <div class="form-group">

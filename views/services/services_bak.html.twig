@@ -1,0 +1,212 @@
+{% extends 'layout/base.html.twig' %}
+
+{% block body %}
+<div id="wrap" class="services-page">
+    <section class="services-hero reveal">
+        <div class="site-container">
+            <p class="section-eyebrow">Service Guide</p>
+            <h1>서비스 & 가격 안내</h1>
+            <p class="hero-sub">기본 기준 가격을 공개하고, 범위와 옵션에 따라 변동됩니다.</p>
+        </div>
+    </section>
+
+    <section class="section services-tabs reveal">
+        <div class="site-container">
+            <div class="tabs-header">
+                <button class="tab-btn is-active" data-tab="web">홈페이지 제작</button>
+                <button class="tab-btn" data-tab="design">디자인 단독</button>
+                <button class="tab-btn" data-tab="hosting">호스팅 & 도메인</button>
+                <button class="tab-btn" data-tab="maintenance">유지보수</button>
+                <button class="tab-btn" data-tab="options">추가 옵션</button>
+            </div>
+
+            <div class="tab-panel is-active" id="tab-web">
+                <div class="section-heading">
+                    <h2 class="section-title">홈페이지 제작 비용</h2>
+                    <p class="section-desc">기본형부터 시스템형까지, 예산 가이드 기준으로 안내합니다.</p>
+                </div>
+                <div class="grid-12 card-grid">
+                    <article class="wire-card span-4">
+                        <h3>기본형 웹사이트</h3>
+                        <p class="price">₩1,500,000 ~</p>
+                        <ul class="list">
+                            <li>5페이지 내외</li>
+                            <li>모바일 반응형 디자인</li>
+                            <li>기본 SEO</li>
+                            <li>문의 폼</li>
+                            <li>관리자 페이지(기본)</li>
+                            <li>DB 무제한</li>
+                        </ul>
+                    </article>
+                    <article class="wire-card span-4">
+                        <h3>기업 · 학회 홈페이지</h3>
+                        <p class="price">₩3,000,000 ~</p>
+                        <ul class="list">
+                            <li>페이지 확장</li>
+                            <li>모바일 반응형 디자인</li>
+                            <li>콘텐츠 구조 기획</li>
+                            <li>관리자 시스템</li>
+                            <li>다국어 가능</li>
+                            <li>유지보수 고려 구조</li>
+                            <li>DB 무제한</li>
+                        </ul>
+                    </article>
+                    <article class="wire-card span-4">
+                        <h3>맞춤 개발 / 시스템형</h3>
+                        <p class="price">₩6,000,000 ~</p>
+                        <ul class="list">
+                            <li>모바일 반응형 디자인</li>
+                            <li>관리자 기능 확장</li>
+                            <li>데이터 관리</li>
+                            <li>로그인/권한</li>
+                            <li>API 연동</li>
+                            <li>DB 무제한</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+
+            <div class="tab-panel" id="tab-design">
+                <div class="section-heading">
+                    <h2 class="section-title">디자인 단독 비용</h2>
+                    <p class="section-desc">개발 전달용 디자인까지 포함한 기준입니다.</p>
+                </div>
+                <div class="grid-12 card-grid">
+                    <article class="wire-card span-6">
+                        <h3>웹/UI 디자인</h3>
+                        <p class="price">₩1,000,000 ~</p>
+                        <ul class="list">
+                            <li>메인/서브 시안</li>
+                            <li>반응형 고려</li>
+                            <li>개발 전달용 디자인</li>
+                        </ul>
+                    </article>
+                    <article class="wire-card span-6">
+                        <h3>인쇄물 디자인</h3>
+                        <ul class="list">
+                            <li>브로슈어 / 리플렛: ₩300,000 ~</li>
+                            <li>포스터 / 배너: ₩200,000 ~</li>
+                            <li>CI/BI: 별도 협의</li>
+                        </ul>
+                        <p class="note">인쇄비 제외 / 디자인 비용 기준</p>
+                    </article>
+                </div>
+            </div>
+
+            <div class="tab-panel" id="tab-hosting">
+                <div class="section-heading">
+                    <h2 class="section-title">호스팅 & 도메인</h2>
+                    <p class="section-desc">고객 대신 안정적으로 관리하는 것이 핵심입니다.</p>
+                </div>
+                <div class="grid-12 card-grid">
+                    <article class="wire-card span-6">
+                        <h3>호스팅</h3>
+                        <ul class="list">
+                            <li>월 서버 관리: ₩50,000 ~</li>
+                        </ul>
+                    </article>
+                    <article class="wire-card span-6">
+                        <h3>도메인</h3>
+                        <ul class="list">
+                            <li>설치비 및 구매 대행 ₩100,000 ~ </li>
+                            <li>.com .co.kr .net 등</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+
+            <div class="tab-panel" id="tab-maintenance">
+                <div class="section-heading">
+                    <h2 class="section-title">유지보수 비용</h2>
+                    <p class="section-desc">운영 안정성을 위한 핵심 파트입니다.</p>
+                </div>
+                <div class="grid-12 card-grid">
+                    <article class="wire-card span-6">
+                        <h3>기본 유지보수</h3>
+                        <p class="price">₩50,000 / 월</p>
+                        <ul class="list">
+                            <li>오류 대응</li>
+                            <li>간단 수정</li>
+                            <li>실시간 자동 서버 모니터링</li>
+                            <li>DB 자동 데일리 백업</li>
+                        </ul>
+                    </article>
+                    <article class="wire-card span-6">
+                        <h3>확장 유지보수</h3>
+                        <p class="price">₩100,000 ~ / 월</p>
+                        <ul class="list">
+                            <li>기능 개선</li>
+                            <li>콘텐츠 수정</li>
+                            <li>운영 지원</li>
+                            <li>실시간 자동 서버 모니터링</li>
+                            <li>DB 자동 데일리 백업</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+
+            <div class="tab-panel" id="tab-options">
+                <div class="section-heading">
+                    <h2 class="section-title">추가 옵션</h2>
+                    <p class="section-desc">업셀링이 가능한 항목 안내입니다.</p>
+                </div>
+                <div class="grid-12 card-grid">
+                    <article class="wire-card span-4">
+                        <h3>PG 결제</h3>
+                        <p class="price">+ ₩1,000,000 ~</p>
+                    </article>
+                    <article class="wire-card span-4">
+                        <h3>이메일 발송 / 카카오톡 메세지</h3>
+                        <p class="price">+ ₩400,000 ~</p>
+                    </article>
+                    <article class="wire-card span-4">
+                        <h3>다국어</h3>
+                        <p class="price">+ ₩500,000 ~</p>
+                    </article>
+                    <article class="wire-card span-4">
+                        <h3>관리자 고도화</h3>
+                        <p class="price">+ ₩1,000,000 ~</p>
+                    </article>
+                    <article class="wire-card span-4">
+                        <h3>SEO 세팅</h3>
+                        <p class="price">+ ₩300,000 ~</p>
+                    </article>
+                </div>
+            </div>
+
+            <div class="services-notice">
+                <p>모든 비용은 프로젝트 범위와 난이도에 따라 달라질 수 있으며 위 금액은 참고용 기준입니다.</p>
+                <p>예산과 일정에 맞춘 합리적인 제안을 드립니다.</p>
+            </div>
+        </div>
+    </section>
+
+    {% include 'partials/_contact.html.twig' %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.services-tabs .tab-btn');
+        const panels = document.querySelectorAll('.services-tabs .tab-panel');
+
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const target = button.getAttribute('data-tab');
+
+                buttons.forEach(function (btn) {
+                    btn.classList.remove('is-active');
+                });
+                panels.forEach(function (panel) {
+                    panel.classList.remove('is-active');
+                });
+
+                button.classList.add('is-active');
+                const panel = document.getElementById('tab-' + target);
+                if (panel) {
+                    panel.classList.add('is-active');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

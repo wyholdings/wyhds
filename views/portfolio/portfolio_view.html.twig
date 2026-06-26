@@ -1,0 +1,128 @@
+{% extends 'layout/base.html.twig' %}
+
+{% block body %}
+<div id="wrap" >
+
+    <section class="subcon port port2">
+
+        <p class="bgtxt"><span>WY</span>D&S</p>
+        <div class="title">
+            <h3>
+                <span>PORTFOLIO</span>
+                포트폴리오
+            </h3>
+        </div>
+
+        <div class="subtab">
+            <div class="tabs">
+            </div>
+        </div>
+
+        <div class="port_view" data-aos="fade-up" data-aos-duration="2000">
+            <div class="boardcont">
+                {% if portfolio|default(null) %}
+                <div class="desc">
+                    <h4>{{ portfolio.title }}</h4>
+                    <div class="text">
+                        {% if portfolio.subtitle %}
+                            <strong>{{ portfolio.subtitle }}</strong><br/><br/>
+                        {% endif %}
+                        {{ portfolio.description|nl2br }}
+                    </div>
+                    <div class="btnbox">
+                        <a href="/contact" class="solid_btn">견적 문의하기</a>
+                        {% if portfolio.site_link %}
+                            <a href="{{ portfolio.site_link }}" class="line_btn" target="_blank">사이트 바로가기</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div>
+                        <h5>CLIENT</h5>
+                        <p>{{ portfolio.client }}</p>
+                    </div>
+                    <div>
+                        <h5>DATE</h5>
+                        <p>{{ portfolio.project_date }}</p>
+                    </div>
+                    <div>
+                        <h5>KEYWORD</h5>
+                        <p>{{ portfolio.keywords }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="desc">
+                    <h4>SMC 공압 전문 특약점 (주)시온텍</h4>
+                    <div class="text">
+                        <!-- 작성한 설명글이 들어가는 자리 -->
+                        시온텍 웹사이트를 이렇게 하였다. (주)시온텍은 국내외 고객사에 내수는 물론 수출입을 통한 종합 솔루션을 제공하며, 특히 일본과 중국·대만의 파트너사와 긴밀한 협력 체계를 구축해 고객이 요청하는 제품을 가장 빠르고 안정적으로 조달할 수 있는 시스템을 운영하고 있습니다.<br/><br/>
+                        그러한 기업 특성에 맞게 브랜드 아이덴티티를 갖춘 돋보적인 웹사이트를 제작하였다.
+                    </div>
+                    <div class="btnbox">
+                        <a href="/contact" class="solid_btn">견적 문의하기</a>
+                        <a href="" class="line_btn" target="_blank">사이트 바로가기</a>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div>
+                        <h5>CLIENT</h5>
+                        <p>(주)시온텍</p>
+                    </div>
+                    <div>
+                        <h5>DATE</h5>
+                        <p>2026-04-01</p>
+                    </div>
+                    <div>
+                        <h5>KEYWORD</h5>
+                        <p>기업, 기술, 깔끔한, 반응형, 기술</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="imgcont">
+
+                <!--사진 첨부하면 이렇게-->
+                <p class="img">
+                    <img src="{{ portfolio.body_image}}" alt="">
+                </p>
+
+            </div>
+
+        </div>
+    </section>
+
+    {# {% include 'partials/_contact.html.twig' %} #}
+
+
+
+
+<script>
+    const cursor = document.getElementById('custom-cursor');
+    let mx = 0, my = 0, cx = 0, cy = 0;
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    (function animate() {
+    cx = lerp(cx, mx, 0.12);
+    cy = lerp(cy, my, 0.12);
+    cursor.style.left = cx + 'px';
+    cursor.style.top  = cy + 'px';
+    requestAnimationFrame(animate);
+    })();
+
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+    document.querySelectorAll('.port_list .box a').forEach(card => {
+    card.addEventListener('mouseenter', () => cursor.classList.add('visible'));
+    card.addEventListener('mouseleave', () => cursor.classList.remove('visible'));
+    });
+
+
+    
+</script>
+  
+</div>
+{% endblock %}
