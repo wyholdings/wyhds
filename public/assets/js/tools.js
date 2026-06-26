@@ -1,8 +1,132 @@
 (function () {
+    const root = document.querySelector('.wy-tools');
     const page = document.querySelector('.tool-detail-page');
-    if (!page) {
-        return;
+    const storageKeys = {
+        favorites: 'wy_tools_favorites',
+        recent: 'wy_tools_recent',
+        theme: 'wy_tools_theme'
+    };
+
+    function readJson(key, fallback) {
+        try {
+            return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+        } catch (error) {
+            return fallback;
+        }
     }
+
+    function writeJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function toolIndex() {
+        if (!root) return [];
+        try {
+            return JSON.parse(root.dataset.toolsIndex || '[]');
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function applyTheme() {
+        if (!root) return;
+        root.classList.toggle('is-dark', localStorage.getItem(storageKeys.theme) === 'dark');
+    }
+
+    function initTheme() {
+        applyTheme();
+        document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const next = localStorage.getItem(storageKeys.theme) === 'dark' ? 'light' : 'dark';
+                localStorage.setItem(storageKeys.theme, next);
+                applyTheme();
+            });
+        });
+    }
+
+    function initSearch() {
+        const input = document.querySelector('[data-tool-search]');
+        const suggestions = document.querySelector('[data-search-suggestions]');
+        if (!input || !suggestions) return;
+        const index = toolIndex();
+
+        input.addEventListener('input', function () {
+            const query = input.value.trim().toLowerCase();
+            suggestions.textContent = '';
+            if (!query) {
+                suggestions.classList.remove('is-open');
+                return;
+            }
+            const matches = index.filter(function (item) {
+                return [item.name, item.category, item.summary, item.keywords].join(' ').toLowerCase().includes(query);
+            }).slice(0, 8);
+
+            matches.forEach(function (item) {
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.textContent = item.name;
+                const desc = document.createElement('span');
+                desc.textContent = item.summary;
+                link.appendChild(desc);
+                suggestions.appendChild(link);
+            });
+            suggestions.classList.toggle('is-open', matches.length > 0);
+        });
+    }
+
+    function initFavorites() {
+        const favorites = readJson(storageKeys.favorites, []);
+        document.querySelectorAll('[data-favorite]').forEach(function (button) {
+            const slug = button.dataset.favorite;
+            button.classList.toggle('is-active', favorites.includes(slug));
+            button.addEventListener('click', function (event) {
+                event.preventDefault();
+                const next = readJson(storageKeys.favorites, []);
+                const index = next.indexOf(slug);
+                if (index >= 0) next.splice(index, 1);
+                else next.unshift(slug);
+                writeJson(storageKeys.favorites, next.slice(0, 80));
+                button.classList.toggle('is-active', next.includes(slug));
+            });
+        });
+    }
+
+    function initRecent() {
+        if (page && page.dataset.toolSlug) {
+            const index = toolIndex();
+            const current = index.find(function (item) { return item.slug === page.dataset.toolSlug; });
+            if (current) {
+                const recent = readJson(storageKeys.recent, []).filter(function (item) {
+                    return item.slug !== current.slug;
+                });
+                recent.unshift(current);
+                writeJson(storageKeys.recent, recent.slice(0, 8));
+            }
+        }
+
+        const target = document.querySelector('[data-recent-tools]');
+        if (!target) return;
+        const recentTools = readJson(storageKeys.recent, []);
+        target.textContent = '';
+        recentTools.slice(0, 6).forEach(function (item) {
+            const link = document.createElement('a');
+            link.href = item.url;
+            const name = document.createElement('span');
+            name.textContent = item.name;
+            const category = document.createElement('em');
+            category.textContent = item.category;
+            link.appendChild(name);
+            link.appendChild(category);
+            target.appendChild(link);
+        });
+    }
+
+    initTheme();
+    initSearch();
+    initFavorites();
+    initRecent();
+
+    if (!page) return;
 
     const slug = page.dataset.tool;
     const statusEl = document.getElementById('tool-status');
@@ -226,6 +350,33 @@
     }
 
     document.addEventListener('click', function (event) {
+        const shareButton = event.target.closest('[data-share]');
+        if (shareButton) {
+            if (navigator.share) {
+                navigator.share({ title: document.title, url: location.href }).catch(function () {});
+            } else {
+                navigator.clipboard.writeText(location.href).then(function () {
+                    setStatus('URL이 복사되었습니다.', 'success');
+                });
+            }
+            return;
+        }
+
+        const downloadButton = event.target.closest('[data-download]');
+        if (downloadButton) {
+            const selector = downloadButton.dataset.download;
+            const el = document.querySelector(selector);
+            const text = el && 'value' in el ? el.value : '';
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = (page.dataset.toolSlug || 'wy-tool') + '.txt';
+            link.click();
+            URL.revokeObjectURL(link.href);
+            setStatus('파일을 다운로드했습니다.', 'success');
+            return;
+        }
+
         const copyButton = event.target.closest('[data-copy]');
         if (copyButton) {
             copyTarget(copyButton.dataset.copy);
@@ -289,6 +440,9 @@
                 setStatus('Cron 표현식을 분석했습니다.', 'success');
             } else if (action === 'color-convert') {
                 convertColor(getValue('#hex-input'));
+            } else if (action === 'generic-copy') {
+                setValue('#tool-output', getValue('#tool-input'));
+                setStatus('입력값을 결과 영역에 준비했습니다.', 'success');
             }
         } catch (error) {
             setStatus(error.message, 'error');

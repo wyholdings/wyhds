@@ -5,145 +5,214 @@
     <script type="application/ld+json">
 {{ {
     '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+        {'@type': 'ListItem', 'position': 1, 'name': 'WY Tools', 'item': 'https://wyhds.com/tools'},
+        {'@type': 'ListItem', 'position': 2, 'name': category.name|default('Tools'), 'item': 'https://wyhds.com/tools/category/' ~ tool.category},
+        {'@type': 'ListItem', 'position': 3, 'name': tool.name, 'item': canonical_url}
+    ]
+}|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
+    </script>
+    <script type="application/ld+json">
+{{ {
+    '@context': 'https://schema.org',
     '@type': 'FAQPage',
     'mainEntity': tool.faqs|map(faq => {
         '@type': 'Question',
         'name': faq.q,
-        'acceptedAnswer': {
-            '@type': 'Answer',
-            'text': faq.a
-        }
+        'acceptedAnswer': {'@type': 'Answer', 'text': faq.a}
     })
 }|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
     </script>
     <script type="application/ld+json">
 {{ {
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
+    '@type': 'SoftwareApplication',
     'name': tool.name,
     'url': canonical_url,
     'description': tool.description,
-    'applicationCategory': 'DeveloperApplication',
+    'applicationCategory': 'WebApplication',
     'operatingSystem': 'Any',
-    'offers': {
-        '@type': 'Offer',
-        'price': '0',
-        'priceCurrency': 'KRW'
-    }
+    'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'KRW'}
 }|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
     </script>
 {% endblock %}
 
 {% block body %}
-<div id="wrap" class="tools-page tool-detail-page" data-tool="{{ tool.slug }}">
-    <section class="tools-visual detail">
-        <p class="bgtxt"><span>DEV</span>TOOLS</p>
-        <div class="title">
-            <h3><span>DEVELOPER TOOL</span>{{ tool.h1 }}</h3>
+<div id="wrap" class="tools-page wy-tools tool-detail-page" data-tool="{{ tool.widget|default(tool.slug) }}" data-tool-slug="{{ tool.slug }}" data-tools-index='{{ search_index|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|e('html_attr') }}'>
+    <section class="wy-hero compact">
+        <div class="tools-inner">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="/tools">WY Tools</a>
+                <span>/</span>
+                <a href="/tools/category/{{ tool.category }}">{{ category.name|default(tool.category) }}</a>
+                <span>/</span>
+                <strong>{{ tool.name }}</strong>
+            </nav>
+            <p class="eyebrow">{{ category.name|default('Tool') }}</p>
+            <h1>{{ tool.h1 }}</h1>
             <p>{{ tool.description }}</p>
-            <a href="/tools" class="back-link">전체 도구 보기</a>
+            <div class="hero-actions">
+                <button type="button" class="mode-toggle" data-theme-toggle>Dark Mode</button>
+                <button type="button" class="mode-toggle" data-share>Share</button>
+                <button type="button" class="mode-toggle" data-favorite="{{ tool.slug }}">Favorite</button>
+            </div>
         </div>
     </section>
 
+    {% include 'tools/partials/_ad_slot.html.twig' with { position: 'top' } %}
+
     <section class="tool-body">
         <div class="tools-inner tool-layout">
-            <div class="tool-panel">
-                {% if tool.slug in ['json-formatter', 'base64', 'url-encode'] %}
-                    <label for="tool-input">Input</label>
-                    <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
-                    <div class="tool-actions">
-                        {% if tool.slug == 'json-formatter' %}
-                            <button type="button" class="tool-btn primary" data-action="json-format">Format</button>
-                            <button type="button" class="tool-btn" data-action="json-minify">Minify</button>
-                        {% elseif tool.slug == 'base64' %}
-                            <button type="button" class="tool-btn primary" data-action="base64-encode">Encode</button>
-                            <button type="button" class="tool-btn" data-action="base64-decode">Decode</button>
-                        {% else %}
-                            <button type="button" class="tool-btn primary" data-action="url-encode">Encode</button>
-                            <button type="button" class="tool-btn" data-action="url-decode">Decode</button>
-                        {% endif %}
-                        <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
-                    </div>
-                    <label for="tool-output">Result</label>
-                    <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
-                {% elseif tool.slug == 'timestamp' %}
-                    <div class="tool-current"><span>Current Unix Timestamp</span><strong id="current-timestamp">-</strong></div>
-                    <label for="timestamp-input">Timestamp</label>
-                    <input id="timestamp-input" class="tool-input" type="text" inputmode="numeric">
-                    <div class="tool-actions">
-                        <button type="button" class="tool-btn primary" data-action="timestamp-to-date">Convert to Date</button>
-                        <button type="button" class="tool-btn" data-action="timestamp-now">Use Now</button>
-                    </div>
-                    <div class="result-grid"><div><span>Local</span><strong id="timestamp-local">-</strong></div><div><span>UTC</span><strong id="timestamp-utc">-</strong></div></div>
-                    <label for="date-input">Date Time</label>
-                    <input id="date-input" class="tool-input" type="datetime-local">
-                    <button type="button" class="tool-btn" data-action="date-to-timestamp">Convert to Timestamp</button>
-                    <input id="date-timestamp-output" class="tool-input" type="text" readonly>
-                {% elseif tool.slug == 'uuid' %}
-                    <label for="uuid-count">Count</label>
-                    <input id="uuid-count" class="tool-input" type="number" min="1" max="50" value="5">
-                    <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="uuid-generate">Generate</button><button type="button" class="tool-btn" data-copy="#tool-output">Copy</button></div>
-                    <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
-                {% elseif tool.slug == 'password-generator' %}
-                    <label for="password-length">Length</label>
-                    <input id="password-length" class="tool-input" type="number" min="8" max="128" value="16">
-                    <div class="tool-checks">
-                        <label><input type="checkbox" id="pw-upper" checked> Uppercase</label>
-                        <label><input type="checkbox" id="pw-lower" checked> Lowercase</label>
-                        <label><input type="checkbox" id="pw-number" checked> Numbers</label>
-                        <label><input type="checkbox" id="pw-symbol" checked> Symbols</label>
-                    </div>
-                    <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="password-generate">Generate</button><button type="button" class="tool-btn" data-copy="#password-output">Copy</button></div>
-                    <input id="password-output" class="tool-input mono" type="text" readonly>
-                {% elseif tool.slug == 'hash-generator' %}
-                    <label for="tool-input">Text</label>
-                    <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
-                    <label for="hash-algorithm">Algorithm</label>
-                    <select id="hash-algorithm" class="tool-input"><option>SHA-256</option><option>SHA-1</option><option>SHA-384</option><option>SHA-512</option></select>
-                    <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="hash-generate">Generate</button><button type="button" class="tool-btn" data-copy="#tool-output">Copy</button></div>
-                    <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
-                {% elseif tool.slug == 'qr-code' %}
-                    <label for="tool-input">URL or Text</label>
-                    <textarea id="tool-input" class="tool-textarea small" spellcheck="false" placeholder="https://wyhds.com"></textarea>
-                    <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="qr-generate">Generate</button><button type="button" class="tool-btn" data-action="qr-download">Download PNG</button></div>
-                    <div class="qr-preview" id="qr-preview"></div>
-                {% elseif tool.slug == 'cron-helper' %}
-                    <label for="cron-input">Cron Expression</label>
-                    <input id="cron-input" class="tool-input mono" type="text" value="0 9 * * 1-5">
-                    <div class="preset-row"><button type="button" data-cron="* * * * *">Every minute</button><button type="button" data-cron="0 * * * *">Hourly</button><button type="button" data-cron="0 0 * * *">Daily</button><button type="button" data-cron="0 9 * * 1-5">Weekdays 09:00</button></div>
-                    <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="cron-analyze">Analyze</button><button type="button" class="tool-btn" data-copy="#cron-input">Copy</button></div>
-                    <div id="cron-output" class="cron-output"></div>
-                {% elseif tool.slug == 'color-converter' %}
-                    <label for="color-picker">Color</label>
-                    <input id="color-picker" class="color-picker" type="color" value="#005bac">
-                    <label for="hex-input">HEX</label>
-                    <input id="hex-input" class="tool-input mono" type="text" value="#005bac">
-                    <button type="button" class="tool-btn primary" data-action="color-convert">Convert</button>
-                    <div class="color-preview" id="color-preview"></div>
-                    <div class="result-grid three"><div><span>HEX</span><strong id="color-hex">-</strong></div><div><span>RGB</span><strong id="color-rgb">-</strong></div><div><span>HSL</span><strong id="color-hsl">-</strong></div></div>
-                {% endif %}
-                <p class="tool-status" id="tool-status" aria-live="polite"></p>
-            </div>
+            <main>
+                <div class="tool-panel">
+                    {% if tool.widget in ['json-formatter', 'base64', 'url-encode'] %}
+                        <label for="tool-input">Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
+                        <div class="tool-actions">
+                            {% if tool.widget == 'json-formatter' %}
+                                <button type="button" class="tool-btn primary" data-action="json-format">Format</button>
+                                <button type="button" class="tool-btn" data-action="json-minify">Minify</button>
+                            {% elseif tool.widget == 'base64' %}
+                                <button type="button" class="tool-btn primary" data-action="base64-encode">Encode</button>
+                                <button type="button" class="tool-btn" data-action="base64-decode">Decode</button>
+                            {% else %}
+                                <button type="button" class="tool-btn primary" data-action="url-encode">Encode</button>
+                                <button type="button" class="tool-btn" data-action="url-decode">Decode</button>
+                            {% endif %}
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'timestamp' %}
+                        <div class="tool-current"><span>Current Unix Timestamp</span><strong id="current-timestamp">-</strong></div>
+                        <label for="timestamp-input">Timestamp</label>
+                        <input id="timestamp-input" class="tool-input" type="text" inputmode="numeric">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="timestamp-to-date">Convert to Date</button>
+                            <button type="button" class="tool-btn" data-action="timestamp-now">Use Now</button>
+                        </div>
+                        <div class="result-grid"><div><span>Local</span><strong id="timestamp-local">-</strong></div><div><span>UTC</span><strong id="timestamp-utc">-</strong></div></div>
+                        <label for="date-input">Date Time</label>
+                        <input id="date-input" class="tool-input" type="datetime-local">
+                        <button type="button" class="tool-btn" data-action="date-to-timestamp">Convert to Timestamp</button>
+                        <input id="date-timestamp-output" class="tool-input" type="text" readonly>
+                    {% elseif tool.widget == 'uuid' %}
+                        <label for="uuid-count">Count</label>
+                        <input id="uuid-count" class="tool-input" type="number" min="1" max="50" value="5">
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="uuid-generate">Generate</button><button type="button" class="tool-btn" data-copy="#tool-output">Copy</button><button type="button" class="tool-btn" data-download="#tool-output">Download</button></div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'password-generator' %}
+                        <label for="password-length">Length</label>
+                        <input id="password-length" class="tool-input" type="number" min="8" max="128" value="16">
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="pw-upper" checked> Uppercase</label>
+                            <label><input type="checkbox" id="pw-lower" checked> Lowercase</label>
+                            <label><input type="checkbox" id="pw-number" checked> Numbers</label>
+                            <label><input type="checkbox" id="pw-symbol" checked> Symbols</label>
+                        </div>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="password-generate">Generate</button><button type="button" class="tool-btn" data-copy="#password-output">Copy</button></div>
+                        <input id="password-output" class="tool-input mono" type="text" readonly>
+                    {% elseif tool.widget == 'hash-generator' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
+                        <label for="hash-algorithm">Algorithm</label>
+                        <select id="hash-algorithm" class="tool-input"><option>SHA-256</option><option>SHA-1</option><option>SHA-384</option><option>SHA-512</option></select>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="hash-generate">Generate</button><button type="button" class="tool-btn" data-copy="#tool-output">Copy</button><button type="button" class="tool-btn" data-download="#tool-output">Download</button></div>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'qr-code' %}
+                        <label for="tool-input">URL or Text</label>
+                        <textarea id="tool-input" class="tool-textarea small" spellcheck="false" placeholder="https://wyhds.com"></textarea>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="qr-generate">Generate</button><button type="button" class="tool-btn" data-action="qr-download">Download PNG</button></div>
+                        <div class="qr-preview" id="qr-preview"></div>
+                    {% elseif tool.widget == 'cron-helper' %}
+                        <label for="cron-input">Cron Expression</label>
+                        <input id="cron-input" class="tool-input mono" type="text" value="0 9 * * 1-5">
+                        <div class="preset-row"><button type="button" data-cron="* * * * *">Every minute</button><button type="button" data-cron="0 * * * *">Hourly</button><button type="button" data-cron="0 0 * * *">Daily</button><button type="button" data-cron="0 9 * * 1-5">Weekdays 09:00</button></div>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="cron-analyze">Analyze</button><button type="button" class="tool-btn" data-copy="#cron-input">Copy</button></div>
+                        <div id="cron-output" class="cron-output"></div>
+                    {% elseif tool.widget == 'color-converter' %}
+                        <label for="color-picker">Color</label>
+                        <input id="color-picker" class="color-picker" type="color" value="#005bac">
+                        <label for="hex-input">HEX</label>
+                        <input id="hex-input" class="tool-input mono" type="text" value="#005bac">
+                        <button type="button" class="tool-btn primary" data-action="color-convert">Convert</button>
+                        <div class="color-preview" id="color-preview"></div>
+                        <div class="result-grid three"><div><span>HEX</span><strong id="color-hex">-</strong></div><div><span>RGB</span><strong id="color-rgb">-</strong></div><div><span>HSL</span><strong id="color-hsl">-</strong></div></div>
+                    {% else %}
+                        <label for="tool-input">Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="{{ tool.name }} 기능은 단계적으로 고도화됩니다."></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="generic-copy">Prepare Input</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly>{{ tool.name }} is registered in WY Tools. The interactive engine for this tool will be added in a later step.</textarea>
+                    {% endif %}
+                    <p class="tool-status" id="tool-status" aria-live="polite"></p>
+                </div>
 
-            <aside class="tool-help">
+                {% include 'tools/partials/_ad_slot.html.twig' with { position: 'middle' } %}
+
+                <section class="content-block">
+                    <h2>사용법</h2>
+                    <ol>{% for step in tool.how_to_use %}<li>{{ step }}</li>{% endfor %}</ol>
+                </section>
+
+                <section class="content-block">
+                    <h2>예제</h2>
+                    {% for example in tool.examples %}
+                        <article class="example-card">
+                            <h3>{{ example.title }}</h3>
+                            <p><strong>Input:</strong> {{ example.input }}</p>
+                            <p><strong>Output:</strong> {{ example.output }}</p>
+                        </article>
+                    {% endfor %}
+                </section>
+
+                <section class="content-block">
+                    <h2>FAQ</h2>
+                    <div class="faq-list">
+                        {% for faq in tool.faqs %}
+                            <details><summary>{{ faq.q }}</summary><p>{{ faq.a }}</p></details>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                {% include 'tools/partials/_ad_slot.html.twig' with { position: 'after-faq' } %}
+
+                <section class="content-block">
+                    <h2>관련 도구</h2>
+                    <div class="wy-tool-grid small">
+                        {% for item in related_tools %}
+                            {% include 'tools/partials/_tool_card.html.twig' with { item: item } %}
+                        {% endfor %}
+                    </div>
+                </section>
+            </main>
+
+            <aside class="tool-sidebar">
                 <div class="help-box">
-                    <h2>사용 방법</h2>
-                    <ol>{% for step in tool.instructions %}<li>{{ step }}</li>{% endfor %}</ol>
+                    <h2>도구 정보</h2>
+                    <p>{{ tool.summary }}</p>
+                    <a href="/tools/category/{{ tool.category }}">{{ category.name|default(tool.category) }} Tools</a>
                 </div>
                 <div class="help-box">
-                    <h2>FAQ</h2>
-                    {% for faq in tool.faqs %}
-                        <details><summary>{{ faq.q }}</summary><p>{{ faq.a }}</p></details>
-                    {% endfor %}
+                    <h2>최근 사용</h2>
+                    <div class="compact-list" data-recent-tools></div>
                 </div>
             </aside>
         </div>
     </section>
+
+    {% include 'tools/partials/_ad_slot.html.twig' with { position: 'footer' } %}
 </div>
 {% endblock %}
 
 {% block scripts %}
-    {% if tool.slug == 'qr-code' %}
+    {% if tool.widget == 'qr-code' %}
         <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     {% endif %}
     <script src="/assets/js/tools.js"></script>

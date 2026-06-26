@@ -1,0 +1,41 @@
+{% extends 'layout/base.html.twig' %}
+
+{% block styles %}
+    <link href="/assets/css/tools.css" rel="stylesheet" />
+{% endblock %}
+
+{% block body %}
+<div id="wrap" class="tools-page wy-tools" data-tools-index='{{ search_index|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|e('html_attr') }}'>
+    <section class="wy-hero compact">
+        <div class="tools-inner">
+            <p class="eyebrow">WY Tools</p>
+            <h1>{{ category.name }} Tools</h1>
+            <p>{{ category.description }}</p>
+            <div class="wy-search">
+                <input type="search" data-tool-search placeholder="도구 검색..." autocomplete="off">
+                <div class="search-suggestions" data-search-suggestions></div>
+            </div>
+        </div>
+    </section>
+
+    {% include 'tools/partials/_ad_slot.html.twig' with { position: 'top' } %}
+
+    <section class="wy-section">
+        <div class="tools-inner">
+            <div class="section-head">
+                <h2>{{ category.label }} 도구</h2>
+                <p>{{ tools|length }}개의 도구가 있습니다.</p>
+            </div>
+            <div class="wy-tool-grid" data-tool-grid>
+                {% for item in tools %}
+                    {% include 'tools/partials/_tool_card.html.twig' with { item: item } %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="/assets/js/tools.js"></script>
+{% endblock %}
