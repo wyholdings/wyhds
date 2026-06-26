@@ -66,7 +66,7 @@ return [
         'examples' => [['title' => 'API 응답 JSON 정리', 'input' => '{"name":"WY Tools","type":"free"}', 'output' => "JSON이 줄바꿈과 들여쓰기 형태로 정리됩니다."]],
         'faqs' => [['q' => '잘못된 JSON도 자동 수정하나요?', 'a' => '문법 오류는 알려주지만 데이터 의미를 추정해 자동 수정하지는 않습니다.'], ['q' => '입력한 JSON은 저장되나요?', 'a' => '아니요. 브라우저에서만 처리합니다.']],
     ]),
-    'json-validator' => $tool('json-validator', 'JSON Validator', 'developer', 'JSON 문법이 유효한지 확인하고 오류를 찾습니다.', ['is_recent' => true, 'keywords' => ['JSON Validator', 'JSON Syntax Checker'], 'related' => ['json-formatter', 'json-csv', 'json-xml']]),
+    'json-validator' => $tool('json-validator', 'JSON Validator', 'developer', 'JSON 문법이 유효한지 확인하고 오류를 찾습니다.', ['widget' => 'json-validator', 'is_recent' => true, 'keywords' => ['JSON Validator', 'JSON Syntax Checker'], 'related' => ['json-formatter', 'json-csv', 'json-xml']]),
     'base64' => $tool('base64', 'Base64 Encode / Decode', 'encoding', '텍스트와 한글 문자열을 Base64로 인코딩하거나 디코딩합니다.', [
         'widget' => 'base64',
         'is_popular' => true,
@@ -75,15 +75,15 @@ return [
         'how_to_use' => ['원본 텍스트나 Base64 문자열을 입력합니다.', 'Encode 또는 Decode 버튼을 선택합니다.', '결과를 복사해 필요한 곳에 사용합니다.'],
         'faqs' => [['q' => '한글도 Base64 변환이 되나요?', 'a' => '네. UTF-8 기준으로 한글도 변환합니다.'], ['q' => 'Base64는 암호화인가요?', 'a' => '아니요. 인코딩 방식이며 보안 목적의 암호화가 아닙니다.']],
     ]),
-    'jwt-decoder' => $tool('jwt-decoder', 'JWT Decoder', 'developer', 'JWT 토큰의 header와 payload를 디코딩해 내용을 확인합니다.', ['is_recent' => true, 'keywords' => ['JWT Decoder', 'JWT Decode'], 'related' => ['base64', 'json-formatter', 'sha256']]),
+    'jwt-decoder' => $tool('jwt-decoder', 'JWT Decoder', 'developer', 'JWT 토큰의 header와 payload를 디코딩해 내용을 확인합니다.', ['widget' => 'jwt-decoder', 'is_recent' => true, 'keywords' => ['JWT Decoder', 'JWT Decode'], 'related' => ['base64', 'json-formatter', 'sha256']]),
     'uuid' => $tool('uuid', 'UUID Generator', 'developer', 'UUID v4 값을 브라우저에서 여러 개 즉시 생성합니다.', [
         'widget' => 'uuid',
         'is_popular' => true,
         'keywords' => ['UUID Generator', 'UUID v4', 'GUID Generator'],
         'related' => ['password-generator', 'hash-generator', 'jwt-decoder'],
     ]),
-    'regex-tester' => $tool('regex-tester', 'Regex Tester', 'developer', '정규식을 테스트하고 매칭 결과를 확인합니다.', ['is_recent' => true, 'keywords' => ['Regex Tester', 'Regular Expression Test'], 'related' => ['word-counter', 'text-diff', 'remove-duplicate-lines']]),
-    'sql-formatter' => $tool('sql-formatter', 'SQL Formatter', 'developer', 'SQL 쿼리를 읽기 좋은 형태로 정리합니다.', ['keywords' => ['SQL Formatter', 'SQL Pretty Print'], 'related' => ['json-formatter', 'csv-viewer']]),
+    'regex-tester' => $tool('regex-tester', 'Regex Tester', 'developer', '정규식을 테스트하고 매칭 결과를 확인합니다.', ['widget' => 'regex-tester', 'is_recent' => true, 'keywords' => ['Regex Tester', 'Regular Expression Test'], 'related' => ['word-counter', 'text-diff', 'remove-duplicate-lines']]),
+    'sql-formatter' => $tool('sql-formatter', 'SQL Formatter', 'developer', 'SQL 쿼리를 읽기 좋은 형태로 정리합니다.', ['widget' => 'sql-formatter', 'keywords' => ['SQL Formatter', 'SQL Pretty Print'], 'related' => ['json-formatter', 'csv-viewer']]),
     'cron-generator' => $tool('cron-generator', 'Cron Generator', 'developer', 'Cron 표현식을 만들고 5필드 스케줄 의미를 확인합니다.', [
         'widget' => 'cron-helper',
         'keywords' => ['Cron Generator', 'Cron Expression', 'Crontab'],

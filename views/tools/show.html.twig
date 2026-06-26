@@ -85,6 +85,55 @@
                         </div>
                         <label for="tool-output">Result</label>
                         <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'json-validator' %}
+                        <label for="tool-input">JSON Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder='{"name":"WY Tools"}'></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="json-validate">Validate</button>
+                            <button type="button" class="tool-btn" data-action="json-format">Format</button>
+                        </div>
+                        <div class="result-grid">
+                            <div><span>Status</span><strong id="json-valid-status">-</strong></div>
+                            <div><span>Type</span><strong id="json-valid-type">-</strong></div>
+                        </div>
+                        <label for="tool-output">Formatted JSON</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'jwt-decoder' %}
+                        <label for="jwt-input">JWT Token</label>
+                        <textarea id="jwt-input" class="tool-textarea small" spellcheck="false" placeholder="eyJhbGciOi..."></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="jwt-decode">Decode</button>
+                            <button type="button" class="tool-btn" data-copy="#jwt-payload">Copy Payload</button>
+                        </div>
+                        <label for="jwt-header">Header</label>
+                        <textarea id="jwt-header" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                        <label for="jwt-payload">Payload</label>
+                        <textarea id="jwt-payload" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'regex-tester' %}
+                        <label for="regex-pattern">Regex Pattern</label>
+                        <input id="regex-pattern" class="tool-input mono" type="text" placeholder="\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b">
+                        <label for="regex-flags">Flags</label>
+                        <input id="regex-flags" class="tool-input mono" type="text" value="gi">
+                        <label for="tool-input">Test Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="regex-test">Test Regex</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy Matches</button>
+                        </div>
+                        <div class="result-grid"><div><span>Matches</span><strong id="regex-count">0</strong></div><div><span>Status</span><strong id="regex-status">-</strong></div></div>
+                        <label for="tool-output">Matches</label>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'sql-formatter' %}
+                        <label for="tool-input">SQL Input</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="select id,name from users where status='active' order by id desc"></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="sql-format">Format SQL</button>
+                            <button type="button" class="tool-btn" data-action="sql-minify">Minify</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'timestamp' %}
                         <div class="tool-current"><span>Current Unix Timestamp</span><strong id="current-timestamp">-</strong></div>
                         <label for="timestamp-input">Timestamp</label>

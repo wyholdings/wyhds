@@ -176,6 +176,11 @@
         return new TextDecoder().decode(bytes);
     }
 
+    function base64UrlToUtf8(text) {
+        const normalized = text.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(text.length / 4) * 4, '=');
+        return base64ToUtf8(normalized);
+    }
+
     function randomInt(max) {
         const array = new Uint32Array(1);
         window.crypto.getRandomValues(array);
@@ -245,6 +250,71 @@
         document.getElementById('timestamp-local').textContent = date.toLocaleString();
         document.getElementById('timestamp-utc').textContent = date.toISOString();
         setStatus('날짜로 변환되었습니다.', 'success');
+    }
+
+    function validateJson() {
+        const parsed = JSON.parse(getValue('#tool-input'));
+        const type = Array.isArray(parsed) ? 'array' : typeof parsed;
+        const status = document.getElementById('json-valid-status');
+        const typeEl = document.getElementById('json-valid-type');
+        if (status) status.textContent = 'Valid JSON';
+        if (typeEl) typeEl.textContent = type;
+        setValue('#tool-output', JSON.stringify(parsed, null, 2));
+        setStatus('유효한 JSON입니다.', 'success');
+    }
+
+    function decodeJwt() {
+        const token = getValue('#jwt-input').trim();
+        const parts = token.split('.');
+        if (parts.length < 2) throw new Error('JWT는 header.payload.signature 형식이어야 합니다.');
+        const header = JSON.parse(base64UrlToUtf8(parts[0]));
+        const payload = JSON.parse(base64UrlToUtf8(parts[1]));
+        setValue('#jwt-header', JSON.stringify(header, null, 2));
+        setValue('#jwt-payload', JSON.stringify(payload, null, 2));
+        setStatus(parts[2] ? 'JWT를 디코딩했습니다. 서명 검증은 수행하지 않습니다.' : 'Header와 payload를 디코딩했습니다.', 'success');
+    }
+
+    function testRegex() {
+        const pattern = getValue('#regex-pattern');
+        const flags = getValue('#regex-flags');
+        const text = getValue('#tool-input');
+        const regex = new RegExp(pattern, flags);
+        const matches = [];
+        if (regex.global) {
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                matches.push(match[0]);
+                if (match[0] === '') regex.lastIndex += 1;
+            }
+        } else {
+            const match = regex.exec(text);
+            if (match) matches.push(match[0]);
+        }
+        document.getElementById('regex-count').textContent = formatNumber(matches.length);
+        document.getElementById('regex-status').textContent = matches.length ? 'Matched' : 'No match';
+        setValue('#tool-output', matches.join('\n'));
+        setStatus(matches.length + '개 매치를 찾았습니다.', matches.length ? 'success' : '');
+    }
+
+    function formatSqlText(sql) {
+        const keywords = [
+            'SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'LIMIT',
+            'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL JOIN', 'JOIN',
+            'VALUES', 'SET', 'AND', 'OR'
+        ];
+        let result = sql.replace(/\s+/g, ' ').trim();
+        keywords.forEach(function (keyword) {
+            const escaped = keyword.replace(/\s+/g, '\\s+');
+            const regex = new RegExp('\\b' + escaped + '\\b', 'gi');
+            result = result.replace(regex, '\n' + keyword);
+        });
+        result = result.replace(/,\s*/g, ',\n    ');
+        result = result.replace(/^\n/, '');
+        return result.split('\n').map(function (line) {
+            const trimmed = line.trim();
+            if (/^(AND|OR)\b/i.test(trimmed)) return '  ' + trimmed;
+            return trimmed;
+        }).join('\n');
     }
 
     function generatePassword() {
@@ -540,6 +610,18 @@
             } else if (action === 'json-minify') {
                 setValue('#tool-output', JSON.stringify(JSON.parse(getValue('#tool-input'))));
                 setStatus('유효한 JSON입니다.', 'success');
+            } else if (action === 'json-validate') {
+                validateJson();
+            } else if (action === 'jwt-decode') {
+                decodeJwt();
+            } else if (action === 'regex-test') {
+                testRegex();
+            } else if (action === 'sql-format') {
+                setValue('#tool-output', formatSqlText(getValue('#tool-input')));
+                setStatus('SQL을 정리했습니다.', 'success');
+            } else if (action === 'sql-minify') {
+                setValue('#tool-output', getValue('#tool-input').replace(/\s+/g, ' ').trim());
+                setStatus('SQL 공백을 압축했습니다.', 'success');
             } else if (action === 'base64-encode') {
                 setValue('#tool-output', utf8ToBase64(getValue('#tool-input')));
                 setStatus('인코딩되었습니다.', 'success');
