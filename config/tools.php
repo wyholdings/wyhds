@@ -98,18 +98,18 @@ return [
     'word-counter' => $tool('word-counter', 'Word Counter', 'text', '글자 수, 단어 수, 줄 수를 계산합니다.', ['widget' => 'word-counter', 'is_popular' => true, 'related' => ['case-converter', 'remove-duplicate-lines', 'text-diff']]),
     'case-converter' => $tool('case-converter', 'Case Converter', 'text', '영문 텍스트를 대문자, 소문자, 제목 케이스 등으로 변환합니다.', ['widget' => 'case-converter', 'related' => ['word-counter', 'lorem-ipsum']]),
     'remove-duplicate-lines' => $tool('remove-duplicate-lines', 'Remove Duplicate Lines', 'text', '중복된 줄을 제거하고 고유한 목록만 남깁니다.', ['widget' => 'remove-duplicate-lines', 'related' => ['text-diff', 'word-counter']]),
-    'text-diff' => $tool('text-diff', 'Text Diff', 'text', '두 텍스트의 차이를 비교합니다.', ['related' => ['remove-duplicate-lines', 'regex-tester']]),
+    'text-diff' => $tool('text-diff', 'Text Diff', 'text', '두 텍스트의 차이를 비교합니다.', ['widget' => 'text-diff', 'related' => ['remove-duplicate-lines', 'regex-tester']]),
 
-    'image-compress' => $tool('image-compress', 'Image Compress', 'image', '이미지 용량을 줄여 웹 업로드와 공유에 적합하게 만듭니다.', ['is_popular' => true, 'related' => ['image-resize', 'webp-converter']]),
-    'image-resize' => $tool('image-resize', 'Image Resize', 'image', '이미지의 가로, 세로 크기를 조정합니다.', ['related' => ['image-compress', 'image-crop']]),
-    'image-crop' => $tool('image-crop', 'Image Crop', 'image', '이미지에서 필요한 영역만 잘라냅니다.', ['related' => ['image-resize', 'webp-converter']]),
-    'webp-converter' => $tool('webp-converter', 'WEBP Converter', 'image', '이미지를 WEBP 형식으로 변환해 웹 성능을 개선합니다.', ['related' => ['image-compress', 'image-resize']]),
-    'image-to-base64' => $tool('image-to-base64', 'Image to Base64', 'image', '이미지 파일을 Base64 문자열로 변환합니다.', ['related' => ['base64', 'webp-converter']]),
+    'image-compress' => $tool('image-compress', 'Image Compress', 'image', '이미지 용량을 줄여 웹 업로드와 공유에 적합하게 만듭니다.', ['widget' => 'image-processor', 'is_popular' => true, 'related' => ['image-resize', 'webp-converter']]),
+    'image-resize' => $tool('image-resize', 'Image Resize', 'image', '이미지의 가로, 세로 크기를 조정합니다.', ['widget' => 'image-processor', 'related' => ['image-compress', 'image-crop']]),
+    'image-crop' => $tool('image-crop', 'Image Crop', 'image', '이미지에서 필요한 영역만 잘라냅니다.', ['widget' => 'image-processor', 'related' => ['image-resize', 'webp-converter']]),
+    'webp-converter' => $tool('webp-converter', 'WEBP Converter', 'image', '이미지를 WEBP 형식으로 변환해 웹 성능을 개선합니다.', ['widget' => 'image-processor', 'related' => ['image-compress', 'image-resize']]),
+    'image-to-base64' => $tool('image-to-base64', 'Image to Base64', 'image', '이미지 파일을 Base64 문자열로 변환합니다.', ['widget' => 'image-base64', 'related' => ['base64', 'webp-converter']]),
 
-    'merge-pdf' => $tool('merge-pdf', 'Merge PDF', 'pdf', '여러 PDF 파일을 하나의 문서로 합칩니다.', ['is_popular' => true, 'related' => ['split-pdf', 'compress-pdf']]),
-    'split-pdf' => $tool('split-pdf', 'Split PDF', 'pdf', 'PDF 문서를 페이지 단위로 분리합니다.', ['related' => ['merge-pdf', 'rotate-pdf']]),
-    'compress-pdf' => $tool('compress-pdf', 'Compress PDF', 'pdf', 'PDF 파일 용량을 줄입니다.', ['related' => ['merge-pdf', 'split-pdf']]),
-    'rotate-pdf' => $tool('rotate-pdf', 'Rotate PDF', 'pdf', 'PDF 페이지 방향을 회전합니다.', ['related' => ['split-pdf', 'merge-pdf']]),
+    'merge-pdf' => $tool('merge-pdf', 'Merge PDF', 'pdf', '여러 PDF 파일을 하나의 문서로 합칩니다.', ['widget' => 'pdf-merge', 'is_popular' => true, 'related' => ['split-pdf', 'compress-pdf']]),
+    'split-pdf' => $tool('split-pdf', 'Split PDF', 'pdf', 'PDF 문서를 페이지 단위로 분리합니다.', ['widget' => 'pdf-split', 'related' => ['merge-pdf', 'rotate-pdf']]),
+    'compress-pdf' => $tool('compress-pdf', 'Compress PDF', 'pdf', 'PDF 파일 용량을 줄입니다.', ['widget' => 'pdf-compress', 'related' => ['merge-pdf', 'split-pdf']]),
+    'rotate-pdf' => $tool('rotate-pdf', 'Rotate PDF', 'pdf', 'PDF 페이지 방향을 회전합니다.', ['widget' => 'pdf-rotate', 'related' => ['split-pdf', 'merge-pdf']]),
 
     'json-csv' => $tool('json-csv', 'JSON to CSV Converter', 'converter', 'JSON 데이터를 CSV 형식으로 변환합니다.', ['widget' => 'json-csv', 'related' => ['json-formatter', 'csv-viewer', 'json-xml']]),
     'json-xml' => $tool('json-xml', 'JSON to XML Converter', 'converter', 'JSON과 XML 데이터를 상호 변환합니다.', ['widget' => 'json-xml', 'related' => ['json-formatter', 'json-csv']]),
@@ -129,7 +129,7 @@ return [
     ]),
     'sha256' => $tool('sha256', 'SHA256 Generator', 'security', '텍스트를 SHA-256 해시 값으로 변환합니다.', ['widget' => 'hash-generator', 'related' => ['hash-generator', 'md5', 'bcrypt']]),
     'md5' => $tool('md5', 'MD5 Generator', 'security', '텍스트의 MD5 해시 값을 생성합니다.', ['widget' => 'md5', 'related' => ['sha256', 'hash-generator']]),
-    'bcrypt' => $tool('bcrypt', 'bcrypt Hash Generator', 'security', '비밀번호 저장에 자주 쓰이는 bcrypt 해시를 생성합니다.', ['related' => ['password-generator', 'sha256']]),
+    'bcrypt' => $tool('bcrypt', 'bcrypt Hash Generator', 'security', '비밀번호 저장에 자주 쓰이는 bcrypt 해시를 생성합니다.', ['widget' => 'bcrypt-helper', 'related' => ['password-generator', 'sha256']]),
     'hash-generator' => $tool('hash-generator', 'Hash Generator', 'security', '텍스트를 SHA-1, SHA-256, SHA-384, SHA-512 해시 값으로 변환합니다.', [
         'widget' => 'hash-generator',
         'related' => ['sha256', 'md5', 'password-generator'],
@@ -137,7 +137,7 @@ return [
 
     'vat-calculator' => $tool('vat-calculator', 'VAT 계산기', 'calculator', '공급가액과 부가세, 합계 금액을 계산합니다.', ['widget' => 'vat-calculator', 'is_recent' => true, 'related' => ['percent-calculator']]),
     'percent-calculator' => $tool('percent-calculator', '퍼센트 계산기', 'calculator', '비율, 증감률, 할인율을 계산합니다.', ['widget' => 'percent-calculator', 'is_popular' => true, 'related' => ['vat-calculator']]),
-    'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 차이나 특정 날짜 이후의 날짜를 계산합니다.', ['related' => ['d-day-calculator', 'age-calculator', 'timestamp']]),
+    'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 차이나 특정 날짜 이후의 날짜를 계산합니다.', ['widget' => 'date-calculator', 'related' => ['d-day-calculator', 'age-calculator', 'timestamp']]),
     'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['widget' => 'd-day-calculator', 'related' => ['date-calculator', 'age-calculator']]),
     'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['widget' => 'age-calculator', 'related' => ['date-calculator', 'd-day-calculator']]),
 

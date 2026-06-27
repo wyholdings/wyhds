@@ -337,6 +337,10 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.result-grid.four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .tool-checks label {
     padding: 10px 14px;
     border: 1px solid #dfe6f2;
@@ -422,6 +426,60 @@
     border-color: rgba(255, 255, 255, 0.14);
 }
 
+.diff-preview,
+.image-preview {
+    overflow: auto;
+    max-height: 420px;
+    border: 1px solid #dfe6f2;
+    border-radius: 14px;
+    background: #fff;
+    padding: 16px;
+}
+
+.diff-preview {
+    display: grid;
+    gap: 6px;
+    font: 14px/1.55 Consolas, Monaco, "Courier New", monospace;
+}
+
+.diff-preview div {
+    border-radius: 8px;
+    padding: 7px 10px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.diff-preview .is-added {
+    background: #e8fff4;
+    color: #087443;
+}
+
+.diff-preview .is-removed {
+    background: #fff0f0;
+    color: #b42318;
+}
+
+.diff-preview .is-same {
+    background: #f6f8fb;
+    color: #344054;
+}
+
+.image-preview img,
+.image-preview canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.wy-tools.is-dark .diff-preview,
+.wy-tools.is-dark .image-preview,
+.wy-tools.is-dark .diff-preview .is-same {
+    background: #11182a;
+    color: #edf3ff;
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
 @media screen and (max-width: 1280px) {
     .tools-list ul {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -468,7 +526,8 @@
 
     .tools-list ul,
     .result-grid,
-    .result-grid.three {
+    .result-grid.three,
+    .result-grid.four {
         grid-template-columns: 1fr;
     }
 

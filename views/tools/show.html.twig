@@ -320,6 +320,23 @@
                         </div>
                         <label for="tool-output">Result</label>
                         <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'text-diff' %}
+                        <label for="diff-left">Original Text</label>
+                        <textarea id="diff-left" class="tool-textarea small" spellcheck="false"></textarea>
+                        <label for="diff-right">Changed Text</label>
+                        <textarea id="diff-right" class="tool-textarea small" spellcheck="false"></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="text-diff">Compare</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy Summary</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Added</span><strong id="diff-added">0</strong></div>
+                            <div><span>Removed</span><strong id="diff-removed">0</strong></div>
+                            <div><span>Unchanged</span><strong id="diff-same">0</strong></div>
+                        </div>
+                        <div class="diff-preview" id="diff-preview"></div>
+                        <label for="tool-output">Summary</label>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'percent-calculator' %}
                         <label for="percent-base">Base value</label>
                         <input id="percent-base" class="tool-input" type="number" step="any" placeholder="10000">
@@ -347,6 +364,31 @@
                             <div><span>VAT</span><strong id="vat-tax">-</strong></div>
                             <div><span>Total</span><strong id="vat-total">-</strong></div>
                         </div>
+                    {% elseif tool.widget == 'date-calculator' %}
+                        <label for="date-start">Start date</label>
+                        <input id="date-start" class="tool-input" type="date">
+                        <label for="date-end">End date</label>
+                        <input id="date-end" class="tool-input" type="date">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="date-diff">Date Difference</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Days</span><strong id="date-days">-</strong></div>
+                            <div><span>Weeks</span><strong id="date-weeks">-</strong></div>
+                            <div><span>Months approx.</span><strong id="date-months">-</strong></div>
+                        </div>
+                        <label for="date-base">Base date</label>
+                        <input id="date-base" class="tool-input" type="date">
+                        <label for="date-offset">Days to add/subtract</label>
+                        <input id="date-offset" class="tool-input" type="number" step="1" value="30">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn" data-action="date-add">Add Days</button>
+                            <button type="button" class="tool-btn" data-action="date-subtract">Subtract Days</button>
+                        </div>
+                        <div class="result-grid">
+                            <div><span>Calculated date</span><strong id="date-result">-</strong></div>
+                            <div><span>Day of week</span><strong id="date-weekday">-</strong></div>
+                        </div>
                     {% elseif tool.widget == 'd-day-calculator' %}
                         <label for="dday-date">Target date</label>
                         <input id="dday-date" class="tool-input" type="date">
@@ -366,6 +408,86 @@
                             <div><span>Months lived</span><strong id="age-months">-</strong></div>
                             <div><span>Days lived</span><strong id="age-days">-</strong></div>
                         </div>
+                    {% elseif tool.widget == 'image-base64' %}
+                        <label for="image-file">Image file</label>
+                        <input id="image-file" class="tool-input" type="file" accept="image/*">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="image-to-base64">Convert to Base64</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <div class="image-preview" id="image-preview"></div>
+                        <label for="tool-output">Data URL</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'image-processor' %}
+                        <label for="image-file">Image file</label>
+                        <input id="image-file" class="tool-input" type="file" accept="image/*">
+                        <div class="result-grid three">
+                            <div><span>Original</span><strong id="image-original">-</strong></div>
+                            <div><span>Output</span><strong id="image-output-size">-</strong></div>
+                            <div><span>Format</span><strong id="image-output-format">-</strong></div>
+                        </div>
+                        <label for="image-width">Width</label>
+                        <input id="image-width" class="tool-input" type="number" min="1" placeholder="auto">
+                        <label for="image-height">Height</label>
+                        <input id="image-height" class="tool-input" type="number" min="1" placeholder="auto">
+                        <label for="image-quality">Quality (0.1 - 1)</label>
+                        <input id="image-quality" class="tool-input" type="number" min="0.1" max="1" step="0.05" value="0.82">
+                        {% if tool.slug == 'image-crop' %}
+                            <div class="result-grid four">
+                                <div><span>X</span><input id="crop-x" class="tool-input" type="number" min="0" value="0"></div>
+                                <div><span>Y</span><input id="crop-y" class="tool-input" type="number" min="0" value="0"></div>
+                                <div><span>W</span><input id="crop-width" class="tool-input" type="number" min="1"></div>
+                                <div><span>H</span><input id="crop-height" class="tool-input" type="number" min="1"></div>
+                            </div>
+                        {% endif %}
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="image-process">Process Image</button>
+                            <button type="button" class="tool-btn" data-action="image-download">Download</button>
+                        </div>
+                        <div class="image-preview" id="image-preview"></div>
+                    {% elseif tool.widget == 'bcrypt-helper' %}
+                        <label for="tool-input">Password</label>
+                        <input id="tool-input" class="tool-input" type="text" autocomplete="off">
+                        <label for="bcrypt-cost">Cost</label>
+                        <input id="bcrypt-cost" class="tool-input" type="number" min="10" max="14" value="12">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="bcrypt-template">Generate PHP Snippet</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <p class="tool-note">bcrypt 해시는 서버의 PHP password_hash()로 생성하는 것이 안전합니다. 이 도구는 바로 붙여 넣을 수 있는 PHP 코드를 만듭니다.</p>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.category == 'pdf' %}
+                        <label for="pdf-files">PDF file{% if tool.widget == 'pdf-merge' %}s{% endif %}</label>
+                        <input id="pdf-files" class="tool-input" type="file" accept="application/pdf" {% if tool.widget == 'pdf-merge' %}multiple{% endif %}>
+                        {% if tool.widget == 'pdf-split' %}
+                            <label for="pdf-pages">Pages</label>
+                            <input id="pdf-pages" class="tool-input" type="text" placeholder="1,3-5">
+                        {% elseif tool.widget == 'pdf-rotate' %}
+                            <label for="pdf-rotation">Rotation</label>
+                            <select id="pdf-rotation" class="tool-input">
+                                <option value="90">90 degrees</option>
+                                <option value="180">180 degrees</option>
+                                <option value="270">270 degrees</option>
+                            </select>
+                        {% endif %}
+                        <div class="tool-actions">
+                            {% if tool.widget == 'pdf-merge' %}
+                                <button type="button" class="tool-btn primary" data-action="pdf-merge">Merge PDF</button>
+                            {% elseif tool.widget == 'pdf-split' %}
+                                <button type="button" class="tool-btn primary" data-action="pdf-split">Split PDF</button>
+                            {% elseif tool.widget == 'pdf-rotate' %}
+                                <button type="button" class="tool-btn primary" data-action="pdf-rotate">Rotate PDF</button>
+                            {% else %}
+                                <button type="button" class="tool-btn primary" data-action="pdf-compress">Optimize PDF</button>
+                            {% endif %}
+                            <button type="button" class="tool-btn" data-action="pdf-download">Download</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Files</span><strong id="pdf-file-count">0</strong></div>
+                            <div><span>Pages</span><strong id="pdf-page-count">-</strong></div>
+                            <div><span>Output</span><strong id="pdf-output-size">-</strong></div>
+                        </div>
+                        <p class="tool-note">PDF는 브라우저에서 처리됩니다. 압축 도구는 PDF를 재저장해 불필요한 객체를 줄이는 방식이며, 스캔 이미지 압축률은 원본에 따라 달라집니다.</p>
                     {% else %}
                         <label for="tool-input">Input</label>
                         <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="{{ tool.name }} 기능은 단계적으로 고도화됩니다."></textarea>
@@ -440,6 +562,9 @@
 {% block scripts %}
     {% if tool.widget == 'qr-code' %}
         <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    {% endif %}
+    {% if tool.category == 'pdf' %}
+        <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     {% endif %}
     <script src="/assets/js/tools.js"></script>
 {% endblock %}

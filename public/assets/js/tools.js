@@ -130,6 +130,8 @@
 
     const slug = page.dataset.tool;
     const statusEl = document.getElementById('tool-status');
+    let processedImage = null;
+    let processedPdf = null;
 
     function setStatus(message, type) {
         if (!statusEl) return;
@@ -822,6 +824,277 @@
         setStatus('토큰 수를 추정했습니다.', 'success');
     }
 
+    function calculateTextDiff() {
+        const left = getValue('#diff-left').split(/\r\n|\r|\n/);
+        const right = getValue('#diff-right').split(/\r\n|\r|\n/);
+        const dp = Array.from({ length: left.length + 1 }, function () {
+            return Array(right.length + 1).fill(0);
+        });
+        for (let i = left.length - 1; i >= 0; i -= 1) {
+            for (let j = right.length - 1; j >= 0; j -= 1) {
+                dp[i][j] = left[i] === right[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+            }
+        }
+
+        const preview = document.getElementById('diff-preview');
+        if (preview) preview.textContent = '';
+        const rows = [];
+        let added = 0;
+        let removed = 0;
+        let same = 0;
+        let i = 0;
+        let j = 0;
+        while (i < left.length || j < right.length) {
+            let type;
+            let value;
+            if (i < left.length && j < right.length && left[i] === right[j]) {
+                type = 'same'; value = '  ' + left[i]; i += 1; j += 1; same += 1;
+            } else if (j < right.length && (i === left.length || dp[i][j + 1] >= dp[i + 1][j])) {
+                type = 'added'; value = '+ ' + right[j]; j += 1; added += 1;
+            } else {
+                type = 'removed'; value = '- ' + left[i]; i += 1; removed += 1;
+            }
+            rows.push(value);
+            if (preview) {
+                const line = document.createElement('div');
+                line.className = 'is-' + type;
+                line.textContent = value;
+                preview.appendChild(line);
+            }
+        }
+        document.getElementById('diff-added').textContent = formatNumber(added);
+        document.getElementById('diff-removed').textContent = formatNumber(removed);
+        document.getElementById('diff-same').textContent = formatNumber(same);
+        setValue('#tool-output', rows.join('\n'));
+        setStatus('텍스트 차이를 비교했습니다.', 'success');
+    }
+
+    function calculateDateDiff() {
+        const start = dateOnly(getValue('#date-start'));
+        const end = dateOnly(getValue('#date-end'));
+        if (!start || !end) throw new Error('시작일과 종료일을 선택해 주세요.');
+        const days = Math.round((end.getTime() - start.getTime()) / 86400000);
+        document.getElementById('date-days').textContent = formatNumber(days);
+        document.getElementById('date-weeks').textContent = formatNumber(days / 7);
+        document.getElementById('date-months').textContent = formatNumber(days / 30.4375);
+        setStatus('날짜 차이를 계산했습니다.', 'success');
+    }
+
+    function calculateDateOffset(direction) {
+        const base = dateOnly(getValue('#date-base'));
+        const offset = parseInt(getValue('#date-offset'), 10);
+        if (!base || !Number.isFinite(offset)) throw new Error('기준일과 일수를 입력해 주세요.');
+        const result = new Date(base);
+        result.setDate(result.getDate() + (direction === 'subtract' ? -offset : offset));
+        document.getElementById('date-result').textContent = result.toLocaleDateString();
+        document.getElementById('date-weekday').textContent = result.toLocaleDateString('ko-KR', { weekday: 'long' });
+        setStatus('날짜를 계산했습니다.', 'success');
+    }
+
+    function selectedImageFile() {
+        const input = document.getElementById('image-file');
+        const file = input && input.files ? input.files[0] : null;
+        if (!file) throw new Error('이미지 파일을 선택해 주세요.');
+        if (!file.type.startsWith('image/')) throw new Error('이미지 파일만 사용할 수 있습니다.');
+        return file;
+    }
+
+    function readFileAsDataUrl(file, callback) {
+        const reader = new FileReader();
+        reader.onload = function () { callback(String(reader.result || '')); };
+        reader.onerror = function () { setStatus('파일을 읽지 못했습니다.', 'error'); };
+        reader.readAsDataURL(file);
+    }
+
+    function loadImage(dataUrl, callback) {
+        const image = new Image();
+        image.onload = function () { callback(image); };
+        image.onerror = function () { setStatus('이미지를 불러오지 못했습니다.', 'error'); };
+        image.src = dataUrl;
+    }
+
+    function renderImagePreview(node) {
+        const preview = document.getElementById('image-preview');
+        if (!preview) return;
+        preview.textContent = '';
+        preview.appendChild(node);
+    }
+
+    function convertImageToBase64() {
+        const file = selectedImageFile();
+        readFileAsDataUrl(file, function (dataUrl) {
+            const image = document.createElement('img');
+            image.src = dataUrl;
+            image.alt = file.name;
+            renderImagePreview(image);
+            setValue('#tool-output', dataUrl);
+            setStatus('Base64 Data URL로 변환했습니다.', 'success');
+        });
+    }
+
+    function processImage() {
+        const file = selectedImageFile();
+        const quality = Math.min(Math.max(Number(getValue('#image-quality')) || 0.82, 0.1), 1);
+        readFileAsDataUrl(file, function (dataUrl) {
+            loadImage(dataUrl, function (image) {
+                const requestedWidth = parseInt(getValue('#image-width'), 10);
+                const requestedHeight = parseInt(getValue('#image-height'), 10);
+                let sx = 0;
+                let sy = 0;
+                let sw = image.naturalWidth;
+                let sh = image.naturalHeight;
+                if (page.dataset.toolSlug === 'image-crop') {
+                    sx = Math.min(Math.max(parseInt(getValue('#crop-x'), 10) || 0, 0), image.naturalWidth - 1);
+                    sy = Math.min(Math.max(parseInt(getValue('#crop-y'), 10) || 0, 0), image.naturalHeight - 1);
+                    sw = Math.min(Math.max(parseInt(getValue('#crop-width'), 10) || image.naturalWidth, 1), image.naturalWidth - sx);
+                    sh = Math.min(Math.max(parseInt(getValue('#crop-height'), 10) || image.naturalHeight, 1), image.naturalHeight - sy);
+                }
+                let width = Number.isFinite(requestedWidth) && requestedWidth > 0 ? requestedWidth : sw;
+                let height = Number.isFinite(requestedHeight) && requestedHeight > 0 ? requestedHeight : Math.round(width * sh / sw);
+                if (!(Number.isFinite(requestedWidth) && requestedWidth > 0) && Number.isFinite(requestedHeight) && requestedHeight > 0) {
+                    height = requestedHeight;
+                    width = Math.round(height * sw / sh);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(image, sx, sy, sw, sh, 0, 0, width, height);
+                const mime = page.dataset.toolSlug === 'webp-converter' ? 'image/webp' : 'image/jpeg';
+                canvas.toBlob(function (blob) {
+                    if (!blob) {
+                        setStatus('이미지 변환에 실패했습니다.', 'error');
+                        return;
+                    }
+                    processedImage = {
+                        blob: blob,
+                        filename: (page.dataset.toolSlug || 'image') + (mime === 'image/webp' ? '.webp' : '.jpg')
+                    };
+                    renderImagePreview(canvas);
+                    document.getElementById('image-original').textContent = formatNumber(file.size / 1024) + ' KB';
+                    document.getElementById('image-output-size').textContent = formatNumber(blob.size / 1024) + ' KB';
+                    document.getElementById('image-output-format').textContent = mime.replace('image/', '').toUpperCase();
+                    setStatus('이미지를 처리했습니다.', 'success');
+                }, mime, quality);
+            });
+        });
+    }
+
+    function downloadProcessedImage() {
+        if (!processedImage) throw new Error('먼저 이미지를 처리해 주세요.');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(processedImage.blob);
+        link.download = processedImage.filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setStatus('이미지를 다운로드했습니다.', 'success');
+    }
+
+    function generateBcryptSnippet() {
+        const password = getValue('#tool-input');
+        const cost = Math.min(Math.max(parseInt(getValue('#bcrypt-cost'), 10) || 12, 10), 14);
+        if (!password) throw new Error('비밀번호를 입력해 주세요.');
+        setValue('#tool-output', [
+            "<?php",
+            "$password = " + JSON.stringify(password) + ";",
+            "$hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => " + cost + "]);",
+            "var_dump($hash);",
+            "var_dump(password_verify($password, $hash));"
+        ].join('\n'));
+        setStatus('PHP bcrypt 생성 코드를 만들었습니다.', 'success');
+    }
+
+    function selectedPdfFiles() {
+        const input = document.getElementById('pdf-files');
+        const files = input && input.files ? Array.from(input.files) : [];
+        if (!files.length) throw new Error('PDF 파일을 선택해 주세요.');
+        files.forEach(function (file) {
+            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                throw new Error('PDF 파일만 사용할 수 있습니다.');
+            }
+        });
+        return files;
+    }
+
+    function fileToArrayBuffer(file) {
+        return file.arrayBuffer ? file.arrayBuffer() : new Promise(function (resolve, reject) {
+            const reader = new FileReader();
+            reader.onload = function () { resolve(reader.result); };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function parsePageSelection(input, total) {
+        const selected = new Set();
+        const value = input.trim() || '1-' + total;
+        value.split(',').forEach(function (part) {
+            const range = part.trim().split('-').map(function (item) { return parseInt(item, 10); });
+            if (range.length === 2 && Number.isFinite(range[0]) && Number.isFinite(range[1])) {
+                const start = Math.max(1, Math.min(range[0], range[1]));
+                const end = Math.min(total, Math.max(range[0], range[1]));
+                for (let pageNo = start; pageNo <= end; pageNo += 1) selected.add(pageNo - 1);
+            } else if (Number.isFinite(range[0]) && range[0] >= 1 && range[0] <= total) {
+                selected.add(range[0] - 1);
+            }
+        });
+        if (!selected.size) throw new Error('분리할 페이지를 입력해 주세요. 예: 1,3-5');
+        return Array.from(selected).sort(function (a, b) { return a - b; });
+    }
+
+    function setPdfStats(files, pages, bytes) {
+        document.getElementById('pdf-file-count').textContent = formatNumber(files);
+        document.getElementById('pdf-page-count').textContent = formatNumber(pages);
+        document.getElementById('pdf-output-size').textContent = bytes ? formatNumber(bytes / 1024) + ' KB' : '-';
+    }
+
+    async function processPdf(mode) {
+        if (!window.PDFLib) throw new Error('PDF 처리 라이브러리를 불러오지 못했습니다.');
+        const files = selectedPdfFiles();
+        const output = await PDFLib.PDFDocument.create();
+        let pageCount = 0;
+
+        if (mode === 'merge') {
+            for (const file of files) {
+                const source = await PDFLib.PDFDocument.load(await fileToArrayBuffer(file));
+                const pages = await output.copyPages(source, source.getPageIndices());
+                pages.forEach(function (pdfPage) {
+                    output.addPage(pdfPage);
+                    pageCount += 1;
+                });
+            }
+        } else {
+            const source = await PDFLib.PDFDocument.load(await fileToArrayBuffer(files[0]));
+            const indices = mode === 'split' ? parsePageSelection(getValue('#pdf-pages'), source.getPageCount()) : source.getPageIndices();
+            const pages = await output.copyPages(source, indices);
+            pages.forEach(function (pdfPage) {
+                if (mode === 'rotate') {
+                    const degrees = parseInt(getValue('#pdf-rotation'), 10) || 90;
+                    pdfPage.setRotation(PDFLib.degrees(degrees));
+                }
+                output.addPage(pdfPage);
+                pageCount += 1;
+            });
+        }
+
+        const bytes = await output.save({ useObjectStreams: true });
+        processedPdf = {
+            blob: new Blob([bytes], { type: 'application/pdf' }),
+            filename: (page.dataset.toolSlug || 'document') + '.pdf'
+        };
+        setPdfStats(files.length, pageCount, bytes.length);
+        setStatus('PDF를 처리했습니다.', 'success');
+    }
+
+    function downloadProcessedPdf() {
+        if (!processedPdf) throw new Error('먼저 PDF를 처리해 주세요.');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(processedPdf.blob);
+        link.download = processedPdf.filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setStatus('PDF를 다운로드했습니다.', 'success');
+    }
+
     document.addEventListener('click', function (event) {
         const shareButton = event.target.closest('[data-share]');
         if (shareButton) {
@@ -954,16 +1227,42 @@
                 dedupeLines();
             } else if (action === 'lorem-generate') {
                 generateLorem();
+            } else if (action === 'text-diff') {
+                calculateTextDiff();
             } else if (action === 'percent-calculate') {
                 calculatePercent();
             } else if (action === 'vat-from-supply') {
                 calculateVat('supply');
             } else if (action === 'vat-from-total') {
                 calculateVat('total');
+            } else if (action === 'date-diff') {
+                calculateDateDiff();
+            } else if (action === 'date-add') {
+                calculateDateOffset('add');
+            } else if (action === 'date-subtract') {
+                calculateDateOffset('subtract');
             } else if (action === 'dday-calculate') {
                 calculateDday();
             } else if (action === 'age-calculate') {
                 calculateAge();
+            } else if (action === 'image-to-base64') {
+                convertImageToBase64();
+            } else if (action === 'image-process') {
+                processImage();
+            } else if (action === 'image-download') {
+                downloadProcessedImage();
+            } else if (action === 'bcrypt-template') {
+                generateBcryptSnippet();
+            } else if (action === 'pdf-merge') {
+                processPdf('merge').catch(function (error) { setStatus(error.message, 'error'); });
+            } else if (action === 'pdf-split') {
+                processPdf('split').catch(function (error) { setStatus(error.message, 'error'); });
+            } else if (action === 'pdf-rotate') {
+                processPdf('rotate').catch(function (error) { setStatus(error.message, 'error'); });
+            } else if (action === 'pdf-compress') {
+                processPdf('compress').catch(function (error) { setStatus(error.message, 'error'); });
+            } else if (action === 'pdf-download') {
+                downloadProcessedPdf();
             } else if (action === 'prompt-format') {
                 formatPrompt();
             } else if (action === 'prompt-optimize') {
@@ -1003,9 +1302,41 @@
         countWords();
     }
     if (slug === 'lorem-ipsum') generateLorem();
+    if (slug === 'date-calculator') {
+        const today = new Date().toISOString().slice(0, 10);
+        const dateStart = document.getElementById('date-start');
+        const dateEnd = document.getElementById('date-end');
+        const dateBase = document.getElementById('date-base');
+        if (dateStart) dateStart.value = today;
+        if (dateEnd) dateEnd.value = today;
+        if (dateBase) dateBase.value = today;
+    }
     if (slug === 'age-calculator') {
         const baseDate = document.getElementById('age-base-date');
         if (baseDate) baseDate.value = new Date().toISOString().slice(0, 10);
+    }
+    if (['image-compress', 'image-resize', 'image-crop', 'webp-converter'].includes(page.dataset.toolSlug)) {
+        const fileInput = document.getElementById('image-file');
+        if (fileInput) {
+            fileInput.addEventListener('change', function () {
+                const file = fileInput.files && fileInput.files[0];
+                if (!file) return;
+                readFileAsDataUrl(file, function (dataUrl) {
+                    loadImage(dataUrl, function (image) {
+                        document.getElementById('image-original').textContent = image.naturalWidth + ' x ' + image.naturalHeight + ' / ' + formatNumber(file.size / 1024) + ' KB';
+                        const width = document.getElementById('image-width');
+                        const height = document.getElementById('image-height');
+                        if (width && !width.value) width.value = image.naturalWidth;
+                        if (height && !height.value) height.value = image.naturalHeight;
+                        const cropWidth = document.getElementById('crop-width');
+                        const cropHeight = document.getElementById('crop-height');
+                        if (cropWidth && !cropWidth.value) cropWidth.value = image.naturalWidth;
+                        if (cropHeight && !cropHeight.value) cropHeight.value = image.naturalHeight;
+                        renderImagePreview(image);
+                    });
+                });
+            });
+        }
     }
     if (slug === 'token-counter') {
         const input = document.getElementById('tool-input');
