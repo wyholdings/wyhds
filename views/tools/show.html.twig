@@ -291,6 +291,32 @@
                             <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
                         </div>
                         <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'meta-tag-generator' %}
+                        <label for="meta-title">Title</label>
+                        <input id="meta-title" class="tool-input" type="text" placeholder="Page title">
+                        <label for="meta-description">Description</label>
+                        <textarea id="meta-description" class="tool-textarea small" spellcheck="false" placeholder="Page description"></textarea>
+                        <label for="meta-url">Canonical URL</label>
+                        <input id="meta-url" class="tool-input" type="url" placeholder="https://example.com/page">
+                        <label for="meta-image">OG Image URL</label>
+                        <input id="meta-image" class="tool-input" type="url" placeholder="https://example.com/og.jpg">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="meta-generate">Generate Tags</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'url-slug-generator' %}
+                        <label for="tool-input">Title or text</label>
+                        <textarea id="tool-input" class="tool-textarea small" spellcheck="false" placeholder="슬러그로 바꿀 제목을 입력하세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="slug-keep-korean" checked> Keep Korean</label>
+                            <label><input type="checkbox" id="slug-lower" checked> Lowercase</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="slug-generate">Generate Slug</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <input id="tool-output" class="tool-input mono" type="text" readonly>
                     {% elseif tool.widget == 'unit-converter' %}
                         <label for="unit-type">Type</label>
                         <select id="unit-type" class="tool-input">
@@ -470,6 +496,55 @@
                             <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
                         </div>
                         <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'list-compare' %}
+                        <label for="list-a">List A</label>
+                        <textarea id="list-a" class="tool-textarea small" spellcheck="false"></textarea>
+                        <label for="list-b">List B</label>
+                        <textarea id="list-b" class="tool-textarea small" spellcheck="false"></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="compare-case"> Case sensitive</label>
+                            <label><input type="checkbox" id="compare-trim" checked> Trim lines</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="compare-lists">Compare</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Common</span><strong id="compare-common-count">0</strong></div>
+                            <div><span>A only</span><strong id="compare-a-count">0</strong></div>
+                            <div><span>B only</span><strong id="compare-b-count">0</strong></div>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'line-number-tool' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="line-number-add">Add Numbers</button>
+                            <button type="button" class="tool-btn" data-action="line-number-remove">Remove Numbers</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'text-sorter' %}
+                        <label for="tool-input">Lines</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="sort-desc"> Descending</label>
+                            <label><input type="checkbox" id="sort-numeric"> Numeric</label>
+                            <label><input type="checkbox" id="sort-unique"> Unique</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="text-sort">Sort</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'table-transpose' %}
+                        <label for="tool-input">Table</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="엑셀 표를 붙여넣으세요."></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="table-transpose">Transpose</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'percent-calculator' %}
                         <label for="percent-base">Base value</label>
                         <input id="percent-base" class="tool-input" type="number" step="any" placeholder="10000">
@@ -636,6 +711,22 @@
                         <div class="result-grid">
                             <div><span>Square meter</span><strong id="pyeong-sqm">-</strong></div>
                             <div><span>Pyeong</span><strong id="pyeong-result">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'shipping-margin' %}
+                        <label for="ship-price">Selling price</label>
+                        <input id="ship-price" class="tool-input" type="number" step="any" placeholder="30000">
+                        <label for="ship-cost">Product cost</label>
+                        <input id="ship-cost" class="tool-input" type="number" step="any" placeholder="15000">
+                        <div class="result-grid three">
+                            <div><span>Shipping cost</span><input id="ship-cost-extra" class="tool-input" type="number" step="any" value="3000"></div>
+                            <div><span>Fee %</span><input id="ship-fee-rate" class="tool-input" type="number" step="any" value="3"></div>
+                            <div><span>Ad cost</span><input id="ship-ad-cost" class="tool-input" type="number" step="any" value="0"></div>
+                        </div>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="shipping-margin-calculate">Calculate</button></div>
+                        <div class="result-grid three">
+                            <div><span>Profit</span><strong id="ship-profit">-</strong></div>
+                            <div><span>Margin rate</span><strong id="ship-margin-rate">-</strong></div>
+                            <div><span>Break-even price</span><strong id="ship-break-even">-</strong></div>
                         </div>
                     {% elseif tool.widget == 'date-calculator' %}
                         <label for="date-start">Start date</label>

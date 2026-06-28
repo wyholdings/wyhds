@@ -140,6 +140,29 @@ return [
         'keywords' => ['메모 정리', '텍스트 정리', '공백 제거'],
         'related' => ['checklist-generator', 'remove-duplicate-lines'],
     ]),
+    'list-compare' => $tool('list-compare', '중복 데이터 비교 도구', 'text', 'A 목록과 B 목록을 비교해 공통, A에만 있음, B에만 있음을 분류합니다.', [
+        'widget' => 'list-compare',
+        'is_popular' => true,
+        'is_recent' => true,
+        'keywords' => ['중복 데이터 비교', '목록 비교', '리스트 비교'],
+        'related' => ['remove-duplicate-lines', 'text-diff'],
+    ]),
+    'line-number-tool' => $tool('line-number-tool', '줄 번호 추가/제거 도구', 'text', '텍스트 줄 앞에 번호를 붙이거나 기존 줄 번호를 제거합니다.', [
+        'widget' => 'line-number-tool',
+        'keywords' => ['줄 번호 추가', '줄 번호 제거', '텍스트 번호 매기기'],
+        'related' => ['note-cleaner', 'list-shuffler'],
+    ]),
+    'text-sorter' => $tool('text-sorter', '텍스트 정렬 도구', 'text', '줄 단위 텍스트를 가나다순, ABC순, 숫자순으로 정렬합니다.', [
+        'widget' => 'text-sorter',
+        'is_frequent' => true,
+        'keywords' => ['텍스트 정렬', '가나다 정렬', '목록 정렬'],
+        'related' => ['list-shuffler', 'remove-duplicate-lines'],
+    ]),
+    'table-transpose' => $tool('table-transpose', '표 행/열 전환 도구', 'text', '엑셀에서 복사한 표의 행과 열을 서로 전환합니다.', [
+        'widget' => 'table-transpose',
+        'keywords' => ['표 행열 전환', '엑셀 행열 바꾸기', '테이블 transpose'],
+        'related' => ['excel-table-converter', 'csv-sort-filter'],
+    ]),
 
     'image-compress' => $tool('image-compress', 'Image Compress', 'image', '이미지 용량을 줄여 웹 업로드와 공유에 적합하게 만듭니다.', ['widget' => 'image-processor', 'is_popular' => true, 'related' => ['image-resize', 'webp-converter']]),
     'image-resize' => $tool('image-resize', 'Image Resize', 'image', '이미지의 가로, 세로 크기를 조정합니다.', ['widget' => 'image-processor', 'related' => ['image-compress', 'image-crop']]),
@@ -241,6 +264,12 @@ return [
         'keywords' => ['더치페이 계산기', 'N분의1 계산기', '회식비 계산기'],
         'related' => ['percent-calculator', 'vat-calculator'],
     ]),
+    'shipping-margin-calculator' => $tool('shipping-margin-calculator', '배송비 포함 마진 계산기', 'calculator', '원가, 판매가, 배송비, 수수료를 반영해 실제 마진을 계산합니다.', [
+        'widget' => 'shipping-margin',
+        'is_recent' => true,
+        'keywords' => ['배송비 포함 마진 계산기', '쇼핑몰 마진 계산', '택배비 마진 계산'],
+        'related' => ['margin-calculator', 'vat-calculator'],
+    ]),
     'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 차이나 특정 날짜 이후의 날짜를 계산합니다.', ['widget' => 'date-calculator', 'related' => ['d-day-calculator', 'age-calculator', 'timestamp']]),
     'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['widget' => 'd-day-calculator', 'related' => ['date-calculator', 'age-calculator']]),
     'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['widget' => 'age-calculator', 'related' => ['date-calculator', 'd-day-calculator']]),
@@ -259,6 +288,18 @@ return [
         'is_recent' => true,
         'keywords' => ['UTM URL 생성기', '캠페인 URL 빌더', '마케팅 URL 생성'],
         'related' => ['url-encode', 'qr-code'],
+    ]),
+    'meta-tag-generator' => $tool('meta-tag-generator', '메타태그/OG 태그 생성기', 'network', 'SEO와 소셜 공유에 필요한 meta, Open Graph, Twitter 태그를 생성합니다.', [
+        'widget' => 'meta-tag-generator',
+        'is_popular' => true,
+        'keywords' => ['메타태그 생성기', 'OG 태그 생성기', 'SEO 태그 생성'],
+        'related' => ['utm-url-builder', 'url-slug-generator'],
+    ]),
+    'url-slug-generator' => $tool('url-slug-generator', 'URL 슬러그 생성기', 'network', '제목이나 문장을 URL에 쓰기 좋은 슬러그로 변환합니다.', [
+        'widget' => 'url-slug-generator',
+        'is_frequent' => true,
+        'keywords' => ['URL 슬러그 생성기', 'slug generator', 'SEO URL 변환'],
+        'related' => ['url-encode', 'meta-tag-generator'],
     ]),
     'qr-code' => $tool('qr-code', 'QR Code Generator', 'converter', 'URL과 텍스트를 QR 코드 이미지로 만들고 PNG로 내려받습니다.', [
         'widget' => 'qr-code',

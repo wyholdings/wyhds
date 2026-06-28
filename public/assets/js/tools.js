@@ -1084,6 +1084,148 @@
         setStatus('메모를 정리했습니다.', 'success');
     }
 
+    function compareLists() {
+        const trim = document.getElementById('compare-trim')?.checked;
+        const caseSensitive = document.getElementById('compare-case')?.checked;
+        const normalize = function (line) {
+            const value = trim ? line.trim() : line;
+            return caseSensitive ? value : value.toLowerCase();
+        };
+        const listA = getValue('#list-a').split(/\r\n|\r|\n/).map(function (line) { return trim ? line.trim() : line; }).filter(Boolean);
+        const listB = getValue('#list-b').split(/\r\n|\r|\n/).map(function (line) { return trim ? line.trim() : line; }).filter(Boolean);
+        const mapA = new Map(listA.map(function (item) { return [normalize(item), item]; }));
+        const mapB = new Map(listB.map(function (item) { return [normalize(item), item]; }));
+        const common = [];
+        const onlyA = [];
+        const onlyB = [];
+        mapA.forEach(function (value, key) {
+            if (mapB.has(key)) common.push(value);
+            else onlyA.push(value);
+        });
+        mapB.forEach(function (value, key) {
+            if (!mapA.has(key)) onlyB.push(value);
+        });
+        document.getElementById('compare-common-count').textContent = formatNumber(common.length);
+        document.getElementById('compare-a-count').textContent = formatNumber(onlyA.length);
+        document.getElementById('compare-b-count').textContent = formatNumber(onlyB.length);
+        setValue('#tool-output', [
+            '[Common]',
+            common.join('\n') || '-',
+            '',
+            '[Only A]',
+            onlyA.join('\n') || '-',
+            '',
+            '[Only B]',
+            onlyB.join('\n') || '-'
+        ].join('\n'));
+        setStatus('두 목록을 비교했습니다.', 'success');
+    }
+
+    function addLineNumbers() {
+        const lines = getValue('#tool-input').split(/\r\n|\r|\n/);
+        const width = String(lines.length).length;
+        setValue('#tool-output', lines.map(function (line, index) {
+            return String(index + 1).padStart(width, '0') + '. ' + line;
+        }).join('\n'));
+        setStatus('줄 번호를 추가했습니다.', 'success');
+    }
+
+    function removeLineNumbers() {
+        setValue('#tool-output', getValue('#tool-input').split(/\r\n|\r|\n/).map(function (line) {
+            return line.replace(/^\s*\d+[\).\-\:]\s*/, '');
+        }).join('\n'));
+        setStatus('줄 번호를 제거했습니다.', 'success');
+    }
+
+    function sortTextLines() {
+        let lines = linesFromInput('#tool-input');
+        if (document.getElementById('sort-unique')?.checked) {
+            lines = Array.from(new Set(lines));
+        }
+        const desc = document.getElementById('sort-desc')?.checked ? -1 : 1;
+        const numeric = document.getElementById('sort-numeric')?.checked;
+        lines.sort(function (a, b) {
+            if (numeric) return ((Number(a) || 0) - (Number(b) || 0)) * desc;
+            return a.localeCompare(b, 'ko') * desc;
+        });
+        setValue('#tool-output', lines.join('\n'));
+        setStatus('텍스트를 정렬했습니다.', 'success');
+    }
+
+    function transposeTable() {
+        const rows = parseTableText();
+        const width = Math.max.apply(null, rows.map(function (row) { return row.length; }));
+        const height = rows.length;
+        const output = [];
+        for (let col = 0; col < width; col += 1) {
+            const next = [];
+            for (let row = 0; row < height; row += 1) {
+                next.push((rows[row][col] || '').trim());
+            }
+            output.push(next.join('\t'));
+        }
+        setValue('#tool-output', output.join('\n'));
+        setStatus('표의 행과 열을 전환했습니다.', 'success');
+    }
+
+    function calculateShippingMargin() {
+        const price = Number(getValue('#ship-price'));
+        const cost = Number(getValue('#ship-cost'));
+        const shipping = Number(getValue('#ship-cost-extra')) || 0;
+        const feeRate = Number(getValue('#ship-fee-rate')) || 0;
+        const adCost = Number(getValue('#ship-ad-cost')) || 0;
+        if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(cost) || cost < 0) {
+            throw new Error('판매가와 원가를 올바르게 입력해 주세요.');
+        }
+        const fee = price * feeRate / 100;
+        const profit = price - cost - shipping - fee - adCost;
+        const breakEven = (cost + shipping + adCost) / Math.max(1 - feeRate / 100, 0.0001);
+        document.getElementById('ship-profit').textContent = formatNumber(Math.round(profit));
+        document.getElementById('ship-margin-rate').textContent = formatNumber(profit / price * 100) + '%';
+        document.getElementById('ship-break-even').textContent = formatNumber(Math.ceil(breakEven));
+        setStatus('배송비 포함 마진을 계산했습니다.', 'success');
+    }
+
+    function escapeAttribute(text) {
+        return String(text).replace(/[&<>"']/g, function (char) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
+        });
+    }
+
+    function generateMetaTags() {
+        const title = getValue('#meta-title').trim();
+        const description = getValue('#meta-description').trim();
+        const url = getValue('#meta-url').trim();
+        const image = getValue('#meta-image').trim();
+        if (!title || !description) throw new Error('제목과 설명을 입력해 주세요.');
+        const tags = [
+            '<title>' + escapeAttribute(title) + '</title>',
+            '<meta name="description" content="' + escapeAttribute(description) + '">',
+            url ? '<link rel="canonical" href="' + escapeAttribute(url) + '">' : '',
+            '<meta property="og:type" content="website">',
+            '<meta property="og:title" content="' + escapeAttribute(title) + '">',
+            '<meta property="og:description" content="' + escapeAttribute(description) + '">',
+            url ? '<meta property="og:url" content="' + escapeAttribute(url) + '">' : '',
+            image ? '<meta property="og:image" content="' + escapeAttribute(image) + '">' : '',
+            '<meta name="twitter:card" content="summary_large_image">',
+            '<meta name="twitter:title" content="' + escapeAttribute(title) + '">',
+            '<meta name="twitter:description" content="' + escapeAttribute(description) + '">',
+            image ? '<meta name="twitter:image" content="' + escapeAttribute(image) + '">' : ''
+        ].filter(Boolean);
+        setValue('#tool-output', tags.join('\n'));
+        setStatus('메타태그를 생성했습니다.', 'success');
+    }
+
+    function generateSlug() {
+        let text = getValue('#tool-input').trim();
+        if (document.getElementById('slug-lower')?.checked) text = text.toLowerCase();
+        const keepKorean = document.getElementById('slug-keep-korean')?.checked;
+        const pattern = keepKorean ? /[^a-z0-9가-힣]+/gi : /[^a-z0-9]+/gi;
+        const slugText = text.normalize('NFKC').replace(pattern, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+        setValue('#tool-output', slugText);
+        setStatus('URL 슬러그를 생성했습니다.', 'success');
+    }
+
     function buildUtmUrl() {
         const rawUrl = getValue('#utm-url').trim();
         if (!rawUrl) throw new Error('랜딩 URL을 입력해 주세요.');
@@ -1749,8 +1891,24 @@
                 tableToCsv();
             } else if (action === 'note-clean') {
                 cleanNote();
+            } else if (action === 'compare-lists') {
+                compareLists();
+            } else if (action === 'line-number-add') {
+                addLineNumbers();
+            } else if (action === 'line-number-remove') {
+                removeLineNumbers();
+            } else if (action === 'text-sort') {
+                sortTextLines();
+            } else if (action === 'table-transpose') {
+                transposeTable();
             } else if (action === 'utm-build') {
                 buildUtmUrl();
+            } else if (action === 'shipping-margin-calculate') {
+                calculateShippingMargin();
+            } else if (action === 'meta-generate') {
+                generateMetaTags();
+            } else if (action === 'slug-generate') {
+                generateSlug();
             } else if (action === 'prompt-format') {
                 formatPrompt();
             } else if (action === 'prompt-optimize') {
@@ -1818,6 +1976,11 @@
     if (slug === 'pyeong-calculator') {
         setValue('#pyeong-value', '84');
         calculatePyeong('sqm');
+    }
+    if (slug === 'shipping-margin') {
+        setValue('#ship-price', '30000');
+        setValue('#ship-cost', '15000');
+        calculateShippingMargin();
     }
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
