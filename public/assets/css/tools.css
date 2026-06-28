@@ -936,8 +936,9 @@
 
 .wy-ad-slot {
     display: block;
+    width: calc(100% - 40px);
     max-width: 1180px;
-    min-height: 92px;
+    min-height: 250px;
     margin: 26px auto;
     border: 1px dashed rgba(0, 91, 172, 0.28);
     border-radius: 16px;
@@ -948,11 +949,23 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     padding: 12px;
+    overflow: hidden;
+}
+
+.wy-ad-top {
+    min-height: 120px;
+}
+
+.wy-ad-middle,
+.wy-ad-footer,
+.wy-ad-after-faq {
+    min-height: 280px;
 }
 
 .wy-ad-slot .adsbygoogle {
-    display: block;
-    min-height: 90px;
+    display: block !important;
+    width: 100%;
+    min-height: inherit;
 }
 
 .wy-tools.is-dark .wy-ad-slot {
@@ -984,6 +997,16 @@
 
     .tool-layout {
         grid-template-columns: 1fr;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .wy-ad-slot {
+        width: calc(100% - 28px);
+        min-height: 280px;
+        margin: 20px auto;
+        border-radius: 12px;
+        padding: 10px;
     }
 }
 
