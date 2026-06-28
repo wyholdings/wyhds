@@ -819,6 +819,119 @@
         setStatus('1인 부담액을 계산했습니다.', 'success');
     }
 
+    function calculateAnnualNetSalary() {
+        const annual = Number(getValue('#annual-salary'));
+        const monthlyTax = Number(getValue('#annual-tax')) || 0;
+        const pensionRate = Number(getValue('#annual-pension-rate'));
+        const healthRate = Number(getValue('#annual-health-rate'));
+        const careRate = Number(getValue('#annual-care-rate'));
+        const employmentRate = Number(getValue('#annual-employment-rate'));
+        if (![annual, pensionRate, healthRate, careRate, employmentRate].every(function (value) { return Number.isFinite(value) && value >= 0; }) || annual <= 0) {
+            throw new Error('연봉과 공제율을 올바르게 입력해 주세요.');
+        }
+        const gross = annual / 12;
+        const pension = gross * pensionRate / 100;
+        const health = gross * healthRate / 100;
+        const care = health * careRate / 100;
+        const employment = gross * employmentRate / 100;
+        const deductions = pension + health + care + employment + monthlyTax;
+        document.getElementById('annual-monthly-gross').textContent = formatNumber(Math.round(gross));
+        document.getElementById('annual-deductions').textContent = formatNumber(Math.round(deductions));
+        document.getElementById('annual-net').textContent = formatNumber(Math.round(gross - deductions));
+        setStatus('월 예상 실수령액을 계산했습니다.', 'success');
+    }
+
+    function calculateWeeklyHolidayPay() {
+        const hourly = Number(getValue('#weekly-hourly'));
+        const weeklyHours = Number(getValue('#weekly-hours'));
+        if (!Number.isFinite(hourly) || hourly < 0 || !Number.isFinite(weeklyHours) || weeklyHours < 0) {
+            throw new Error('시급과 주 근무시간을 입력해 주세요.');
+        }
+        const eligibleHours = Math.min(weeklyHours, 40);
+        const holidayHours = weeklyHours >= 15 ? eligibleHours / 5 : 0;
+        const holidayPay = hourly * holidayHours;
+        const weeklyPay = hourly * weeklyHours + holidayPay;
+        document.getElementById('weekly-holiday-hours').textContent = formatNumber(holidayHours);
+        document.getElementById('weekly-holiday-pay').textContent = formatNumber(Math.round(holidayPay));
+        document.getElementById('weekly-total-pay').textContent = formatNumber(Math.round(weeklyPay));
+        setStatus('주휴수당을 계산했습니다.', 'success');
+    }
+
+    function calculateSeverancePay() {
+        const average = Number(getValue('#severance-average'));
+        const days = Number(getValue('#severance-days'));
+        if (!Number.isFinite(average) || average < 0 || !Number.isFinite(days) || days < 0) {
+            throw new Error('평균임금과 재직일수를 입력해 주세요.');
+        }
+        const years = days / 365;
+        const monthWage = average * 30;
+        const severance = monthWage * years;
+        document.getElementById('severance-years').textContent = formatNumber(years);
+        document.getElementById('severance-month-wage').textContent = formatNumber(Math.round(monthWage));
+        document.getElementById('severance-result').textContent = formatNumber(Math.round(severance));
+        setStatus('예상 퇴직금을 계산했습니다.', 'success');
+    }
+
+    function calculateMargin() {
+        const cost = Number(getValue('#margin-cost'));
+        const price = Number(getValue('#margin-price'));
+        const feeRate = Number(getValue('#margin-fee')) || 0;
+        if (!Number.isFinite(cost) || !Number.isFinite(price) || cost < 0 || price <= 0 || !Number.isFinite(feeRate)) {
+            throw new Error('원가, 판매가, 수수료율을 입력해 주세요.');
+        }
+        const fee = price * feeRate / 100;
+        const profit = price - cost - fee;
+        document.getElementById('margin-profit').textContent = formatNumber(Math.round(profit));
+        document.getElementById('margin-rate').textContent = formatNumber(profit / price * 100) + '%';
+        document.getElementById('markup-rate').textContent = cost > 0 ? formatNumber(profit / cost * 100) + '%' : '-';
+        setStatus('마진을 계산했습니다.', 'success');
+    }
+
+    function calculatePyeong(mode) {
+        const value = Number(getValue('#pyeong-value'));
+        if (!Number.isFinite(value) || value < 0) throw new Error('면적 값을 입력해 주세요.');
+        const sqm = mode === 'pyeong' ? value * 3.305785 : value;
+        const pyeong = mode === 'pyeong' ? value : value / 3.305785;
+        document.getElementById('pyeong-sqm').textContent = formatNumber(sqm) + ' m²';
+        document.getElementById('pyeong-result').textContent = formatNumber(pyeong) + ' 평';
+        setStatus('면적을 변환했습니다.', 'success');
+    }
+
+    function maskPersonalInfo() {
+        let text = getValue('#tool-input');
+        if (document.getElementById('mask-email')?.checked) {
+            text = text.replace(/([A-Za-z0-9._%+-]{2})[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '$1***$2');
+        }
+        if (document.getElementById('mask-phone')?.checked) {
+            text = text.replace(/\b(01[016789])[-.\s]?(\d{3,4})[-.\s]?(\d{4})\b/g, '$1-****-$3');
+            text = text.replace(/\b(0\d{1,2})[-.\s]?(\d{3,4})[-.\s]?(\d{4})\b/g, '$1-****-$3');
+        }
+        if (document.getElementById('mask-rrn')?.checked) {
+            text = text.replace(/\b(\d{6})[-\s]?([1-4])\d{6}\b/g, '$1-$2******');
+        }
+        setValue('#tool-output', text);
+        setStatus('개인정보 패턴을 마스킹했습니다.', 'success');
+    }
+
+    function buildUtmUrl() {
+        const rawUrl = getValue('#utm-url').trim();
+        if (!rawUrl) throw new Error('랜딩 URL을 입력해 주세요.');
+        const url = new URL(rawUrl, window.location.origin);
+        const params = {
+            utm_source: getValue('#utm-source').trim(),
+            utm_medium: getValue('#utm-medium').trim(),
+            utm_campaign: getValue('#utm-campaign').trim(),
+            utm_term: getValue('#utm-term').trim(),
+            utm_content: getValue('#utm-content').trim(),
+            utm_language: getValue('#utm-language').trim()
+        };
+        Object.keys(params).forEach(function (key) {
+            if (params[key]) url.searchParams.set(key, params[key]);
+        });
+        setValue('#tool-output', url.href);
+        setStatus('UTM URL을 생성했습니다.', 'success');
+    }
+
     const unitGroups = {
         length: {
             mm: ['Millimeter', 0.001],
@@ -1398,6 +1511,18 @@
                 calculateCompound();
             } else if (action === 'split-calculate') {
                 calculateSplitBill();
+            } else if (action === 'annual-net-calculate') {
+                calculateAnnualNetSalary();
+            } else if (action === 'weekly-holiday-calculate') {
+                calculateWeeklyHolidayPay();
+            } else if (action === 'severance-calculate') {
+                calculateSeverancePay();
+            } else if (action === 'margin-calculate') {
+                calculateMargin();
+            } else if (action === 'sqm-to-pyeong') {
+                calculatePyeong('sqm');
+            } else if (action === 'pyeong-to-sqm') {
+                calculatePyeong('pyeong');
             } else if (action === 'date-diff') {
                 calculateDateDiff();
             } else if (action === 'date-add') {
@@ -1435,6 +1560,10 @@
                 from.value = to.value;
                 to.value = previous;
                 convertUnit();
+            } else if (action === 'mask-personal-info') {
+                maskPersonalInfo();
+            } else if (action === 'utm-build') {
+                buildUtmUrl();
             } else if (action === 'prompt-format') {
                 formatPrompt();
             } else if (action === 'prompt-optimize') {
@@ -1479,6 +1608,29 @@
             });
         }
         convertUnit();
+    }
+    if (slug === 'annual-salary-net') {
+        setValue('#annual-salary', '50000000');
+        calculateAnnualNetSalary();
+    }
+    if (slug === 'weekly-holiday-pay') {
+        setValue('#weekly-hourly', '10030');
+        setValue('#weekly-hours', '40');
+        calculateWeeklyHolidayPay();
+    }
+    if (slug === 'severance-pay') {
+        setValue('#severance-average', '120000');
+        setValue('#severance-days', '1095');
+        calculateSeverancePay();
+    }
+    if (slug === 'margin-calculator') {
+        setValue('#margin-cost', '7000');
+        setValue('#margin-price', '10000');
+        calculateMargin();
+    }
+    if (slug === 'pyeong-calculator') {
+        setValue('#pyeong-value', '84');
+        calculatePyeong('sqm');
     }
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');

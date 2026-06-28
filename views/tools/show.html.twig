@@ -272,6 +272,25 @@
                         <button type="button" class="tool-btn primary" data-action="color-convert">Convert</button>
                         <div class="color-preview" id="color-preview"></div>
                         <div class="result-grid three"><div><span>HEX</span><strong id="color-hex">-</strong></div><div><span>RGB</span><strong id="color-rgb">-</strong></div><div><span>HSL</span><strong id="color-hsl">-</strong></div></div>
+                    {% elseif tool.widget == 'utm-builder' %}
+                        <label for="utm-url">Landing URL</label>
+                        <input id="utm-url" class="tool-input" type="url" placeholder="https://example.com/page">
+                        <label for="utm-source">Source</label>
+                        <input id="utm-source" class="tool-input" type="text" placeholder="google">
+                        <label for="utm-medium">Medium</label>
+                        <input id="utm-medium" class="tool-input" type="text" placeholder="cpc">
+                        <label for="utm-campaign">Campaign</label>
+                        <input id="utm-campaign" class="tool-input" type="text" placeholder="summer_sale">
+                        <div class="result-grid three">
+                            <div><span>Term</span><input id="utm-term" class="tool-input" type="text" placeholder="keyword"></div>
+                            <div><span>Content</span><input id="utm-content" class="tool-input" type="text" placeholder="banner_a"></div>
+                            <div><span>Language</span><input id="utm-language" class="tool-input" type="text" placeholder="ko"></div>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="utm-build">Build URL</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'unit-converter' %}
                         <label for="unit-type">Type</label>
                         <select id="unit-type" class="tool-input">
@@ -358,6 +377,21 @@
                         <div class="diff-preview" id="diff-preview"></div>
                         <label for="tool-output">Summary</label>
                         <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'personal-info-masker' %}
+                        <label for="tool-input">Text</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="마스킹할 텍스트를 입력하세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="mask-phone" checked> Phone</label>
+                            <label><input type="checkbox" id="mask-email" checked> Email</label>
+                            <label><input type="checkbox" id="mask-rrn" checked> Resident ID</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="mask-personal-info">Mask</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <label for="tool-output">Masked Result</label>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'percent-calculator' %}
                         <label for="percent-base">Base value</label>
                         <input id="percent-base" class="tool-input" type="number" step="any" placeholder="10000">
@@ -460,6 +494,70 @@
                             <div><span>Grand total</span><strong id="split-grand-total">-</strong></div>
                             <div><span>Per person</span><strong id="split-per-person">-</strong></div>
                             <div><span>Remainder</span><strong id="split-remainder">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'annual-salary-net' %}
+                        <label for="annual-salary">Annual salary</label>
+                        <input id="annual-salary" class="tool-input" type="number" step="any" placeholder="50000000">
+                        <label for="annual-tax">Monthly income/local tax</label>
+                        <input id="annual-tax" class="tool-input" type="number" step="any" value="0">
+                        <div class="result-grid four">
+                            <div><span>Pension %</span><input id="annual-pension-rate" class="tool-input" type="number" step="0.01" value="4.75"></div>
+                            <div><span>Health %</span><input id="annual-health-rate" class="tool-input" type="number" step="0.001" value="3.595"></div>
+                            <div><span>LTC % of health</span><input id="annual-care-rate" class="tool-input" type="number" step="0.01" value="13.2"></div>
+                            <div><span>Employment %</span><input id="annual-employment-rate" class="tool-input" type="number" step="0.01" value="0.9"></div>
+                        </div>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="annual-net-calculate">Calculate</button></div>
+                        <div class="result-grid three">
+                            <div><span>Gross monthly</span><strong id="annual-monthly-gross">-</strong></div>
+                            <div><span>Total deductions</span><strong id="annual-deductions">-</strong></div>
+                            <div><span>Estimated net</span><strong id="annual-net">-</strong></div>
+                        </div>
+                        <p class="tool-note">간편 추정용입니다. 소득세는 간이세액표·공제 조건에 따라 달라져 월 세액을 직접 입력하도록 구성했습니다.</p>
+                    {% elseif tool.widget == 'weekly-holiday-pay' %}
+                        <label for="weekly-hourly">Hourly wage</label>
+                        <input id="weekly-hourly" class="tool-input" type="number" step="any" placeholder="10030">
+                        <label for="weekly-hours">Weekly work hours</label>
+                        <input id="weekly-hours" class="tool-input" type="number" step="any" placeholder="40">
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="weekly-holiday-calculate">Calculate</button></div>
+                        <div class="result-grid three">
+                            <div><span>Holiday hours</span><strong id="weekly-holiday-hours">-</strong></div>
+                            <div><span>Holiday pay</span><strong id="weekly-holiday-pay">-</strong></div>
+                            <div><span>Weekly total</span><strong id="weekly-total-pay">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'severance-pay' %}
+                        <label for="severance-average">Average daily wage</label>
+                        <input id="severance-average" class="tool-input" type="number" step="any" placeholder="120000">
+                        <label for="severance-days">Employment days</label>
+                        <input id="severance-days" class="tool-input" type="number" step="1" placeholder="1095">
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="severance-calculate">Calculate</button></div>
+                        <div class="result-grid three">
+                            <div><span>Years</span><strong id="severance-years">-</strong></div>
+                            <div><span>30-day wage</span><strong id="severance-month-wage">-</strong></div>
+                            <div><span>Estimated severance</span><strong id="severance-result">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'margin-calculator' %}
+                        <label for="margin-cost">Cost</label>
+                        <input id="margin-cost" class="tool-input" type="number" step="any" placeholder="7000">
+                        <label for="margin-price">Selling price</label>
+                        <input id="margin-price" class="tool-input" type="number" step="any" placeholder="10000">
+                        <label for="margin-fee">Fee rate (%)</label>
+                        <input id="margin-fee" class="tool-input" type="number" step="any" value="0">
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="margin-calculate">Calculate</button></div>
+                        <div class="result-grid three">
+                            <div><span>Profit</span><strong id="margin-profit">-</strong></div>
+                            <div><span>Margin rate</span><strong id="margin-rate">-</strong></div>
+                            <div><span>Markup rate</span><strong id="markup-rate">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'pyeong-calculator' %}
+                        <label for="pyeong-value">Area</label>
+                        <input id="pyeong-value" class="tool-input" type="number" step="any" placeholder="84">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="sqm-to-pyeong">m² to 평</button>
+                            <button type="button" class="tool-btn" data-action="pyeong-to-sqm">평 to m²</button>
+                        </div>
+                        <div class="result-grid">
+                            <div><span>Square meter</span><strong id="pyeong-sqm">-</strong></div>
+                            <div><span>Pyeong</span><strong id="pyeong-result">-</strong></div>
                         </div>
                     {% elseif tool.widget == 'date-calculator' %}
                         <label for="date-start">Start date</label>

@@ -99,6 +99,12 @@ return [
     'case-converter' => $tool('case-converter', 'Case Converter', 'text', '영문 텍스트를 대문자, 소문자, 제목 케이스 등으로 변환합니다.', ['widget' => 'case-converter', 'related' => ['word-counter', 'lorem-ipsum']]),
     'remove-duplicate-lines' => $tool('remove-duplicate-lines', 'Remove Duplicate Lines', 'text', '중복된 줄을 제거하고 고유한 목록만 남깁니다.', ['widget' => 'remove-duplicate-lines', 'related' => ['text-diff', 'word-counter']]),
     'text-diff' => $tool('text-diff', 'Text Diff', 'text', '두 텍스트의 차이를 비교합니다.', ['widget' => 'text-diff', 'related' => ['remove-duplicate-lines', 'regex-tester']]),
+    'personal-info-masker' => $tool('personal-info-masker', '개인정보 마스킹 도구', 'text', '전화번호, 이메일, 주민등록번호 패턴을 찾아 일부를 마스킹합니다.', [
+        'widget' => 'personal-info-masker',
+        'is_recent' => true,
+        'keywords' => ['개인정보 마스킹', '전화번호 마스킹', '이메일 마스킹', '주민번호 마스킹'],
+        'related' => ['word-counter', 'regex-tester', 'text-diff'],
+    ]),
 
     'image-compress' => $tool('image-compress', 'Image Compress', 'image', '이미지 용량을 줄여 웹 업로드와 공유에 적합하게 만듭니다.', ['widget' => 'image-processor', 'is_popular' => true, 'related' => ['image-resize', 'webp-converter']]),
     'image-resize' => $tool('image-resize', 'Image Resize', 'image', '이미지의 가로, 세로 크기를 조정합니다.', ['widget' => 'image-processor', 'related' => ['image-compress', 'image-crop']]),
@@ -153,6 +159,36 @@ return [
         'keywords' => ['시급 계산기', '월급 계산기', '연봉 계산기', '급여 환산기'],
         'related' => ['withholding-3-3-calculator', 'percent-calculator'],
     ]),
+    'annual-salary-net-calculator' => $tool('annual-salary-net-calculator', '연봉 실수령액 계산기', 'calculator', '연봉 기준 월 예상 실수령액과 공제액을 계산합니다.', [
+        'widget' => 'annual-salary-net',
+        'is_popular' => true,
+        'is_recent' => true,
+        'keywords' => ['연봉 실수령액 계산기', '월급 실수령액', '4대보험 계산기'],
+        'related' => ['salary-calculator', 'withholding-3-3-calculator', 'weekly-holiday-pay-calculator'],
+    ]),
+    'weekly-holiday-pay-calculator' => $tool('weekly-holiday-pay-calculator', '주휴수당 계산기', 'calculator', '시급과 주 근무시간으로 주휴수당과 주급을 계산합니다.', [
+        'widget' => 'weekly-holiday-pay',
+        'is_frequent' => true,
+        'keywords' => ['주휴수당 계산기', '알바 주휴수당', '시급 주급 계산기'],
+        'related' => ['salary-calculator', 'annual-salary-net-calculator'],
+    ]),
+    'severance-pay-calculator' => $tool('severance-pay-calculator', '퇴직금 계산기', 'calculator', '평균임금과 재직기간으로 예상 퇴직금을 계산합니다.', [
+        'widget' => 'severance-pay',
+        'keywords' => ['퇴직금 계산기', '퇴직급여 계산기', '평균임금 계산'],
+        'related' => ['annual-salary-net-calculator', 'salary-calculator'],
+    ]),
+    'margin-calculator' => $tool('margin-calculator', '마진율 계산기', 'calculator', '원가, 판매가, 수수료를 기준으로 마진과 마진율을 계산합니다.', [
+        'widget' => 'margin-calculator',
+        'is_popular' => true,
+        'keywords' => ['마진율 계산기', '원가 계산기', '판매가 계산기', '쇼핑몰 마진 계산'],
+        'related' => ['percent-calculator', 'vat-calculator'],
+    ]),
+    'pyeong-calculator' => $tool('pyeong-calculator', '평수 계산기', 'calculator', '제곱미터와 평을 서로 변환하고 면적을 계산합니다.', [
+        'widget' => 'pyeong-calculator',
+        'is_frequent' => true,
+        'keywords' => ['평수 계산기', '제곱미터 평 변환', '아파트 평수 계산'],
+        'related' => ['unit-converter', 'date-calculator'],
+    ]),
     'loan-calculator' => $tool('loan-calculator', '대출 이자 계산기', 'calculator', '원금, 금리, 기간으로 월 상환액과 총 이자를 계산합니다.', [
         'widget' => 'loan-calculator',
         'is_popular' => true,
@@ -182,6 +218,12 @@ return [
         'widget' => 'url-encode',
         'is_frequent' => true,
         'related' => ['base64', 'jwt-decoder'],
+    ]),
+    'utm-url-builder' => $tool('utm-url-builder', 'UTM URL 생성기', 'network', '캠페인 추적에 사용할 UTM 파라미터 URL을 생성합니다.', [
+        'widget' => 'utm-builder',
+        'is_recent' => true,
+        'keywords' => ['UTM URL 생성기', '캠페인 URL 빌더', '마케팅 URL 생성'],
+        'related' => ['url-encode', 'qr-code'],
     ]),
     'qr-code' => $tool('qr-code', 'QR Code Generator', 'converter', 'URL과 텍스트를 QR 코드 이미지로 만들고 PNG로 내려받습니다.', [
         'widget' => 'qr-code',
