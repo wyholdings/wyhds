@@ -70,6 +70,29 @@ class ToolRegistry
         return array_slice(array_values(array_filter($this->active(), static fn (array $tool): bool => (bool)($tool['is_popular'] ?? false))), 0, $limit);
     }
 
+    public function popularBySlugs(array $slugs, int $limit = 8): array
+    {
+        $popular = [];
+        foreach ($slugs as $slug) {
+            if (isset($this->tools[$slug]) && ($this->tools[$slug]['status'] ?? 'active') === 'active') {
+                $popular[] = $this->tools[$slug];
+            }
+        }
+
+        if (count($popular) < $limit) {
+            foreach ($this->popular($limit) as $tool) {
+                if (!in_array($tool['slug'], array_column($popular, 'slug'), true)) {
+                    $popular[] = $tool;
+                }
+                if (count($popular) >= $limit) {
+                    break;
+                }
+            }
+        }
+
+        return array_slice($popular, 0, $limit);
+    }
+
     public function recent(int $limit = 8): array
     {
         return array_slice(array_values(array_filter($this->active(), static fn (array $tool): bool => (bool)($tool['is_recent'] ?? false))), 0, $limit);
@@ -116,6 +139,14 @@ class ToolRegistry
             'summary' => $tool['summary'],
             'keywords' => $tool['keywords'] ?? '',
         ], $this->active());
+    }
+
+    public function withViewCounts(array $tools, array $counts): array
+    {
+        return array_map(static function (array $tool) use ($counts): array {
+            $tool['view_count'] = $counts[$tool['slug']] ?? 0;
+            return $tool;
+        }, $tools);
     }
 
     private function normalizeTool(array $tool): array

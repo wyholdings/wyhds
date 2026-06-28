@@ -909,6 +909,9 @@
                 <div class="help-box">
                     <h2>도구 정보</h2>
                     <p>{{ tool.summary }}</p>
+                    {% if tool.view_count is defined and tool.view_count > 0 %}
+                        <p class="tool-views">{{ tool.view_count|number_format }} views</p>
+                    {% endif %}
                     <a href="/tools/category/{{ tool.category }}">{{ category.name|default(tool.category) }} Tools</a>
                 </div>
                 <div class="help-box">

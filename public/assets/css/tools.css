@@ -778,6 +778,14 @@
     line-height: 1.65;
 }
 
+.tool-views {
+    display: block;
+    margin-bottom: 16px;
+    color: var(--wy-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
 .wy-tool-card em {
     margin-top: auto;
     color: var(--wy-blue);

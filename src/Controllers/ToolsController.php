@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\ToolUsageModel;
 use App\Services\ToolRegistry;
 use Twig\Environment;
 
@@ -19,6 +20,9 @@ class ToolsController
     public function index(): void
     {
         $tools = $this->registry->active();
+        $usage = new ToolUsageModel();
+        $popularTools = $this->registry->popularBySlugs($usage->getPopularSlugs(8, 30), 8);
+        $popularTools = $this->registry->withViewCounts($popularTools, $usage->getViewCounts(array_column($popularTools, 'slug')));
 
         echo $this->twig->render('tools/index.html.twig', [
             'title' => 'WY Tools | 무료 온라인 도구 모음',
@@ -26,7 +30,7 @@ class ToolsController
             'keywords' => 'WY Tools, 무료 온라인 도구, 개발자 도구, PDF 도구, 이미지 도구, AI 도구, 텍스트 도구, 계산기',
             'canonical_url' => 'https://wyhds.com/tools',
             'tools' => $tools,
-            'popular_tools' => $this->registry->popular(),
+            'popular_tools' => $popularTools,
             'recent_tools' => $this->registry->recent(),
             'frequent_tools' => $this->registry->frequent(),
             'categories' => $this->registry->categories(),
@@ -66,6 +70,9 @@ class ToolsController
             return;
         }
 
+        $usage = new ToolUsageModel();
+        $usage->recordView($slug);
+        $tool = $this->registry->withViewCounts([$tool], $usage->getViewCounts([$slug]))[0];
         $category = $this->registry->category($tool['category'] ?? 'developer');
 
         echo $this->twig->render('tools/show.html.twig', [
