@@ -392,6 +392,84 @@
                         </div>
                         <label for="tool-output">Masked Result</label>
                         <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'random-picker' %}
+                        <label for="tool-input">Items</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="한 줄에 하나씩 입력하세요."></textarea>
+                        <label for="picker-count">Winners</label>
+                        <input id="picker-count" class="tool-input" type="number" min="1" value="1">
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="picker-unique" checked> Unique winners</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="random-pick">Pick</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'list-shuffler' %}
+                        <label for="tool-input">List</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="섞을 목록을 줄 단위로 입력하세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="shuffle-numbered"> Add numbers</label>
+                            <label><input type="checkbox" id="shuffle-trim" checked> Trim lines</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="shuffle-list">Shuffle</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'checklist-generator' %}
+                        <label for="tool-input">Tasks</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="할 일을 줄 단위로 입력하세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="checklist-numbered"> Numbered</label>
+                            <label><input type="checkbox" id="checklist-checked"> Checked</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="checklist-generate">Generate</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'csv-sort-filter' %}
+                        <label for="tool-input">CSV</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="name,status&#10;A,active&#10;B,pending"></textarea>
+                        <div class="result-grid three">
+                            <div><span>Sort column</span><input id="csv-sort-column" class="tool-input" type="text" placeholder="name"></div>
+                            <div><span>Filter column</span><input id="csv-filter-column" class="tool-input" type="text" placeholder="status"></div>
+                            <div><span>Filter text</span><input id="csv-filter-text" class="tool-input" type="text" placeholder="active"></div>
+                        </div>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="csv-sort-desc"> Descending</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="csv-sort-filter">Apply</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy CSV</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'excel-table-converter' %}
+                        <label for="tool-input">Excel table</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="엑셀에서 복사한 표를 붙여넣으세요."></textarea>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="table-to-markdown">Markdown</button>
+                            <button type="button" class="tool-btn" data-action="table-to-html">HTML</button>
+                            <button type="button" class="tool-btn" data-action="table-to-csv">CSV</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'note-cleaner' %}
+                        <label for="tool-input">Memo</label>
+                        <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="정리할 메모를 붙여넣으세요."></textarea>
+                        <div class="tool-checks">
+                            <label><input type="checkbox" id="note-trim" checked> Trim lines</label>
+                            <label><input type="checkbox" id="note-collapse" checked> Collapse blanks</label>
+                            <label><input type="checkbox" id="note-dedupe"> Remove duplicate lines</label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="note-clean">Clean</button>
+                            <button type="button" class="tool-btn" data-copy="#tool-output">Copy</button>
+                            <button type="button" class="tool-btn" data-download="#tool-output">Download</button>
+                        </div>
+                        <textarea id="tool-output" class="tool-textarea" readonly spellcheck="false"></textarea>
                     {% elseif tool.widget == 'percent-calculator' %}
                         <label for="percent-base">Base value</label>
                         <input id="percent-base" class="tool-input" type="number" step="any" placeholder="10000">

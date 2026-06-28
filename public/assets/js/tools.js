@@ -913,6 +913,177 @@
         setStatus('개인정보 패턴을 마스킹했습니다.', 'success');
     }
 
+    function linesFromInput(selector) {
+        return getValue(selector).split(/\r\n|\r|\n/).map(function (line) {
+            return line.trim();
+        }).filter(Boolean);
+    }
+
+    function shuffleArray(items) {
+        const result = items.slice();
+        for (let i = result.length - 1; i > 0; i -= 1) {
+            const j = randomInt(i + 1);
+            const temp = result[i];
+            result[i] = result[j];
+            result[j] = temp;
+        }
+        return result;
+    }
+
+    function randomPick() {
+        const items = linesFromInput('#tool-input');
+        const count = Math.max(parseInt(getValue('#picker-count'), 10) || 1, 1);
+        const unique = document.getElementById('picker-unique')?.checked;
+        if (!items.length) throw new Error('추첨할 항목을 입력해 주세요.');
+        const source = unique ? shuffleArray(Array.from(new Set(items))) : items;
+        const winners = [];
+        for (let i = 0; i < count; i += 1) {
+            winners.push(unique ? source[i % source.length] : source[randomInt(source.length)]);
+        }
+        setValue('#tool-output', winners.map(function (item, index) {
+            return (index + 1) + '. ' + item;
+        }).join('\n'));
+        setStatus(winners.length + '개 항목을 추첨했습니다.', 'success');
+    }
+
+    function shuffleList() {
+        let items = getValue('#tool-input').split(/\r\n|\r|\n/);
+        if (document.getElementById('shuffle-trim')?.checked) {
+            items = items.map(function (line) { return line.trim(); }).filter(Boolean);
+        } else {
+            items = items.filter(function (line) { return line !== ''; });
+        }
+        if (!items.length) throw new Error('섞을 목록을 입력해 주세요.');
+        const numbered = document.getElementById('shuffle-numbered')?.checked;
+        const shuffled = shuffleArray(items).map(function (item, index) {
+            return numbered ? (index + 1) + '. ' + item : item;
+        });
+        setValue('#tool-output', shuffled.join('\n'));
+        setStatus('목록을 무작위로 섞었습니다.', 'success');
+    }
+
+    function generateChecklist() {
+        const items = linesFromInput('#tool-input');
+        const numbered = document.getElementById('checklist-numbered')?.checked;
+        const checked = document.getElementById('checklist-checked')?.checked ? 'x' : ' ';
+        if (!items.length) throw new Error('체크리스트로 만들 항목을 입력해 주세요.');
+        setValue('#tool-output', items.map(function (item, index) {
+            return numbered ? (index + 1) + '. [' + checked + '] ' + item : '- [' + checked + '] ' + item;
+        }).join('\n'));
+        setStatus('체크리스트를 생성했습니다.', 'success');
+    }
+
+    function csvSortFilter() {
+        const rows = parseCsv(getValue('#tool-input'));
+        if (rows.length < 2) throw new Error('헤더와 데이터가 포함된 CSV를 입력해 주세요.');
+        const headers = rows[0].map(function (header) { return header.trim(); });
+        let data = rows.slice(1).filter(function (row) {
+            return row.some(function (cell) { return cell !== ''; });
+        });
+        const filterColumn = getValue('#csv-filter-column').trim();
+        const filterText = getValue('#csv-filter-text').trim().toLowerCase();
+        if (filterColumn && filterText) {
+            const filterIndex = headers.indexOf(filterColumn);
+            if (filterIndex < 0) throw new Error('필터 컬럼을 찾을 수 없습니다.');
+            data = data.filter(function (row) {
+                return String(row[filterIndex] || '').toLowerCase().includes(filterText);
+            });
+        }
+        const sortColumn = getValue('#csv-sort-column').trim();
+        if (sortColumn) {
+            const sortIndex = headers.indexOf(sortColumn);
+            if (sortIndex < 0) throw new Error('정렬 컬럼을 찾을 수 없습니다.');
+            const desc = document.getElementById('csv-sort-desc')?.checked ? -1 : 1;
+            data.sort(function (a, b) {
+                const av = a[sortIndex] || '';
+                const bv = b[sortIndex] || '';
+                const an = Number(av);
+                const bn = Number(bv);
+                if (Number.isFinite(an) && Number.isFinite(bn)) return (an - bn) * desc;
+                return av.localeCompare(bv, 'ko') * desc;
+            });
+        }
+        setValue('#tool-output', [headers].concat(data).map(function (row) {
+            return row.map(csvEscape).join(',');
+        }).join('\n'));
+        setStatus(data.length + '개 행을 정리했습니다.', 'success');
+    }
+
+    function parseTableText() {
+        const rows = getValue('#tool-input').trim().split(/\r\n|\r|\n/).map(function (line) {
+            return line.split('\t');
+        }).filter(function (row) {
+            return row.some(function (cell) { return cell.trim() !== ''; });
+        });
+        if (!rows.length) throw new Error('표 데이터를 붙여넣어 주세요.');
+        return rows;
+    }
+
+    function tableToMarkdown() {
+        const rows = parseTableText();
+        const width = Math.max.apply(null, rows.map(function (row) { return row.length; }));
+        const normalized = rows.map(function (row) {
+            return Array.from({ length: width }, function (_, index) { return (row[index] || '').trim(); });
+        });
+        const separator = Array.from({ length: width }, function () { return '---'; });
+        const output = [normalized[0], separator].concat(normalized.slice(1)).map(function (row) {
+            return '| ' + row.map(function (cell) { return cell.replace(/\|/g, '\\|'); }).join(' | ') + ' |';
+        }).join('\n');
+        setValue('#tool-output', output);
+        setStatus('Markdown 표로 변환했습니다.', 'success');
+    }
+
+    function tableToHtml() {
+        const rows = parseTableText();
+        const escapeHtml = function (text) {
+            return String(text).replace(/[&<>"']/g, function (char) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
+            });
+        };
+        const output = ['<table>', '  <thead>', '    <tr>' + rows[0].map(function (cell) { return '<th>' + escapeHtml(cell.trim()) + '</th>'; }).join('') + '</tr>', '  </thead>', '  <tbody>']
+            .concat(rows.slice(1).map(function (row) {
+                return '    <tr>' + row.map(function (cell) { return '<td>' + escapeHtml(cell.trim()) + '</td>'; }).join('') + '</tr>';
+            }))
+            .concat(['  </tbody>', '</table>'])
+            .join('\n');
+        setValue('#tool-output', output);
+        setStatus('HTML 표로 변환했습니다.', 'success');
+    }
+
+    function tableToCsv() {
+        const rows = parseTableText();
+        setValue('#tool-output', rows.map(function (row) {
+            return row.map(function (cell) { return csvEscape(cell.trim()); }).join(',');
+        }).join('\n'));
+        setStatus('CSV로 변환했습니다.', 'success');
+    }
+
+    function cleanNote() {
+        let lines = getValue('#tool-input').split(/\r\n|\r|\n/);
+        if (document.getElementById('note-trim')?.checked) {
+            lines = lines.map(function (line) { return line.trim().replace(/\s+/g, ' '); });
+        }
+        if (document.getElementById('note-collapse')?.checked) {
+            const collapsed = [];
+            lines.forEach(function (line) {
+                if (line === '' && collapsed[collapsed.length - 1] === '') return;
+                collapsed.push(line);
+            });
+            lines = collapsed;
+        }
+        if (document.getElementById('note-dedupe')?.checked) {
+            const seen = new Set();
+            lines = lines.filter(function (line) {
+                const key = line.toLowerCase();
+                if (line !== '' && seen.has(key)) return false;
+                if (line !== '') seen.add(key);
+                return true;
+            });
+        }
+        setValue('#tool-output', lines.join('\n').trim());
+        setStatus('메모를 정리했습니다.', 'success');
+    }
+
     function buildUtmUrl() {
         const rawUrl = getValue('#utm-url').trim();
         if (!rawUrl) throw new Error('랜딩 URL을 입력해 주세요.');
@@ -1562,6 +1733,22 @@
                 convertUnit();
             } else if (action === 'mask-personal-info') {
                 maskPersonalInfo();
+            } else if (action === 'random-pick') {
+                randomPick();
+            } else if (action === 'shuffle-list') {
+                shuffleList();
+            } else if (action === 'checklist-generate') {
+                generateChecklist();
+            } else if (action === 'csv-sort-filter') {
+                csvSortFilter();
+            } else if (action === 'table-to-markdown') {
+                tableToMarkdown();
+            } else if (action === 'table-to-html') {
+                tableToHtml();
+            } else if (action === 'table-to-csv') {
+                tableToCsv();
+            } else if (action === 'note-clean') {
+                cleanNote();
             } else if (action === 'utm-build') {
                 buildUtmUrl();
             } else if (action === 'prompt-format') {

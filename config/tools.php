@@ -105,6 +105,41 @@ return [
         'keywords' => ['개인정보 마스킹', '전화번호 마스킹', '이메일 마스킹', '주민번호 마스킹'],
         'related' => ['word-counter', 'regex-tester', 'text-diff'],
     ]),
+    'random-picker' => $tool('random-picker', '랜덤 추첨기', 'text', '이름이나 항목 목록에서 무작위 당첨자를 추첨합니다.', [
+        'widget' => 'random-picker',
+        'is_popular' => true,
+        'is_recent' => true,
+        'keywords' => ['랜덤 추첨기', '이름 추첨기', '당첨자 뽑기'],
+        'related' => ['list-shuffler', 'remove-duplicate-lines'],
+    ]),
+    'list-shuffler' => $tool('list-shuffler', '목록 셔플 도구', 'text', '줄 단위 목록을 무작위로 섞거나 번호를 붙여 정리합니다.', [
+        'widget' => 'list-shuffler',
+        'is_frequent' => true,
+        'keywords' => ['목록 섞기', '랜덤 순서', '리스트 셔플'],
+        'related' => ['random-picker', 'remove-duplicate-lines'],
+    ]),
+    'checklist-generator' => $tool('checklist-generator', '체크리스트 생성기', 'text', '줄 단위 메모를 Markdown 체크리스트로 변환합니다.', [
+        'widget' => 'checklist-generator',
+        'keywords' => ['체크리스트 생성기', 'Markdown 체크리스트', '할일 목록 변환'],
+        'related' => ['note-cleaner', 'case-converter'],
+    ]),
+    'csv-sort-filter' => $tool('csv-sort-filter', 'CSV 정렬/필터 도구', 'text', 'CSV 데이터를 컬럼 기준으로 필터링하고 정렬합니다.', [
+        'widget' => 'csv-sort-filter',
+        'is_recent' => true,
+        'keywords' => ['CSV 정렬', 'CSV 필터', 'CSV 데이터 정리'],
+        'related' => ['csv-viewer', 'json-csv'],
+    ]),
+    'excel-table-converter' => $tool('excel-table-converter', '엑셀 표 변환기', 'text', '엑셀에서 복사한 탭 구분 표를 Markdown, HTML, CSV로 변환합니다.', [
+        'widget' => 'excel-table-converter',
+        'keywords' => ['엑셀 표 변환', 'Markdown 표 변환', 'HTML 테이블 변환'],
+        'related' => ['csv-viewer', 'csv-sort-filter'],
+    ]),
+    'note-cleaner' => $tool('note-cleaner', '메모 정리기', 'text', '흩어진 메모의 공백, 빈 줄, 중복 줄을 정리합니다.', [
+        'widget' => 'note-cleaner',
+        'is_frequent' => true,
+        'keywords' => ['메모 정리', '텍스트 정리', '공백 제거'],
+        'related' => ['checklist-generator', 'remove-duplicate-lines'],
+    ]),
 
     'image-compress' => $tool('image-compress', 'Image Compress', 'image', '이미지 용량을 줄여 웹 업로드와 공유에 적합하게 만듭니다.', ['widget' => 'image-processor', 'is_popular' => true, 'related' => ['image-resize', 'webp-converter']]),
     'image-resize' => $tool('image-resize', 'Image Resize', 'image', '이미지의 가로, 세로 크기를 조정합니다.', ['widget' => 'image-processor', 'related' => ['image-compress', 'image-crop']]),
