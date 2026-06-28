@@ -272,6 +272,27 @@
                         <button type="button" class="tool-btn primary" data-action="color-convert">Convert</button>
                         <div class="color-preview" id="color-preview"></div>
                         <div class="result-grid three"><div><span>HEX</span><strong id="color-hex">-</strong></div><div><span>RGB</span><strong id="color-rgb">-</strong></div><div><span>HSL</span><strong id="color-hsl">-</strong></div></div>
+                    {% elseif tool.widget == 'unit-converter' %}
+                        <label for="unit-type">Type</label>
+                        <select id="unit-type" class="tool-input">
+                            <option value="length">Length</option>
+                            <option value="weight">Weight</option>
+                            <option value="area">Area</option>
+                        </select>
+                        <label for="unit-value">Value</label>
+                        <input id="unit-value" class="tool-input" type="number" step="any" placeholder="1">
+                        <label for="unit-from">From</label>
+                        <select id="unit-from" class="tool-input"></select>
+                        <label for="unit-to">To</label>
+                        <select id="unit-to" class="tool-input"></select>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="unit-convert">Convert</button>
+                            <button type="button" class="tool-btn" data-action="unit-swap">Swap</button>
+                        </div>
+                        <div class="result-grid">
+                            <div><span>Result</span><strong id="unit-result">-</strong></div>
+                            <div><span>Formula</span><strong id="unit-formula">-</strong></div>
+                        </div>
                     {% elseif tool.widget == 'word-counter' %}
                         <label for="tool-input">Text</label>
                         <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="분석할 텍스트를 입력하세요."></textarea>
@@ -363,6 +384,82 @@
                             <div><span>Supply</span><strong id="vat-supply">-</strong></div>
                             <div><span>VAT</span><strong id="vat-tax">-</strong></div>
                             <div><span>Total</span><strong id="vat-total">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'withholding-3-3' %}
+                        <label for="withholding-amount">Amount</label>
+                        <input id="withholding-amount" class="tool-input" type="number" step="any" placeholder="1000000">
+                        <label for="withholding-rate">Withholding Rate (%)</label>
+                        <input id="withholding-rate" class="tool-input" type="number" step="any" value="3.3">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="withholding-from-gross">계약금액 기준</button>
+                            <button type="button" class="tool-btn" data-action="withholding-from-net">실수령액 기준</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Contract amount</span><strong id="withholding-gross">-</strong></div>
+                            <div><span>Tax</span><strong id="withholding-tax">-</strong></div>
+                            <div><span>Net payment</span><strong id="withholding-net">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'salary-calculator' %}
+                        <label for="salary-hourly">Hourly wage</label>
+                        <input id="salary-hourly" class="tool-input" type="number" step="any" placeholder="10030">
+                        <label for="salary-hours">Hours per day</label>
+                        <input id="salary-hours" class="tool-input" type="number" step="any" value="8">
+                        <label for="salary-days">Work days per month</label>
+                        <input id="salary-days" class="tool-input" type="number" step="any" value="22">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="salary-calculate">Calculate</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Daily</span><strong id="salary-daily">-</strong></div>
+                            <div><span>Monthly</span><strong id="salary-monthly">-</strong></div>
+                            <div><span>Yearly</span><strong id="salary-yearly">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'loan-calculator' %}
+                        <label for="loan-principal">Principal</label>
+                        <input id="loan-principal" class="tool-input" type="number" step="any" placeholder="10000000">
+                        <label for="loan-rate">Annual interest rate (%)</label>
+                        <input id="loan-rate" class="tool-input" type="number" step="any" placeholder="5">
+                        <label for="loan-months">Period (months)</label>
+                        <input id="loan-months" class="tool-input" type="number" step="1" placeholder="36">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="loan-calculate">Calculate</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Monthly payment</span><strong id="loan-payment">-</strong></div>
+                            <div><span>Total interest</span><strong id="loan-interest">-</strong></div>
+                            <div><span>Total payment</span><strong id="loan-total">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'compound-interest' %}
+                        <label for="compound-principal">Initial amount</label>
+                        <input id="compound-principal" class="tool-input" type="number" step="any" placeholder="1000000">
+                        <label for="compound-monthly">Monthly contribution</label>
+                        <input id="compound-monthly" class="tool-input" type="number" step="any" value="0">
+                        <label for="compound-rate">Annual return (%)</label>
+                        <input id="compound-rate" class="tool-input" type="number" step="any" placeholder="7">
+                        <label for="compound-years">Years</label>
+                        <input id="compound-years" class="tool-input" type="number" step="any" placeholder="10">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="compound-calculate">Calculate</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Future value</span><strong id="compound-future">-</strong></div>
+                            <div><span>Total paid</span><strong id="compound-paid">-</strong></div>
+                            <div><span>Gain</span><strong id="compound-gain">-</strong></div>
+                        </div>
+                    {% elseif tool.widget == 'split-bill' %}
+                        <label for="split-total">Total amount</label>
+                        <input id="split-total" class="tool-input" type="number" step="any" placeholder="120000">
+                        <label for="split-people">People</label>
+                        <input id="split-people" class="tool-input" type="number" step="1" value="4">
+                        <label for="split-extra-rate">Extra rate (%)</label>
+                        <input id="split-extra-rate" class="tool-input" type="number" step="any" value="0">
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="split-calculate">Calculate</button>
+                        </div>
+                        <div class="result-grid three">
+                            <div><span>Grand total</span><strong id="split-grand-total">-</strong></div>
+                            <div><span>Per person</span><strong id="split-per-person">-</strong></div>
+                            <div><span>Remainder</span><strong id="split-remainder">-</strong></div>
                         </div>
                     {% elseif tool.widget == 'date-calculator' %}
                         <label for="date-start">Start date</label>

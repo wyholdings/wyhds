@@ -727,6 +727,157 @@
         setStatus('부가세를 계산했습니다.', 'success');
     }
 
+    function calculateWithholding(mode) {
+        const amount = Number(getValue('#withholding-amount'));
+        const rate = Number(getValue('#withholding-rate'));
+        if (!Number.isFinite(amount) || amount < 0 || !Number.isFinite(rate) || rate < 0 || rate >= 100) {
+            throw new Error('금액과 원천징수율을 올바르게 입력해 주세요.');
+        }
+        let gross;
+        let tax;
+        let net;
+        if (mode === 'net') {
+            net = amount;
+            gross = net / (1 - rate / 100);
+            tax = gross - net;
+        } else {
+            gross = amount;
+            tax = gross * rate / 100;
+            net = gross - tax;
+        }
+        document.getElementById('withholding-gross').textContent = formatNumber(Math.round(gross));
+        document.getElementById('withholding-tax').textContent = formatNumber(Math.round(tax));
+        document.getElementById('withholding-net').textContent = formatNumber(Math.round(net));
+        setStatus('3.3% 원천징수를 계산했습니다.', 'success');
+    }
+
+    function calculateSalary() {
+        const hourly = Number(getValue('#salary-hourly'));
+        const hours = Number(getValue('#salary-hours'));
+        const days = Number(getValue('#salary-days'));
+        if (![hourly, hours, days].every(function (value) { return Number.isFinite(value) && value >= 0; })) {
+            throw new Error('시급, 근무시간, 근무일을 입력해 주세요.');
+        }
+        const daily = hourly * hours;
+        const monthly = daily * days;
+        document.getElementById('salary-daily').textContent = formatNumber(Math.round(daily));
+        document.getElementById('salary-monthly').textContent = formatNumber(Math.round(monthly));
+        document.getElementById('salary-yearly').textContent = formatNumber(Math.round(monthly * 12));
+        setStatus('급여를 환산했습니다.', 'success');
+    }
+
+    function calculateLoan() {
+        const principal = Number(getValue('#loan-principal'));
+        const annualRate = Number(getValue('#loan-rate'));
+        const months = parseInt(getValue('#loan-months'), 10);
+        if (!Number.isFinite(principal) || principal <= 0 || !Number.isFinite(annualRate) || annualRate < 0 || !Number.isFinite(months) || months <= 0) {
+            throw new Error('원금, 금리, 기간을 올바르게 입력해 주세요.');
+        }
+        const monthlyRate = annualRate / 100 / 12;
+        const payment = monthlyRate === 0 ? principal / months : principal * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1);
+        const total = payment * months;
+        document.getElementById('loan-payment').textContent = formatNumber(Math.round(payment));
+        document.getElementById('loan-interest').textContent = formatNumber(Math.round(total - principal));
+        document.getElementById('loan-total').textContent = formatNumber(Math.round(total));
+        setStatus('원리금균등 기준으로 계산했습니다.', 'success');
+    }
+
+    function calculateCompound() {
+        const principal = Number(getValue('#compound-principal'));
+        const monthly = Number(getValue('#compound-monthly'));
+        const annualRate = Number(getValue('#compound-rate'));
+        const years = Number(getValue('#compound-years'));
+        if (![principal, monthly, annualRate, years].every(function (value) { return Number.isFinite(value); }) || principal < 0 || monthly < 0 || years < 0) {
+            throw new Error('초기 금액, 월 납입액, 수익률, 기간을 입력해 주세요.');
+        }
+        const months = Math.round(years * 12);
+        const monthlyRate = annualRate / 100 / 12;
+        let balance = principal;
+        for (let i = 0; i < months; i += 1) {
+            balance = balance * (1 + monthlyRate) + monthly;
+        }
+        const paid = principal + monthly * months;
+        document.getElementById('compound-future').textContent = formatNumber(Math.round(balance));
+        document.getElementById('compound-paid').textContent = formatNumber(Math.round(paid));
+        document.getElementById('compound-gain').textContent = formatNumber(Math.round(balance - paid));
+        setStatus('복리 미래가치를 계산했습니다.', 'success');
+    }
+
+    function calculateSplitBill() {
+        const total = Number(getValue('#split-total'));
+        const people = parseInt(getValue('#split-people'), 10);
+        const extraRate = Number(getValue('#split-extra-rate'));
+        if (!Number.isFinite(total) || total < 0 || !Number.isFinite(people) || people <= 0 || !Number.isFinite(extraRate)) {
+            throw new Error('총액, 인원, 추가 비율을 입력해 주세요.');
+        }
+        const grandTotal = Math.round(total * (1 + extraRate / 100));
+        const perPerson = Math.floor(grandTotal / people);
+        const remainder = grandTotal - perPerson * people;
+        document.getElementById('split-grand-total').textContent = formatNumber(grandTotal);
+        document.getElementById('split-per-person').textContent = formatNumber(perPerson);
+        document.getElementById('split-remainder').textContent = formatNumber(remainder);
+        setStatus('1인 부담액을 계산했습니다.', 'success');
+    }
+
+    const unitGroups = {
+        length: {
+            mm: ['Millimeter', 0.001],
+            cm: ['Centimeter', 0.01],
+            m: ['Meter', 1],
+            km: ['Kilometer', 1000],
+            inch: ['Inch', 0.0254],
+            ft: ['Feet', 0.3048]
+        },
+        weight: {
+            g: ['Gram', 1],
+            kg: ['Kilogram', 1000],
+            ton: ['Metric ton', 1000000],
+            oz: ['Ounce', 28.349523125],
+            lb: ['Pound', 453.59237]
+        },
+        area: {
+            sqm: ['Square meter', 1],
+            pyeong: ['Pyeong', 3.305785],
+            sqft: ['Square feet', 0.09290304],
+            hectare: ['Hectare', 10000],
+            acre: ['Acre', 4046.8564224]
+        }
+    };
+
+    function populateUnitOptions() {
+        const type = getValue('#unit-type') || 'length';
+        const from = document.getElementById('unit-from');
+        const to = document.getElementById('unit-to');
+        if (!from || !to || !unitGroups[type]) return;
+        const previousFrom = from.value;
+        const previousTo = to.value;
+        [from, to].forEach(function (select) {
+            select.textContent = '';
+            Object.keys(unitGroups[type]).forEach(function (key) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = unitGroups[type][key][0] + ' (' + key + ')';
+                select.appendChild(option);
+            });
+        });
+        from.value = unitGroups[type][previousFrom] ? previousFrom : Object.keys(unitGroups[type])[0];
+        to.value = unitGroups[type][previousTo] ? previousTo : Object.keys(unitGroups[type])[1];
+    }
+
+    function convertUnit() {
+        const type = getValue('#unit-type') || 'length';
+        const value = Number(getValue('#unit-value'));
+        const from = getValue('#unit-from');
+        const to = getValue('#unit-to');
+        if (!Number.isFinite(value) || !unitGroups[type] || !unitGroups[type][from] || !unitGroups[type][to]) {
+            throw new Error('변환할 값과 단위를 선택해 주세요.');
+        }
+        const result = value * unitGroups[type][from][1] / unitGroups[type][to][1];
+        document.getElementById('unit-result').textContent = formatNumber(result) + ' ' + to;
+        document.getElementById('unit-formula').textContent = '1 ' + from + ' = ' + formatNumber(unitGroups[type][from][1] / unitGroups[type][to][1]) + ' ' + to;
+        setStatus('단위를 변환했습니다.', 'success');
+    }
+
     function dateOnly(value) {
         if (!value) return null;
         const date = new Date(value + 'T00:00:00');
@@ -1235,6 +1386,18 @@
                 calculateVat('supply');
             } else if (action === 'vat-from-total') {
                 calculateVat('total');
+            } else if (action === 'withholding-from-gross') {
+                calculateWithholding('gross');
+            } else if (action === 'withholding-from-net') {
+                calculateWithholding('net');
+            } else if (action === 'salary-calculate') {
+                calculateSalary();
+            } else if (action === 'loan-calculate') {
+                calculateLoan();
+            } else if (action === 'compound-calculate') {
+                calculateCompound();
+            } else if (action === 'split-calculate') {
+                calculateSplitBill();
             } else if (action === 'date-diff') {
                 calculateDateDiff();
             } else if (action === 'date-add') {
@@ -1263,6 +1426,15 @@
                 processPdf('compress').catch(function (error) { setStatus(error.message, 'error'); });
             } else if (action === 'pdf-download') {
                 downloadProcessedPdf();
+            } else if (action === 'unit-convert') {
+                convertUnit();
+            } else if (action === 'unit-swap') {
+                const from = document.getElementById('unit-from');
+                const to = document.getElementById('unit-to');
+                const previous = from.value;
+                from.value = to.value;
+                to.value = previous;
+                convertUnit();
             } else if (action === 'prompt-format') {
                 formatPrompt();
             } else if (action === 'prompt-optimize') {
@@ -1296,6 +1468,18 @@
     if (slug === 'password-generator') document.querySelector('[data-action="password-generate"]').click();
     if (slug === 'cron-helper') document.querySelector('[data-action="cron-analyze"]').click();
     if (slug === 'color-converter') convertColor(getValue('#hex-input'));
+    if (slug === 'unit-converter') {
+        populateUnitOptions();
+        setValue('#unit-value', '1');
+        const unitType = document.getElementById('unit-type');
+        if (unitType) {
+            unitType.addEventListener('change', function () {
+                populateUnitOptions();
+                convertUnit();
+            });
+        }
+        convertUnit();
+    }
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
         if (input) input.addEventListener('input', countWords);

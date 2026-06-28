@@ -137,6 +137,39 @@ return [
 
     'vat-calculator' => $tool('vat-calculator', 'VAT 계산기', 'calculator', '공급가액과 부가세, 합계 금액을 계산합니다.', ['widget' => 'vat-calculator', 'is_recent' => true, 'related' => ['percent-calculator']]),
     'percent-calculator' => $tool('percent-calculator', '퍼센트 계산기', 'calculator', '비율, 증감률, 할인율을 계산합니다.', ['widget' => 'percent-calculator', 'is_popular' => true, 'related' => ['vat-calculator']]),
+    'withholding-3-3-calculator' => $tool('withholding-3-3-calculator', '3.3% 계산기', 'calculator', '프리랜서·사업소득 3.3% 원천징수액과 실수령액을 계산합니다.', [
+        'widget' => 'withholding-3-3',
+        'is_popular' => true,
+        'is_recent' => true,
+        'is_frequent' => true,
+        'keywords' => ['3.3% 계산기', '프리랜서 세금 계산기', '원천징수 계산기', '실수령액 계산기'],
+        'related' => ['vat-calculator', 'percent-calculator', 'salary-calculator'],
+        'how_to_use' => ['계약금액 또는 실수령액을 입력합니다.', '계산 방향을 선택합니다.', '원천징수세액과 지급액을 확인합니다.'],
+        'faqs' => [['q' => '3.3%는 무엇인가요?', 'a' => '일반적으로 사업소득 원천징수 3%와 지방소득세 0.3%를 합친 비율입니다.'], ['q' => '정확한 세무 신고 금액인가요?', 'a' => '간편 계산용이며 실제 신고·정산은 계약 유형과 세무 기준에 따라 달라질 수 있습니다.']],
+    ]),
+    'salary-calculator' => $tool('salary-calculator', '시급·월급 환산기', 'calculator', '시급, 근무시간, 근무일 기준으로 월급과 연봉을 빠르게 환산합니다.', [
+        'widget' => 'salary-calculator',
+        'is_recent' => true,
+        'keywords' => ['시급 계산기', '월급 계산기', '연봉 계산기', '급여 환산기'],
+        'related' => ['withholding-3-3-calculator', 'percent-calculator'],
+    ]),
+    'loan-calculator' => $tool('loan-calculator', '대출 이자 계산기', 'calculator', '원금, 금리, 기간으로 월 상환액과 총 이자를 계산합니다.', [
+        'widget' => 'loan-calculator',
+        'is_popular' => true,
+        'keywords' => ['대출 이자 계산기', '월 상환액 계산기', '원리금균등 계산기'],
+        'related' => ['compound-interest-calculator', 'percent-calculator'],
+    ]),
+    'compound-interest-calculator' => $tool('compound-interest-calculator', '복리 계산기', 'calculator', '초기 금액, 추가 납입, 수익률 기준으로 미래 가치를 계산합니다.', [
+        'widget' => 'compound-interest',
+        'keywords' => ['복리 계산기', '투자 수익률 계산기', '미래가치 계산기'],
+        'related' => ['loan-calculator', 'percent-calculator'],
+    ]),
+    'split-bill-calculator' => $tool('split-bill-calculator', '더치페이 계산기', 'calculator', '총액, 인원, 팁 또는 추가 비용을 기준으로 1인 부담액을 계산합니다.', [
+        'widget' => 'split-bill',
+        'is_frequent' => true,
+        'keywords' => ['더치페이 계산기', 'N분의1 계산기', '회식비 계산기'],
+        'related' => ['percent-calculator', 'vat-calculator'],
+    ]),
     'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 차이나 특정 날짜 이후의 날짜를 계산합니다.', ['widget' => 'date-calculator', 'related' => ['d-day-calculator', 'age-calculator', 'timestamp']]),
     'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['widget' => 'd-day-calculator', 'related' => ['date-calculator', 'age-calculator']]),
     'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['widget' => 'age-calculator', 'related' => ['date-calculator', 'd-day-calculator']]),
@@ -154,6 +187,12 @@ return [
         'widget' => 'qr-code',
         'is_popular' => true,
         'related' => ['url-encode', 'image-to-base64'],
+    ]),
+    'unit-converter' => $tool('unit-converter', 'Unit Converter', 'converter', '길이, 무게, 면적 단위를 빠르게 변환합니다.', [
+        'widget' => 'unit-converter',
+        'is_recent' => true,
+        'keywords' => ['단위 변환기', '길이 변환', '무게 변환', '평 제곱미터 변환'],
+        'related' => ['percent-calculator', 'date-calculator'],
     ]),
     'color-converter' => $tool('color-converter', 'Color Converter', 'color', 'HEX 색상 값을 RGB와 HSL로 변환하고 색상 미리보기를 제공합니다.', [
         'widget' => 'color-converter',
