@@ -28,6 +28,49 @@
         }
     }
 
+    function normalizeCategory(category) {
+        return String(category || '').replace(/-/g, ' ').replace(/\b\w/g, function (char) {
+            return char.toUpperCase();
+        });
+    }
+
+    function findTool(slug) {
+        return toolIndex().find(function (item) {
+            return item.slug === slug;
+        });
+    }
+
+    function renderToolList(target, items, emptyMessage) {
+        target.textContent = '';
+        if (!items.length) {
+            const empty = document.createElement('p');
+            empty.className = 'compact-empty';
+            empty.textContent = emptyMessage;
+            target.appendChild(empty);
+            return;
+        }
+
+        items.forEach(function (item) {
+            const link = document.createElement('a');
+            link.href = item.url;
+            const name = document.createElement('span');
+            name.textContent = item.name;
+            const category = document.createElement('em');
+            category.textContent = normalizeCategory(item.category);
+            link.appendChild(name);
+            link.appendChild(category);
+            target.appendChild(link);
+        });
+    }
+
+    function renderFavorites() {
+        const favorites = readJson(storageKeys.favorites, []);
+        document.querySelectorAll('[data-favorite-tools]').forEach(function (target) {
+            const items = favorites.map(findTool).filter(Boolean).slice(0, 6);
+            renderToolList(target, items, '즐겨찾기한 도구가 없습니다.');
+        });
+    }
+
     function applyTheme() {
         if (!root) return;
         root.classList.toggle('is-dark', localStorage.getItem(storageKeys.theme) === 'dark');
@@ -50,16 +93,29 @@
         if (!input || !suggestions) return;
         const index = toolIndex();
 
+        function closeSuggestions() {
+            suggestions.classList.remove('is-open');
+        }
+
         input.addEventListener('input', function () {
             const query = input.value.trim().toLowerCase();
             suggestions.textContent = '';
             if (!query) {
-                suggestions.classList.remove('is-open');
+                closeSuggestions();
                 return;
             }
             const matches = index.filter(function (item) {
                 return [item.name, item.category, item.summary, item.keywords].join(' ').toLowerCase().includes(query);
             }).slice(0, 8);
+
+            if (!matches.length) {
+                const empty = document.createElement('div');
+                empty.className = 'search-empty';
+                empty.textContent = '검색 결과가 없습니다.';
+                suggestions.appendChild(empty);
+                suggestions.classList.add('is-open');
+                return;
+            }
 
             matches.forEach(function (item) {
                 const link = document.createElement('a');
@@ -72,13 +128,36 @@
             });
             suggestions.classList.toggle('is-open', matches.length > 0);
         });
+
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeSuggestions();
+            if (event.key === 'Enter') {
+                const first = suggestions.querySelector('a');
+                if (first) {
+                    event.preventDefault();
+                    first.click();
+                }
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.wy-search')) closeSuggestions();
+        });
     }
 
     function initFavorites() {
         const favorites = readJson(storageKeys.favorites, []);
         document.querySelectorAll('[data-favorite]').forEach(function (button) {
             const slug = button.dataset.favorite;
-            button.classList.toggle('is-active', favorites.includes(slug));
+            const setButtonState = function () {
+                const isActive = readJson(storageKeys.favorites, []).includes(slug);
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                if (!button.classList.contains('favorite-btn')) {
+                    button.textContent = isActive ? 'Favorited' : 'Favorite';
+                }
+            };
+            setButtonState();
             button.addEventListener('click', function (event) {
                 event.preventDefault();
                 const next = readJson(storageKeys.favorites, []);
@@ -86,9 +165,18 @@
                 if (index >= 0) next.splice(index, 1);
                 else next.unshift(slug);
                 writeJson(storageKeys.favorites, next.slice(0, 80));
-                button.classList.toggle('is-active', next.includes(slug));
+                document.querySelectorAll('[data-favorite="' + slug + '"]').forEach(function (sameButton) {
+                    const isActive = next.includes(slug);
+                    sameButton.classList.toggle('is-active', isActive);
+                    sameButton.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    if (!sameButton.classList.contains('favorite-btn')) {
+                        sameButton.textContent = isActive ? 'Favorited' : 'Favorite';
+                    }
+                });
+                renderFavorites();
             });
         });
+        renderFavorites();
     }
 
     function initRecent() {
@@ -104,20 +192,9 @@
             }
         }
 
-        const target = document.querySelector('[data-recent-tools]');
-        if (!target) return;
         const recentTools = readJson(storageKeys.recent, []);
-        target.textContent = '';
-        recentTools.slice(0, 6).forEach(function (item) {
-            const link = document.createElement('a');
-            link.href = item.url;
-            const name = document.createElement('span');
-            name.textContent = item.name;
-            const category = document.createElement('em');
-            category.textContent = item.category;
-            link.appendChild(name);
-            link.appendChild(category);
-            target.appendChild(link);
+        document.querySelectorAll('[data-recent-tools]').forEach(function (target) {
+            renderToolList(target, recentTools.slice(0, 6), '최근 사용한 도구가 없습니다.');
         });
     }
 

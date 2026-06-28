@@ -655,6 +655,13 @@
     font-weight: 500;
 }
 
+.search-empty {
+    padding: 16px 18px;
+    color: #667085;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 .hero-actions {
     display: flex;
     flex-wrap: wrap;
@@ -674,8 +681,18 @@
     padding: 11px 17px;
 }
 
+.mode-toggle.is-active {
+    border-color: #fff;
+    background: #fff;
+    color: var(--wy-blue);
+}
+
 .wy-section {
     padding: 74px 0;
+}
+
+.personal-tools {
+    padding-bottom: 0;
 }
 
 .section-head {
@@ -855,6 +872,14 @@
     color: var(--wy-muted);
     font-style: normal;
     font-size: 13px;
+}
+
+.compact-empty {
+    margin: 0;
+    padding: 18px 20px;
+    color: var(--wy-muted);
+    font-size: 14px;
+    font-weight: 700;
 }
 
 .seo-copy .tools-inner,
