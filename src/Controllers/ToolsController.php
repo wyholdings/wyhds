@@ -48,10 +48,20 @@ class ToolsController
             return;
         }
 
+        $title = $category['name'] . ' Tools | WY Tools';
+        $description = $category['description'] . ' WY Tools에서 무료로 사용할 수 있습니다.';
+        $keywords = $category['name'] . ' Tools, WY Tools, 무료 온라인 도구';
+
+        if ($slug === 'calculator') {
+            $title = '무료 계산기 모음 - 연봉 실수령액·3.3%·대출 이자·마진율 계산 | WY Tools';
+            $description = '연봉 실수령액, 3.3% 원천징수, 대출 이자, 마진율, 부가세, 주휴수당, 퇴직금 계산기를 한 곳에서 무료로 사용할 수 있습니다.';
+            $keywords = '무료 계산기, 연봉 실수령액 계산기, 3.3% 계산기, 대출 이자 계산기, 마진율 계산기, 부가세 계산기, 주휴수당 계산기';
+        }
+
         echo $this->twig->render('tools/category.html.twig', [
-            'title' => $category['name'] . ' Tools | WY Tools',
-            'description' => $category['description'] . ' WY Tools에서 무료로 사용할 수 있습니다.',
-            'keywords' => $category['name'] . ' Tools, WY Tools, 무료 온라인 도구',
+            'title' => $title,
+            'description' => $description,
+            'keywords' => $keywords,
             'canonical_url' => 'https://wyhds.com/tools/category/' . $slug,
             'category' => $category,
             'categories' => $this->registry->categories(),

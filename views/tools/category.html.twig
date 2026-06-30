@@ -20,6 +20,64 @@
 
     {% include 'tools/partials/_ad_slot.html.twig' with { position: 'top' } %}
 
+    {% if category.slug == 'calculator' %}
+        <section class="wy-section category-band">
+            <div class="tools-inner">
+                <div class="section-head">
+                    <h2>목적별 계산기</h2>
+                    <p>급여, 세금, 금융, 쇼핑몰 판매처럼 검색 수요가 높은 계산기를 묶어 빠르게 이동할 수 있습니다.</p>
+                </div>
+                <div class="category-grid">
+                    <a href="/tools/annual-salary-net-calculator">
+                        <strong>급여·실수령액</strong>
+                        <span>연봉 실수령액, 시급·월급, 주휴수당, 퇴직금</span>
+                    </a>
+                    <a href="/tools/withholding-3-3-calculator">
+                        <strong>세금·원천징수</strong>
+                        <span>3.3% 원천징수, 부가세, 퍼센트 계산</span>
+                    </a>
+                    <a href="/tools/loan-calculator">
+                        <strong>금융·이자</strong>
+                        <span>대출 이자, 월 상환액, 복리 계산</span>
+                    </a>
+                    <a href="/tools/margin-calculator">
+                        <strong>쇼핑몰·판매</strong>
+                        <span>마진율, 배송비 포함 마진, 손익분기 판매가</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="wy-section">
+            <div class="tools-inner two-columns">
+                <div>
+                    <div class="section-head">
+                        <h2>많이 찾는 계산기</h2>
+                        <p>검색 유입과 반복 사용 가능성이 높은 핵심 계산기입니다.</p>
+                    </div>
+                    <div class="compact-list">
+                        <a href="/tools/annual-salary-net-calculator"><span>연봉 실수령액 계산기</span><em>월급·공제액</em></a>
+                        <a href="/tools/withholding-3-3-calculator"><span>3.3% 계산기</span><em>프리랜서 원천징수</em></a>
+                        <a href="/tools/loan-calculator"><span>대출 이자 계산기</span><em>월 상환액·총 이자</em></a>
+                        <a href="/tools/margin-calculator"><span>마진율 계산기</span><em>원가·판매가·수수료</em></a>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-head">
+                        <h2>업무용 계산기</h2>
+                        <p>회사원, 프리랜서, 쇼핑몰 운영자가 바로 쓰기 좋은 계산기입니다.</p>
+                    </div>
+                    <div class="compact-list">
+                        <a href="/tools/vat-calculator"><span>부가세 계산기</span><em>공급가액·합계</em></a>
+                        <a href="/tools/weekly-holiday-pay-calculator"><span>주휴수당 계산기</span><em>시급·주급</em></a>
+                        <a href="/tools/severance-pay-calculator"><span>퇴직금 계산기</span><em>평균임금·재직기간</em></a>
+                        <a href="/tools/shipping-margin-calculator"><span>배송비 포함 마진 계산기</span><em>판매 수익성</em></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
     <section class="wy-section">
         <div class="tools-inner">
             <div class="section-head">
