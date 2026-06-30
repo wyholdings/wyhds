@@ -97,6 +97,7 @@ if ($visitLogId) {
 $twig->addGlobal('site_title', 'WY Holdings');
 $twig->addGlobal('event_date', 'We make Your Holding dreams');
 $twig->addGlobal('visit_log_id', $visitLogId);
+$twig->addGlobal('adsense', require __DIR__ . '/../config/adsense.php');
 
 $router = new App\Router($twig);
 

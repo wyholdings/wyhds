@@ -1,10 +1,15 @@
-<div class="wy-ad-slot wy-ad-{{ position|default('middle') }}">
+{% set ad_position = position|default('middle') %}
+{% set ad_key = ad_position == 'after-faq' ? 'after_faq' : ad_position %}
+{% set ad_slot = attribute(adsense.slots|default({}), ad_key)|default(adsense.slots.default|default('8432108065')) %}
+{% set ad_client = adsense.client|default('ca-pub-5028641394927049') %}
+
+<div class="wy-ad-slot wy-ad-{{ ad_position }}" data-ad-position="{{ ad_position }}">
     <ins class="adsbygoogle"
          style="display:block"
          data-ad-format="fluid"
          data-ad-layout-key="-fb+5w+4e-db+86"
-         data-ad-client="ca-pub-5028641394927049"
-         data-ad-slot="8432108065"></ins>
+         data-ad-client="{{ ad_client }}"
+         data-ad-slot="{{ ad_slot }}"></ins>
     <script>
         (adsbygoogle = window.adsbygoogle || []).push({});
     </script>

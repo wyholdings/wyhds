@@ -26,6 +26,7 @@ $router->post('/visit/leave', [App\Controllers\VisitorLogController::class, 'lea
 // 관리자(admin) 라우팅
 $router->get('/admin/', [App\Controllers\AdminController::class, 'dashboard']);
 $router->get('/admin', [App\Controllers\AdminController::class, 'dashboard']);
+$router->get('/admin/tools/analytics', [App\Controllers\AdminController::class, 'toolAnalytics']);
 $router->get('/admin/login', [App\Controllers\AdminController::class, 'loginForm']);
 $router->post('/admin/login', [App\Controllers\AdminController::class, 'login']);
 $router->get('/admin/logout', [App\Controllers\AdminController::class, 'logout']);

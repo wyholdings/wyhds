@@ -72,32 +72,42 @@
 
 
 <script>
-    $(function () {
-        $('.burger').click(function () {
-            $('#menuArea').addClass('on');
-            $("body").append("<div id='grayLayer'><a href='#'></a></div>");
-		    $("#grayLayer").show();
-        });
+    document.addEventListener('DOMContentLoaded', function () {
+        const menu = document.getElementById('menuArea');
+        const burger = document.querySelector('.burger');
+        const closeButton = document.querySelector('#menuArea .btnMenu_mClose');
 
-        $("body").on("click ", "#menuArea .btnMenu_mClose", function(){
-            $("#menuArea").removeClass("on");
-            $("#grayLayer").remove();
-        });
+        function closeMenu() {
+            if (menu) menu.classList.remove('on');
+            const layer = document.getElementById('grayLayer');
+            if (layer) layer.remove();
+        }
 
-        $("body").on("click ", "#grayLayer", function(){
-            $("#menuArea").removeClass("on");
-            $("#grayLayer").remove();
-	    });  
+        if (burger && menu) {
+            burger.addEventListener('click', function (event) {
+                event.preventDefault();
+                menu.classList.add('on');
+                if (!document.getElementById('grayLayer')) {
+                    const layer = document.createElement('div');
+                    layer.id = 'grayLayer';
+                    layer.innerHTML = '<a href="#"></a>';
+                    layer.addEventListener('click', function (layerEvent) {
+                        layerEvent.preventDefault();
+                        closeMenu();
+                    });
+                    document.body.appendChild(layer);
+                }
+            });
+        }
+
+        if (closeButton) {
+            closeButton.addEventListener('click', closeMenu);
+        }
     });
 
-   window.addEventListener('scroll', function () {
-  const header = document.getElementById('header');
-
-    if (window.scrollY > 100) {
-        header.classList.add('onheader');
-    } else {
-        header.classList.remove('onheader');
-    }
+    window.addEventListener('scroll', function () {
+        const header = document.getElementById('header');
+        if (!header) return;
+        header.classList.toggle('onheader', window.scrollY > 100);
     });
-
 </script>

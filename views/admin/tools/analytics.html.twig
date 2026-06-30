@@ -1,0 +1,201 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}WY Tools 통계{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">WY Tools 통계</h1>
+    <form method="get" class="form-inline">
+        <label for="days" class="mr-2 mb-0">기간</label>
+        <select id="days" name="days" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+            {% for option in [7, 14, 30, 60, 90, 180, 365] %}
+                <option value="{{ option }}" {% if days == option %}selected{% endif %}>최근 {{ option }}일</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+{% if error %}
+    <div class="alert alert-warning">통계 데이터를 불러오지 못했습니다: {{ error }}</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">도구 페이지 방문</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.visits|number_format }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">도구 실행 조회수</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tool_views|number_format }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">검색 유입</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.search_visits|number_format }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">평균 체류</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.avg_duration|number_format }}초</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h2 class="h6 m-0 font-weight-bold text-primary">조회수 상위 도구</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>도구</th>
+                                <th>카테고리</th>
+                                <th class="text-right">조회수</th>
+                                <th>최근 조회일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in top_tools %}
+                                <tr>
+                                    <td><a href="{{ item.url }}" target="_blank">{{ item.name }}</a></td>
+                                    <td>{{ item.category }}</td>
+                                    <td class="text-right">{{ item.views|number_format }}</td>
+                                    <td>{{ item.last_view_date }}</td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="4" class="text-center text-muted py-4">도구 조회 데이터가 없습니다.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h2 class="h6 m-0 font-weight-bold text-primary">검색 유입 소스</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>검색엔진</th>
+                                <th class="text-right">방문</th>
+                                <th class="text-right">페이지</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source in search_sources %}
+                                <tr>
+                                    <td>{{ source.source }}</td>
+                                    <td class="text-right">{{ source.visits|number_format }}</td>
+                                    <td class="text-right">{{ source.pages|number_format }}</td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="3" class="text-center text-muted py-4">검색 referer 데이터가 없습니다.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h2 class="h6 m-0 font-weight-bold text-primary">도구 랜딩 페이지</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>페이지</th>
+                        <th>카테고리</th>
+                        <th class="text-right">방문</th>
+                        <th class="text-right">검색 유입</th>
+                        <th class="text-right">평균 체류</th>
+                        <th>최근 방문</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for page in landing_pages %}
+                        <tr>
+                            <td><a href="{{ page.path }}" target="_blank">{{ page.name }}</a></td>
+                            <td>{{ page.category }}</td>
+                            <td class="text-right">{{ page.visits|number_format }}</td>
+                            <td class="text-right">{{ page.search_visits|number_format }}</td>
+                            <td class="text-right">{{ page.avg_duration|number_format }}초</td>
+                            <td>{{ page.last_visited_at }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">도구 방문 로그가 없습니다.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h2 class="h6 m-0 font-weight-bold text-primary">최근 14일 방문</h2>
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead><tr><th>날짜</th><th class="text-right">방문</th><th class="text-right">검색 유입</th></tr></thead>
+                    <tbody>
+                        {% for row in daily_visits %}
+                            <tr><td>{{ row.visit_date }}</td><td class="text-right">{{ row.visits|number_format }}</td><td class="text-right">{{ row.search_visits|number_format }}</td></tr>
+                        {% else %}
+                            <tr><td colspan="3" class="text-center text-muted py-4">방문 데이터가 없습니다.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h2 class="h6 m-0 font-weight-bold text-primary">최근 14일 도구 조회</h2>
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead><tr><th>날짜</th><th class="text-right">조회수</th></tr></thead>
+                    <tbody>
+                        {% for row in daily_views %}
+                            <tr><td>{{ row.view_date }}</td><td class="text-right">{{ row.views|number_format }}</td></tr>
+                        {% else %}
+                            <tr><td colspan="2" class="text-center text-muted py-4">조회 데이터가 없습니다.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

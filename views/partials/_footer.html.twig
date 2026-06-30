@@ -53,7 +53,9 @@
 </div>
 
 <script>
-  AOS.init();
+  if (window.AOS) {
+    AOS.init();
+  }
   if (window.lucide) {
     lucide.createIcons();
   }

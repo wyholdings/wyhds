@@ -126,6 +126,110 @@ class VisitorLogModel
         return (int)$stmt->fetchColumn();
     }
 
+    public function getToolTrafficSummary(int $days = 30): array
+    {
+        $days = max(1, $days);
+        $searchSql = $this->searchRefererSql();
+
+        $stmt = $this->db->query("
+            SELECT
+                COUNT(*) AS visits,
+                COUNT(DISTINCT NULLIF(session_id, '')) AS sessions,
+                COALESCE(ROUND(AVG(NULLIF(duration_seconds, 0))), 0) AS avg_duration,
+                SUM(CASE WHEN {$searchSql} THEN 1 ELSE 0 END) AS search_visits
+            FROM visitor_logs
+            WHERE path LIKE '/tools%'
+              AND visited_at >= (NOW() - INTERVAL {$days} DAY)
+        ");
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'visits' => (int)($row['visits'] ?? 0),
+            'sessions' => (int)($row['sessions'] ?? 0),
+            'avg_duration' => (int)($row['avg_duration'] ?? 0),
+            'search_visits' => (int)($row['search_visits'] ?? 0),
+        ];
+    }
+
+    public function getTopToolLandingPages(int $limit = 20, int $days = 30): array
+    {
+        $limit = max(1, $limit);
+        $days = max(1, $days);
+        $searchSql = $this->searchRefererSql();
+
+        $stmt = $this->db->prepare("
+            SELECT
+                path,
+                COUNT(*) AS visits,
+                COALESCE(ROUND(AVG(NULLIF(duration_seconds, 0))), 0) AS avg_duration,
+                SUM(CASE WHEN {$searchSql} THEN 1 ELSE 0 END) AS search_visits,
+                MAX(visited_at) AS last_visited_at
+            FROM visitor_logs
+            WHERE path LIKE '/tools/%'
+              AND path NOT LIKE '/tools/category/%'
+              AND visited_at >= (NOW() - INTERVAL {$days} DAY)
+            GROUP BY path
+            ORDER BY visits DESC, path ASC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getSearchRefererSummary(int $limit = 10, int $days = 30): array
+    {
+        $limit = max(1, $limit);
+        $days = max(1, $days);
+        $searchSql = $this->searchRefererSql();
+
+        $stmt = $this->db->prepare("
+            SELECT
+                CASE
+                    WHEN referer LIKE '%google.%' THEN 'Google'
+                    WHEN referer LIKE '%naver.%' THEN 'Naver'
+                    WHEN referer LIKE '%daum.%' OR referer LIKE '%kakao.%' THEN 'Daum/Kakao'
+                    WHEN referer LIKE '%bing.%' THEN 'Bing'
+                    ELSE 'Other Search'
+                END AS source,
+                COUNT(*) AS visits,
+                COUNT(DISTINCT path) AS pages
+            FROM visitor_logs
+            WHERE path LIKE '/tools%'
+              AND {$searchSql}
+              AND visited_at >= (NOW() - INTERVAL {$days} DAY)
+            GROUP BY source
+            ORDER BY visits DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getToolDailyVisits(int $days = 14): array
+    {
+        $days = max(1, $days);
+        $searchSql = $this->searchRefererSql();
+
+        $stmt = $this->db->query("
+            SELECT
+                DATE(visited_at) AS visit_date,
+                COUNT(*) AS visits,
+                SUM(CASE WHEN {$searchSql} THEN 1 ELSE 0 END) AS search_visits
+            FROM visitor_logs
+            WHERE path LIKE '/tools%'
+              AND visited_at >= (NOW() - INTERVAL {$days} DAY)
+            GROUP BY DATE(visited_at)
+            ORDER BY visit_date ASC
+        ");
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function createTableIfNotExists(): void
     {
         $this->db->exec("
@@ -176,6 +280,11 @@ class VisitorLogModel
         }
 
         return ['WHERE ' . implode(' AND ', $conditions), $params];
+    }
+
+    private function searchRefererSql(): string
+    {
+        return "(referer LIKE '%google.%' OR referer LIKE '%naver.%' OR referer LIKE '%daum.%' OR referer LIKE '%kakao.%' OR referer LIKE '%bing.%')";
     }
 
     private function ensureColumnExists(string $column, string $definition): void

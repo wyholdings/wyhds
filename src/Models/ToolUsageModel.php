@@ -83,6 +83,53 @@ class ToolUsageModel
         return $this->rowsToCounts($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
+    public function getTotalViews(int $days = 30): int
+    {
+        $days = max(1, $days);
+
+        $stmt = $this->db->query("
+            SELECT COALESCE(SUM(views), 0)
+            FROM tool_view_daily
+            WHERE view_date >= (CURDATE() - INTERVAL {$days} DAY)
+        ");
+
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function getTopTools(int $limit = 20, int $days = 30): array
+    {
+        $limit = max(1, $limit);
+        $days = max(1, $days);
+
+        $stmt = $this->db->prepare("
+            SELECT tool_slug, SUM(views) AS views, MAX(view_date) AS last_view_date
+            FROM tool_view_daily
+            WHERE view_date >= (CURDATE() - INTERVAL {$days} DAY)
+            GROUP BY tool_slug
+            ORDER BY views DESC, tool_slug ASC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getDailyViews(int $days = 14): array
+    {
+        $days = max(1, $days);
+
+        $stmt = $this->db->query("
+            SELECT view_date, SUM(views) AS views
+            FROM tool_view_daily
+            WHERE view_date >= (CURDATE() - INTERVAL {$days} DAY)
+            GROUP BY view_date
+            ORDER BY view_date ASC
+        ");
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function rowsToCounts(array $rows): array
     {
         $counts = [];

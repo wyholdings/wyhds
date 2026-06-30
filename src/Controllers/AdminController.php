@@ -4,6 +4,10 @@ namespace App\Controllers;
 
 use Twig\Environment;
 use App\Models\AdminModel;
+use App\Models\ToolUsageModel;
+use App\Models\VisitorLogModel;
+use App\Services\ToolRegistry;
+use Throwable;
 
 class AdminController
 {
@@ -20,6 +24,74 @@ class AdminController
         echo $this->twig->render('admin/dashboard.html.twig', [
             'page_title' => '관리자 대시보드',
         ]);
+    }
+
+    public function toolAnalytics(): void
+    {
+        $days = max(1, min(365, (int)($_GET['days'] ?? 30)));
+        $registry = new ToolRegistry();
+        $toolsBySlug = [];
+        foreach ($registry->active() as $tool) {
+            $toolsBySlug[$tool['slug']] = $tool;
+        }
+
+        $data = [
+            'summary' => ['visits' => 0, 'sessions' => 0, 'avg_duration' => 0, 'search_visits' => 0],
+            'total_tool_views' => 0,
+            'top_tools' => [],
+            'landing_pages' => [],
+            'search_sources' => [],
+            'daily_visits' => [],
+            'daily_views' => [],
+            'error' => null,
+        ];
+
+        try {
+            $usage = new ToolUsageModel();
+            $visitors = new VisitorLogModel();
+
+            $data['summary'] = $visitors->getToolTrafficSummary($days);
+            $data['total_tool_views'] = $usage->getTotalViews($days);
+            $data['top_tools'] = array_map(static function (array $row) use ($toolsBySlug): array {
+                $slug = (string)$row['tool_slug'];
+                $tool = $toolsBySlug[$slug] ?? null;
+                return [
+                    'slug' => $slug,
+                    'name' => $tool['name'] ?? $slug,
+                    'category' => $tool['category'] ?? '',
+                    'url' => $tool['url'] ?? '/tools/' . $slug,
+                    'views' => (int)$row['views'],
+                    'last_view_date' => $row['last_view_date'] ?? '',
+                ];
+            }, $usage->getTopTools(20, $days));
+
+            $data['landing_pages'] = array_map(static function (array $row) use ($toolsBySlug): array {
+                $path = (string)$row['path'];
+                $slug = basename($path);
+                $tool = $toolsBySlug[$slug] ?? null;
+                return [
+                    'path' => $path,
+                    'slug' => $slug,
+                    'name' => $tool['name'] ?? $path,
+                    'category' => $tool['category'] ?? '',
+                    'visits' => (int)$row['visits'],
+                    'search_visits' => (int)$row['search_visits'],
+                    'avg_duration' => (int)$row['avg_duration'],
+                    'last_visited_at' => $row['last_visited_at'] ?? '',
+                ];
+            }, $visitors->getTopToolLandingPages(20, $days));
+
+            $data['search_sources'] = $visitors->getSearchRefererSummary(10, $days);
+            $data['daily_visits'] = $visitors->getToolDailyVisits(14);
+            $data['daily_views'] = $usage->getDailyViews(14);
+        } catch (Throwable $e) {
+            $data['error'] = $e->getMessage();
+        }
+
+        echo $this->twig->render('admin/tools/analytics.html.twig', array_merge($data, [
+            'page_title' => 'WY Tools 통계',
+            'days' => $days,
+        ]));
     }
 
     // 로그인 폼
