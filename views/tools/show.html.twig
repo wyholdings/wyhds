@@ -899,7 +899,7 @@
                     <h2>관련 도구</h2>
                     <div class="wy-tool-grid small">
                         {% for item in related_tools %}
-                            {% include 'tools/partials/_tool_card.html.twig' with { item: item } %}
+                            {% include 'tools/partials/_tool_card.html.twig' with { item: item, card_context: 'related', source_tool: tool.slug } %}
                         {% endfor %}
                     </div>
                 </section>

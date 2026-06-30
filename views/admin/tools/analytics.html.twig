@@ -47,8 +47,8 @@
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-warning shadow h-100 py-2">
             <div class="card-body">
-                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">평균 체류</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.avg_duration|number_format }}초</div>
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">관련 도구 클릭</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_related_clicks|number_format }}</div>
             </div>
         </div>
     </div>
@@ -124,6 +124,40 @@
 
 <div class="card shadow mb-4">
     <div class="card-header py-3">
+        <h2 class="h6 m-0 font-weight-bold text-primary">관련 도구 이동 경로</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>출발 도구</th>
+                        <th>도착 도구</th>
+                        <th class="text-right">클릭</th>
+                        <th class="text-right">세션</th>
+                        <th>최근 클릭</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in related_clicks %}
+                        <tr>
+                            <td><a href="{{ item.source_url }}" target="_blank">{{ item.source_name }}</a></td>
+                            <td><a href="{{ item.target_url }}" target="_blank">{{ item.target_name }}</a></td>
+                            <td class="text-right">{{ item.clicks|number_format }}</td>
+                            <td class="text-right">{{ item.sessions|number_format }}</td>
+                            <td>{{ item.last_clicked_at }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">관련 도구 클릭 데이터가 없습니다.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
         <h2 class="h6 m-0 font-weight-bold text-primary">도구 랜딩 페이지</h2>
     </div>
     <div class="card-body p-0">
@@ -181,16 +215,26 @@
     <div class="col-lg-6 mb-4">
         <div class="card shadow">
             <div class="card-header py-3">
-                <h2 class="h6 m-0 font-weight-bold text-primary">최근 14일 도구 조회</h2>
+                <h2 class="h6 m-0 font-weight-bold text-primary">최근 14일 도구 조회/관련 클릭</h2>
             </div>
             <div class="card-body p-0">
                 <table class="table mb-0">
-                    <thead><tr><th>날짜</th><th class="text-right">조회수</th></tr></thead>
+                    <thead><tr><th>날짜</th><th class="text-right">조회수</th><th class="text-right">관련 클릭</th></tr></thead>
                     <tbody>
                         {% for row in daily_views %}
-                            <tr><td>{{ row.view_date }}</td><td class="text-right">{{ row.views|number_format }}</td></tr>
+                            {% set click_row = null %}
+                            {% for related_row in related_daily_clicks %}
+                                {% if related_row.click_date == row.view_date %}
+                                    {% set click_row = related_row %}
+                                {% endif %}
+                            {% endfor %}
+                            <tr>
+                                <td>{{ row.view_date }}</td>
+                                <td class="text-right">{{ row.views|number_format }}</td>
+                                <td class="text-right">{{ click_row ? click_row.clicks|number_format : 0 }}</td>
+                            </tr>
                         {% else %}
-                            <tr><td colspan="2" class="text-center text-muted py-4">조회 데이터가 없습니다.</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted py-4">조회 데이터가 없습니다.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

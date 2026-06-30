@@ -5,6 +5,7 @@ namespace App\Controllers;
 use Twig\Environment;
 use App\Models\AdminModel;
 use App\Models\ToolUsageModel;
+use App\Models\ToolRelatedClickModel;
 use App\Models\VisitorLogModel;
 use App\Services\ToolRegistry;
 use Throwable;
@@ -43,12 +44,16 @@ class AdminController
             'search_sources' => [],
             'daily_visits' => [],
             'daily_views' => [],
+            'related_clicks' => [],
+            'related_daily_clicks' => [],
+            'total_related_clicks' => 0,
             'error' => null,
         ];
 
         try {
             $usage = new ToolUsageModel();
             $visitors = new VisitorLogModel();
+            $relatedClicks = new ToolRelatedClickModel();
 
             $data['summary'] = $visitors->getToolTrafficSummary($days);
             $data['total_tool_views'] = $usage->getTotalViews($days);
@@ -84,6 +89,23 @@ class AdminController
             $data['search_sources'] = $visitors->getSearchRefererSummary(10, $days);
             $data['daily_visits'] = $visitors->getToolDailyVisits(14);
             $data['daily_views'] = $usage->getDailyViews(14);
+            $data['total_related_clicks'] = $relatedClicks->getTotalClicks($days);
+            $data['related_clicks'] = array_map(static function (array $row) use ($toolsBySlug): array {
+                $sourceSlug = (string)$row['source_tool_slug'];
+                $targetSlug = (string)$row['target_tool_slug'];
+                return [
+                    'source_slug' => $sourceSlug,
+                    'target_slug' => $targetSlug,
+                    'source_name' => $toolsBySlug[$sourceSlug]['name'] ?? $sourceSlug,
+                    'target_name' => $toolsBySlug[$targetSlug]['name'] ?? $targetSlug,
+                    'source_url' => $toolsBySlug[$sourceSlug]['url'] ?? '/tools/' . $sourceSlug,
+                    'target_url' => $toolsBySlug[$targetSlug]['url'] ?? '/tools/' . $targetSlug,
+                    'clicks' => (int)$row['clicks'],
+                    'sessions' => (int)$row['sessions'],
+                    'last_clicked_at' => $row['last_clicked_at'] ?? '',
+                ];
+            }, $relatedClicks->getSummary(20, $days));
+            $data['related_daily_clicks'] = $relatedClicks->getDailyClicks(14);
         } catch (Throwable $e) {
             $data['error'] = $e->getMessage();
         }

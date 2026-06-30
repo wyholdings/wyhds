@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ToolUsageModel;
+use App\Models\ToolRelatedClickModel;
 use App\Services\ToolRegistry;
 use Twig\Environment;
 
@@ -99,6 +100,62 @@ class ToolsController
             'related_tools' => $this->registry->related($tool),
             'search_index' => $this->registry->searchIndex(),
         ]);
+    }
+
+    public function relatedClick(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        $source = trim((string)($_POST['source'] ?? ''));
+        $target = trim((string)($_POST['target'] ?? ''));
+        $context = trim((string)($_POST['context'] ?? 'related'));
+
+        if ($source === '' || $target === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false]);
+            return;
+        }
+
+        if ($this->registry->find($source) === null || $this->registry->find($target) === null) {
+            http_response_code(404);
+            echo json_encode(['success' => false]);
+            return;
+        }
+
+        $model = new ToolRelatedClickModel();
+        $model->record(
+            $source,
+            $target,
+            $context !== '' ? substr($context, 0, 60) : 'related',
+            (string)($_POST['path'] ?? ''),
+            (string)($_SERVER['HTTP_REFERER'] ?? ''),
+            session_id(),
+            $this->resolveClientIp()
+        );
+
+        echo json_encode(['success' => true]);
+    }
+
+    private function resolveClientIp(): string
+    {
+        $candidates = [
+            $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '',
+            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '',
+            $_SERVER['REMOTE_ADDR'] ?? '',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === '') {
+                continue;
+            }
+
+            $ip = trim(explode(',', $candidate)[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return '';
     }
 }
 

@@ -198,10 +198,39 @@
         });
     }
 
+    function initRelatedClickTracking() {
+        document.querySelectorAll('[data-related-click]').forEach(function (link) {
+            link.addEventListener('click', function () {
+                const source = link.dataset.sourceTool || '';
+                const target = link.dataset.targetTool || '';
+                if (!source || !target) return;
+
+                const payload = new URLSearchParams();
+                payload.set('source', source);
+                payload.set('target', target);
+                payload.set('context', link.dataset.clickContext || 'related');
+                payload.set('path', window.location.pathname);
+
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon('/tools/related-click', payload);
+                    return;
+                }
+
+                fetch('/tools/related-click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body: payload.toString(),
+                    keepalive: true
+                }).catch(function () {});
+            });
+        });
+    }
+
     initTheme();
     initSearch();
     initFavorites();
     initRecent();
+    initRelatedClickTracking();
 
     if (!page) return;
 

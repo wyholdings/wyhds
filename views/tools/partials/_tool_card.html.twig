@@ -1,5 +1,5 @@
 <article class="wy-tool-card" data-tool-card data-name="{{ item.name|lower }}" data-category="{{ item.category }}" data-keywords="{{ item.keywords|default('')|lower }}">
-    <a href="{{ item.url }}">
+    <a href="{{ item.url }}"{% if card_context|default('') == 'related' and source_tool|default('') %} data-related-click data-source-tool="{{ source_tool }}" data-target-tool="{{ item.slug }}" data-click-context="related"{% endif %}>
         <span class="tool-category">{{ item.category|replace({'-': ' '})|title }}</span>
         <h3>{{ item.name }}</h3>
         <p>{{ item.summary|default(item.description) }}</p>
