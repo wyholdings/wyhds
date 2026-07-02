@@ -38,21 +38,19 @@ class CompanyController
     public function add()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireValidCsrf();
             $model = new CompanyModel();
+            $data = $this->normalizeData($_POST);
+            $errors = $this->validateData($data);
 
-            $data = [
-                'name'             => $_POST['name'] ?? null,
-                'business_number'  => $_POST['business_number'] ?? null,
-                'type'             => $_POST['type'] ?? 'client',
-                'contract_start'   => $_POST['contract_start'] ?? null,
-                'contract_end'     => $_POST['contract_end'] ?? null,
-                'manager'          => $_POST['manager'] ?? null,
-                'phone'            => $_POST['phone'] ?? null,
-                'email'            => $_POST['email'] ?? null,
-                'address'          => $_POST['address'] ?? null,
-                'status'           => $_POST['status'] ?? 'active',
-                'memo'             => $_POST['memo'] ?? null,
-            ];
+            if ($errors) {
+                http_response_code(422);
+                echo $this->twig->render('admin/company/add.html.twig', [
+                    'company' => $data,
+                    'errors' => $errors,
+                ]);
+                return;
+            }
 
             $model->insert($data);
             header('Location: /admin/company/list');
@@ -103,7 +101,20 @@ class CompanyController
 
         // POST 요청으로 데이터가 전달되면 업데이트 처리
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $data = $_POST;
+            $this->requireValidCsrf();
+            $data = $this->normalizeData($_POST);
+            $errors = $this->validateData($data);
+
+            if ($errors) {
+                $data['id'] = $id;
+                http_response_code(422);
+                echo $this->twig->render('admin/company/add.html.twig', [
+                    'company' => $data,
+                    'errors' => $errors,
+                ]);
+                return;
+            }
+
             $model->updateCompany($id, $data); // 데이터 업데이트
             header("Location: /admin/company/{$id}/view"); // 수정 후 업체 정보 보기 페이지로 리디렉션
             exit;
@@ -125,6 +136,7 @@ class CompanyController
     // 업체 삭제 처리
     public function delete($id)
     {
+        $this->requireValidCsrf();
         $model = new CompanyModel();
         $model->deleteCompany($id);
         header("Location: /admin/company/list");
@@ -141,9 +153,73 @@ class CompanyController
         ];
     }
 
+    private function normalizeData(array $input): array
+    {
+        return [
+            'name' => trim((string)($input['name'] ?? '')),
+            'business_number' => trim((string)($input['business_number'] ?? '')),
+            'type' => $input['type'] ?? 'client',
+            'contract_start' => $this->nullableDate($input['contract_start'] ?? null),
+            'contract_end' => $this->nullableDate($input['contract_end'] ?? null),
+            'manager' => trim((string)($input['manager'] ?? '')),
+            'phone' => trim((string)($input['phone'] ?? '')),
+            'email' => trim((string)($input['email'] ?? '')),
+            'address' => trim((string)($input['address'] ?? '')),
+            'status' => $input['status'] ?? 'active',
+            'memo' => trim((string)($input['memo'] ?? '')),
+        ];
+    }
+
+    private function validateData(array $data): array
+    {
+        $errors = [];
+
+        if ($data['name'] === '') {
+            $errors[] = '업체명을 입력해주세요.';
+        }
+
+        if (!in_array($data['type'], ['client', 'partner', 'internal'], true)) {
+            $errors[] = '업체 타입을 확인해주세요.';
+        }
+
+        if (!in_array($data['status'], ['active', 'inactive', 'hold'], true)) {
+            $errors[] = '상태값을 확인해주세요.';
+        }
+
+        if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = '이메일 형식을 확인해주세요.';
+        }
+
+        if ($data['contract_start'] && $data['contract_end'] && $data['contract_start'] > $data['contract_end']) {
+            $errors[] = '계약 종료일은 계약 시작일 이후여야 합니다.';
+        }
+
+        return $errors;
+    }
+
+    private function requireValidCsrf(): void
+    {
+        if (!\verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            http_response_code(400);
+            echo 'Invalid CSRF token.';
+            exit;
+        }
+    }
+
+    private function nullableDate($value): ?string
+    {
+        $value = trim((string)$value);
+        if ($value === '' || $value === '0000-00-00') {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+        return $date && $date->format('Y-m-d') === $value ? $value : null;
+    }
+
     private function daysUntil(?string $date): ?int
     {
-        if (!$date) {
+        if (!$date || $date === '0000-00-00') {
             return null;
         }
 

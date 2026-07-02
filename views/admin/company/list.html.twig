@@ -149,7 +149,10 @@
                         <td>
                             <a href="/admin/company/{{ company.id }}/view" class="btn btn-sm btn-outline-info">보기</a>
                             <a href="/admin/company/{{ company.id }}/edit" class="btn btn-sm btn-outline-warning">수정</a>
-                            <a href="/admin/company/{{ company.id }}/delete" class="btn btn-sm btn-outline-danger" onclick="return confirm('삭제할까요?')">삭제</a>
+                            <form method="post" action="/admin/company/{{ company.id }}/delete" class="d-inline" onsubmit="return confirm('삭제할까요?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                            </form>
                         </td>
                     </tr>
                     {% else %}
