@@ -6,7 +6,10 @@
         <h1 class="h3 mb-0 text-gray-800">업체 목록</h1>
         <p class="text-muted mb-0">조회 {{ companies|length }}개 / 전체 {{ summary.total }}개 업체</p>
     </div>
-    <a href="/admin/company/add" class="btn btn-sm btn-primary">+ 업체 등록</a>
+    <div>
+        <a href="/admin/company/export{% if export_query %}?{{ export_query }}{% endif %}" class="btn btn-sm btn-outline-success">CSV 다운로드</a>
+        <a href="/admin/company/add" class="btn btn-sm btn-primary">+ 업체 등록</a>
+    </div>
 </div>
 
 <div class="row">
@@ -94,6 +97,15 @@
                     <option value="30" {% if filters.contract == '30' %}selected{% endif %}>30일 이내</option>
                     <option value="60" {% if filters.contract == '60' %}selected{% endif %}>60일 이내</option>
                     <option value="none" {% if filters.contract == 'none' %}selected{% endif %}>종료일 없음</option>
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-3">
+                <label class="small font-weight-bold">담당자</label>
+                <select name="manager" class="form-control">
+                    <option value="">전체</option>
+                    {% for manager in managers %}
+                        <option value="{{ manager }}" {% if filters.manager == manager %}selected{% endif %}>{{ manager }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="form-group col-lg-2 col-md-3 d-flex">

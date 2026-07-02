@@ -31,7 +31,36 @@ class CompanyController
             'companies' => $companies,
             'filters' => $filters,
             'summary' => $companyModel->getSummary(),
+            'managers' => $companyModel->getManagers(),
+            'export_query' => $this->queryString($filters),
         ]);
+    }
+
+    public function export(): void
+    {
+        $companyModel = new CompanyModel();
+        $companies = $companyModel->getAll($this->filtersFromQuery($_GET));
+
+        $this->sendCsv('companies_' . date('Ymd_His') . '.csv', [
+            ['ID', '업체명', '사업자등록번호', '타입', '계약시작일', '계약종료일', '담당자', '전화번호', '이메일', '주소', '상태', '메모', '등록일', '수정일'],
+        ], array_map(static function (array $company): array {
+            return [
+                $company['id'] ?? '',
+                $company['name'] ?? '',
+                $company['business_number'] ?? '',
+                $company['type'] ?? '',
+                $company['contract_start'] ?? '',
+                $company['contract_end'] ?? '',
+                $company['manager'] ?? '',
+                $company['phone'] ?? '',
+                $company['email'] ?? '',
+                $company['address'] ?? '',
+                $company['status'] ?? '',
+                $company['memo'] ?? '',
+                $company['created_at'] ?? '',
+                $company['updated_at'] ?? '',
+            ];
+        }, $companies));
     }
 
     //업체 등록
@@ -150,7 +179,35 @@ class CompanyController
             'status' => trim((string)($query['status'] ?? '')),
             'type' => trim((string)($query['type'] ?? '')),
             'contract' => trim((string)($query['contract'] ?? '')),
+            'manager' => trim((string)($query['manager'] ?? '')),
         ];
+    }
+
+    private function queryString(array $filters): string
+    {
+        return http_build_query(array_filter($filters, static function ($value): bool {
+            return $value !== '' && $value !== null && $value !== 0;
+        }));
+    }
+
+    private function sendCsv(string $filename, array $headerRows, array $rows): void
+    {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF");
+
+        foreach ($headerRows as $header) {
+            fputcsv($output, $header);
+        }
+
+        foreach ($rows as $row) {
+            fputcsv($output, $row);
+        }
+
+        fclose($output);
+        exit;
     }
 
     private function normalizeData(array $input): array

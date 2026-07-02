@@ -161,6 +161,18 @@ class ProjectModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getManagers(): array
+    {
+        $stmt = $this->db->query("
+            SELECT DISTINCT manager
+            FROM projects
+            WHERE manager IS NOT NULL AND manager != ''
+            ORDER BY manager ASC
+        ");
+
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'manager');
+    }
+
     public function getProject(int $projectId): ?array
     {
         $stmt = $this->db->prepare("
@@ -242,6 +254,31 @@ class ProjectModel
         return $stmt->execute($data);
     }
 
+    public function updateExpiryDate(int $id, string $field, ?string $date): bool
+    {
+        $allowedFields = [
+            'url_expiry_date',
+            'ssl_expiry_date',
+            'hosting_expiry_date',
+            'maintenance_expiry_date',
+        ];
+
+        if (!in_array($field, $allowedFields, true)) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare("
+            UPDATE projects
+            SET {$field} = :expiry_date,
+                updated_at = NOW()
+            WHERE id = :id
+        ");
+        $stmt->bindValue(':expiry_date', $date);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
     public function deleteProject(int $id): bool
     {
         $stmt = $this->db->prepare("DELETE FROM projects WHERE id = :id");
@@ -298,6 +335,12 @@ class ProjectModel
         if ($companyId > 0) {
             $conditions[] = "p.company_id = :company_id";
             $params[':company_id'] = $companyId;
+        }
+
+        $manager = trim((string)($filters['manager'] ?? ''));
+        if ($manager !== '') {
+            $conditions[] = "p.manager = :manager";
+            $params[':manager'] = $manager;
         }
 
         $expiry = trim((string)($filters['expiry'] ?? ''));

@@ -119,6 +119,20 @@ class CompanyModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getManagers(): array
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->query("
+            SELECT DISTINCT manager
+            FROM companies
+            WHERE manager IS NOT NULL AND manager != ''
+            ORDER BY manager ASC
+        ");
+
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'manager');
+    }
+
     //업체 등록
     public function insert(array $data): bool
     {
@@ -217,6 +231,12 @@ class CompanyModel
         if ($type !== '') {
             $conditions[] = "type = :type";
             $params[':type'] = $type;
+        }
+
+        $manager = trim((string)($filters['manager'] ?? ''));
+        if ($manager !== '') {
+            $conditions[] = "manager = :manager";
+            $params[':manager'] = $manager;
         }
 
         $contract = trim((string)($filters['contract'] ?? ''));

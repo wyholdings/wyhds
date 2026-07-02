@@ -34,7 +34,37 @@ class ProjectController
             'filters' => $filters,
             'summary' => $model->getSummary(),
             'companies' => (new CompanyModel())->getAll(),
+            'managers' => $model->getManagers(),
+            'export_query' => $this->queryString($filters),
         ]);
+    }
+
+    public function export(): void
+    {
+        $model = new ProjectModel();
+        $projects = $model->getAll($this->filtersFromQuery($_GET));
+
+        $this->sendCsv('projects_' . date('Ymd_His') . '.csv', [
+            ['ID', '프로젝트명', '연결업체', '고객사메모', '사이트URL', '시작일', 'URL만료일', 'SSL만료일', '호스팅만료일', '유지보수만료일', '담당자', '상태', '메모', '등록일', '수정일'],
+        ], array_map(static function (array $project): array {
+            return [
+                $project['id'] ?? '',
+                $project['name'] ?? '',
+                $project['company_name'] ?? '',
+                $project['client_name'] ?? '',
+                $project['site_url'] ?? '',
+                $project['start_date'] ?? '',
+                $project['url_expiry_date'] ?? '',
+                $project['ssl_expiry_date'] ?? '',
+                $project['hosting_expiry_date'] ?? '',
+                $project['maintenance_expiry_date'] ?? '',
+                $project['manager'] ?? '',
+                $project['status'] ?? '',
+                $project['memo'] ?? '',
+                $project['created_at'] ?? '',
+                $project['updated_at'] ?? '',
+            ];
+        }, $projects));
     }
 
     public function add(): void
@@ -83,7 +113,27 @@ class ProjectController
 
         echo $this->twig->render('admin/project/view.html.twig', [
             'project' => $project,
+            'expiry_fields' => $this->expiryFields(),
         ]);
+    }
+
+    public function renew($id): void
+    {
+        $this->requireValidCsrf();
+
+        $field = trim((string)($_POST['expiry_field'] ?? ''));
+        $date = $this->nullableDate($_POST['expiry_date'] ?? null);
+
+        if (!$date || !array_key_exists($field, $this->expiryFields())) {
+            header("Location: /admin/project/{$id}/view");
+            exit;
+        }
+
+        $model = new ProjectModel();
+        $model->updateExpiryDate((int)$id, $field, $date);
+
+        header("Location: /admin/project/{$id}/view");
+        exit;
     }
 
     public function edit($id): void
@@ -184,7 +234,45 @@ class ProjectController
             'status' => trim((string)($query['status'] ?? '')),
             'expiry' => trim((string)($query['expiry'] ?? '')),
             'company_id' => (int)($query['company_id'] ?? 0),
+            'manager' => trim((string)($query['manager'] ?? '')),
         ];
+    }
+
+    private function expiryFields(): array
+    {
+        return [
+            'url_expiry_date' => 'URL 만료일',
+            'ssl_expiry_date' => 'SSL 만료일',
+            'hosting_expiry_date' => '호스팅 만료일',
+            'maintenance_expiry_date' => '유지보수 만료일',
+        ];
+    }
+
+    private function queryString(array $filters): string
+    {
+        return http_build_query(array_filter($filters, static function ($value): bool {
+            return $value !== '' && $value !== null && $value !== 0;
+        }));
+    }
+
+    private function sendCsv(string $filename, array $headerRows, array $rows): void
+    {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF");
+
+        foreach ($headerRows as $header) {
+            fputcsv($output, $header);
+        }
+
+        foreach ($rows as $row) {
+            fputcsv($output, $row);
+        }
+
+        fclose($output);
+        exit;
     }
 
     private function nullableInt($value): ?int

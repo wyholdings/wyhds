@@ -34,6 +34,7 @@ $router->get('/admin/logout', [App\Controllers\AdminController::class, 'logout']
 
 //관리자 업체 관리 목록
 $router->get('/admin/company/list', [App\Controllers\CompanyController::class, 'list']);
+$router->get('/admin/company/export', [App\Controllers\CompanyController::class, 'export']);
 //관리자 업체 입력
 $router->post('/admin/company/add', [App\Controllers\CompanyController::class, 'add']);
 $router->get('/admin/company/add', [App\Controllers\CompanyController::class, 'add']);
@@ -47,9 +48,11 @@ $router->post('/admin/company/{id}/delete', [App\Controllers\CompanyController::
 
 //프로젝트 관리
 $router->get('/admin/project/list', [App\Controllers\ProjectController::class, 'list']);
+$router->get('/admin/project/export', [App\Controllers\ProjectController::class, 'export']);
 $router->post('/admin/project/add', [App\Controllers\ProjectController::class, 'add']);
 $router->get('/admin/project/add', [App\Controllers\ProjectController::class, 'add']);
 $router->get('/admin/project/{id}/view', [App\Controllers\ProjectController::class, 'view']);
+$router->post('/admin/project/{id}/renew', [App\Controllers\ProjectController::class, 'renew']);
 $router->get('/admin/project/{id}/edit', [App\Controllers\ProjectController::class, 'edit']);
 $router->post('/admin/project/{id}/edit', [App\Controllers\ProjectController::class, 'edit']);
 $router->post('/admin/project/{id}/delete', [App\Controllers\ProjectController::class, 'delete']);
