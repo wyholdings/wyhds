@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\CompanyModel;
 use App\Models\ProjectModel;
 use Twig\Environment;
 
@@ -32,6 +33,7 @@ class ProjectController
             'projects' => $projects,
             'filters' => $filters,
             'summary' => $model->getSummary(),
+            'companies' => (new CompanyModel())->getAll(),
         ]);
     }
 
@@ -45,7 +47,9 @@ class ProjectController
             exit;
         }
 
-        echo $this->twig->render('admin/project/add.html.twig');
+        echo $this->twig->render('admin/project/add.html.twig', [
+            'companies' => (new CompanyModel())->getAll(),
+        ]);
     }
 
     public function view($projectId): void
@@ -87,7 +91,10 @@ class ProjectController
             exit;
         }
 
-        echo $this->twig->render('admin/project/add.html.twig', ['project' => $project]);
+        echo $this->twig->render('admin/project/add.html.twig', [
+            'project' => $project,
+            'companies' => (new CompanyModel())->getAll(),
+        ]);
     }
 
     public function delete($id): void
@@ -102,6 +109,7 @@ class ProjectController
     {
         return [
             'name'            => trim((string)($input['name'] ?? '')),
+            'company_id'      => $this->nullableInt($input['company_id'] ?? null),
             'client_name'     => trim((string)($input['client_name'] ?? '')),
             'site_url'        => trim((string)($input['site_url'] ?? '')),
             'start_date'      => $input['start_date'] ?? null,
@@ -121,7 +129,14 @@ class ProjectController
             'q' => trim((string)($query['q'] ?? '')),
             'status' => trim((string)($query['status'] ?? '')),
             'expiry' => trim((string)($query['expiry'] ?? '')),
+            'company_id' => (int)($query['company_id'] ?? 0),
         ];
+    }
+
+    private function nullableInt($value): ?int
+    {
+        $id = (int)$value;
+        return $id > 0 ? $id : null;
     }
 
     private function daysUntil(?string $date): ?int

@@ -20,7 +20,19 @@
         </div>
 
         <div class="form-group">
-            <label><strong>고객사/기관</strong></label>
+            <label><strong>연결 업체</strong></label>
+            <p class="form-control-plaintext">
+                {% if project.company_id and project.company_name %}
+                    <a href="/admin/company/{{ project.company_id }}/view">{{ project.company_name }}</a>
+                    {% if project.company_manager %}<span class="small text-muted ml-2">{{ project.company_manager }}</span>{% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label><strong>고객사/기관 메모</strong></label>
             <p class="form-control-plaintext">{{ project.client_name ?? '-' }}</p>
         </div>
 

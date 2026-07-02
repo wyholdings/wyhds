@@ -16,8 +16,19 @@
                     <input type="text" name="name" class="form-control" value="{{ project.name ?? '' }}" required>
                 </div>
                 <div class="form-group">
-                    <label>고객사/기관</label>
-                    <input type="text" name="client_name" class="form-control" value="{{ project.client_name ?? '' }}">
+                    <label>연결 업체</label>
+                    <select name="company_id" class="form-control">
+                        <option value="">업체 미연결</option>
+                        {% for company in companies %}
+                            <option value="{{ company.id }}" {% if project.company_id is defined and project.company_id == company.id %}selected{% endif %}>
+                                {{ company.name }}{% if company.manager %} / {{ company.manager }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>고객사/기관 메모</label>
+                    <input type="text" name="client_name" class="form-control" value="{{ project.client_name ?? '' }}" placeholder="업체 미등록 기관명 또는 보조 표기">
                 </div>
                 <div class="form-group">
                     <label>사이트 URL</label>

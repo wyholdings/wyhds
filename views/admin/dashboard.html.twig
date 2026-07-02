@@ -80,7 +80,13 @@
                             {% for project in expiring_projects %}
                             <tr>
                                 <td><a href="/admin/project/{{ project.id }}/view">{{ project.name }}</a></td>
-                                <td class="small">{{ project.client_name ?? '-' }}</td>
+                                <td class="small">
+                                    {% if project.company_id and project.company_name %}
+                                        <a href="/admin/company/{{ project.company_id }}/view">{{ project.company_name }}</a>
+                                    {% else %}
+                                        {{ project.client_name ?? '-' }}
+                                    {% endif %}
+                                </td>
                                 <td class="small">{{ project.nearest_expiry_date }}</td>
                                 <td>
                                     <span class="badge badge-warning">D-{{ project.nearest_expiry_days }}</span>

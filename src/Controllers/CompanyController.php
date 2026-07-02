@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Twig\Environment;
 use App\Models\CompanyModel;
+use App\Models\ProjectModel;
 
 class CompanyController
 {
@@ -77,8 +78,22 @@ class CompanyController
             exit;
         }
 
+        $projectModel = new ProjectModel();
+        $projects = $projectModel->getByCompanyId((int)$companyId);
+
+        foreach ($projects as &$project) {
+            $project['url_expiry_days'] = $this->daysUntil($project['url_expiry_date'] ?? null);
+            $project['ssl_expiry_days'] = $this->daysUntil($project['ssl_expiry_date'] ?? null);
+            $project['hosting_expiry_days'] = $this->daysUntil($project['hosting_expiry_date'] ?? null);
+            $project['maintenance_expiry_days'] = $this->daysUntil($project['maintenance_expiry_date'] ?? null);
+        }
+        unset($project);
+
         // 업체 정보를 템플릿에 전달
-        echo $this->twig->render('admin/company/view.html.twig', ['company' => $company]);
+        echo $this->twig->render('admin/company/view.html.twig', [
+            'company' => $company,
+            'projects' => $projects,
+        ]);
     }
 
     // 업체 수정 화면 + 수정 처리
