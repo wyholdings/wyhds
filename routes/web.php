@@ -32,6 +32,15 @@ $router->get('/admin/login', [App\Controllers\AdminController::class, 'loginForm
 $router->post('/admin/login', [App\Controllers\AdminController::class, 'login']);
 $router->get('/admin/logout', [App\Controllers\AdminController::class, 'logout']);
 
+//할 일
+$router->get('/admin/todo/list', [App\Controllers\TodoController::class, 'list']);
+$router->get('/admin/todo/add', [App\Controllers\TodoController::class, 'add']);
+$router->post('/admin/todo/add', [App\Controllers\TodoController::class, 'add']);
+$router->get('/admin/todo/{id}/edit', [App\Controllers\TodoController::class, 'edit']);
+$router->post('/admin/todo/{id}/edit', [App\Controllers\TodoController::class, 'edit']);
+$router->post('/admin/todo/{id}/status', [App\Controllers\TodoController::class, 'status']);
+$router->post('/admin/todo/{id}/delete', [App\Controllers\TodoController::class, 'delete']);
+
 //관리자 업체 관리 목록
 $router->get('/admin/company/list', [App\Controllers\CompanyController::class, 'list']);
 $router->get('/admin/company/export', [App\Controllers\CompanyController::class, 'export']);

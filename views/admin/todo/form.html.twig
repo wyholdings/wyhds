@@ -1,0 +1,95 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0 text-gray-800">{% if todo.id is defined %}할 일 수정{% else %}할 일 등록{% endif %}</h1>
+    <a href="/admin/todo/list" class="btn btn-sm btn-outline-secondary">목록</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if errors is defined and errors %}
+            <div class="alert alert-danger">
+                {% for error in errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ todo.id is defined ? '/admin/todo/' ~ todo.id ~ '/edit' : '/admin/todo/add' }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-section">
+                <div class="form-section-title">업무 내용</div>
+                <div class="form-group">
+                    <label>제목</label>
+                    <input type="text" name="title" class="form-control" value="{{ todo.title ?? '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>메모</label>
+                    <textarea name="content" class="form-control" rows="7">{{ todo.content ?? '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">연결</div>
+                <div class="form-group">
+                    <label>업체</label>
+                    <select name="company_id" class="form-control">
+                        <option value="">업체 미연결</option>
+                        {% for company in companies %}
+                            <option value="{{ company.id }}" {% if todo.company_id is defined and todo.company_id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>프로젝트</label>
+                    <select name="project_id" class="form-control">
+                        <option value="">프로젝트 미연결</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}" {% if todo.project_id is defined and todo.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">운영 정보</div>
+                <div class="form-group">
+                    <label>담당자</label>
+                    <input type="text" name="manager" class="form-control" value="{{ todo.manager ?? '' }}" list="todo-managers">
+                    <datalist id="todo-managers">
+                        {% for manager in managers %}
+                            <option value="{{ manager }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label>우선순위</label>
+                    <select name="priority" class="form-control">
+                        <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>높음</option>
+                        <option value="normal" {% if (todo.priority ?? 'normal') == 'normal' %}selected{% endif %}>보통</option>
+                        <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>낮음</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>상태</label>
+                    <select name="status" class="form-control">
+                        <option value="todo" {% if (todo.status ?? 'todo') == 'todo' %}selected{% endif %}>할 일</option>
+                        <option value="doing" {% if todo.status == 'doing' %}selected{% endif %}>진행중</option>
+                        <option value="done" {% if todo.status == 'done' %}selected{% endif %}>완료</option>
+                        <option value="hold" {% if todo.status == 'hold' %}selected{% endif %}>보류</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>마감일</label>
+                    <input type="date" name="due_date" class="form-control date-input" value="{{ todo.due_date ?? '' }}">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">{% if todo.id is defined %}수정{% else %}등록{% endif %}</button>
+            <a href="/admin/todo/list" class="btn btn-secondary">목록</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

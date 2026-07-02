@@ -11358,6 +11358,21 @@
     color: #fff;
 }
 
+.badge-status.badge-todo {
+    background-color: #4e73df;
+    color: #fff;
+}
+
+.badge-status.badge-doing {
+    background-color: #36b9cc;
+    color: #fff;
+}
+
+.badge-status.badge-done {
+    background-color: #1cc88a;
+    color: #fff;
+}
+
 .form-section {
     padding: 0.75rem 0 0.25rem;
     border-bottom: 1px solid #eaecf4;

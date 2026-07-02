@@ -7,6 +7,7 @@ use App\Models\AdminModel;
 use App\Models\CompanyModel;
 use App\Models\InquiryModel;
 use App\Models\ProjectModel;
+use App\Models\TodoModel;
 use App\Models\ToolUsageModel;
 use App\Models\ToolRelatedClickModel;
 use App\Models\VisitorLogModel;
@@ -28,6 +29,7 @@ class AdminController
         $companyModel = new CompanyModel();
         $projectModel = new ProjectModel();
         $inquiryModel = new InquiryModel();
+        $todoModel = new TodoModel();
         $expiringProjects = $projectModel->getExpiringSoon(8, 30);
         $expiredProjects = $projectModel->getExpiredItems(8);
         $holdProjects = $projectModel->getByStatus('hold', 8);
@@ -60,17 +62,21 @@ class AdminController
         $companySummary = $companyModel->getSummary();
         $projectSummary = $projectModel->getSummary();
         $inquirySummary = $inquiryModel->getSummary();
+        $todoSummary = $todoModel->getSummary();
 
         echo $this->twig->render('admin/dashboard.html.twig', [
             'page_title' => '관리자 대시보드',
             'company_summary' => $companySummary,
             'project_summary' => $projectSummary,
             'inquiry_summary' => $inquirySummary,
+            'todo_summary' => $todoSummary,
             'work_summary' => [
                 'project_attention' => $projectSummary['expired'] + $projectSummary['due_30'] + $projectSummary['hold'],
                 'company_attention' => $companySummary['expired'] + $companySummary['due_30'] + $companySummary['hold'],
                 'new_inquiries' => $inquirySummary['recent_7'],
+                'todo_attention' => $todoSummary['overdue'] + $todoSummary['today'] + $todoSummary['doing'],
             ],
+            'dashboard_todos' => $todoModel->getDashboardItems(8),
             'expiring_projects' => $expiringProjects,
             'expired_projects' => $expiredProjects,
             'hold_projects' => $holdProjects,

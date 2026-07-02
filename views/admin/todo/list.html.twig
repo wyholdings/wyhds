@@ -1,0 +1,186 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">할 일</h1>
+        <p class="text-muted mb-0">업무 내역과 마감 일정을 관리합니다.</p>
+    </div>
+    <a href="/admin/todo/add" class="btn btn-sm btn-primary">+ 할 일 등록</a>
+</div>
+
+<div class="row">
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <a href="/admin/todo/list" class="card shadow-sm h-100 text-decoration-none">
+            <div class="card-body py-3">
+                <div class="small text-muted">전체</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.total }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <a href="/admin/todo/list?due=overdue" class="card shadow-sm h-100 text-decoration-none">
+            <div class="card-body py-3">
+                <div class="small text-muted">지연</div>
+                <div class="h5 mb-0 font-weight-bold text-danger">{{ summary.overdue }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <a href="/admin/todo/list?due=today" class="card shadow-sm h-100 text-decoration-none">
+            <div class="card-body py-3">
+                <div class="small text-muted">오늘</div>
+                <div class="h5 mb-0 font-weight-bold text-warning">{{ summary.today }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <a href="/admin/todo/list?status=doing" class="card shadow-sm h-100 text-decoration-none">
+            <div class="card-body py-3">
+                <div class="small text-muted">진행중</div>
+                <div class="h5 mb-0 font-weight-bold text-primary">{{ summary.doing }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <a href="/admin/todo/list?status=hold" class="card shadow-sm h-100 text-decoration-none">
+            <div class="card-body py-3">
+                <div class="small text-muted">보류</div>
+                <div class="h5 mb-0 font-weight-bold text-secondary">{{ summary.hold }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <a href="/admin/todo/list?status=done" class="card shadow-sm h-100 text-decoration-none">
+            <div class="card-body py-3">
+                <div class="small text-muted">완료</div>
+                <div class="h5 mb-0 font-weight-bold text-success">{{ summary.done }}</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" action="/admin/todo/list" class="form-row align-items-end">
+            <div class="form-group col-lg-3 col-md-6">
+                <label class="small font-weight-bold">검색</label>
+                <input type="search" name="q" class="form-control" value="{{ filters.q }}" placeholder="제목, 내용, 업체, 프로젝트">
+            </div>
+            <div class="form-group col-lg-2 col-md-3">
+                <label class="small font-weight-bold">상태</label>
+                <select name="status" class="form-control">
+                    <option value="">전체</option>
+                    <option value="todo" {% if filters.status == 'todo' %}selected{% endif %}>할 일</option>
+                    <option value="doing" {% if filters.status == 'doing' %}selected{% endif %}>진행중</option>
+                    <option value="done" {% if filters.status == 'done' %}selected{% endif %}>완료</option>
+                    <option value="hold" {% if filters.status == 'hold' %}selected{% endif %}>보류</option>
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-3">
+                <label class="small font-weight-bold">우선순위</label>
+                <select name="priority" class="form-control">
+                    <option value="">전체</option>
+                    <option value="high" {% if filters.priority == 'high' %}selected{% endif %}>높음</option>
+                    <option value="normal" {% if filters.priority == 'normal' %}selected{% endif %}>보통</option>
+                    <option value="low" {% if filters.priority == 'low' %}selected{% endif %}>낮음</option>
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-3">
+                <label class="small font-weight-bold">마감</label>
+                <select name="due" class="form-control">
+                    <option value="">전체</option>
+                    <option value="overdue" {% if filters.due == 'overdue' %}selected{% endif %}>지연</option>
+                    <option value="today" {% if filters.due == 'today' %}selected{% endif %}>오늘</option>
+                    <option value="week" {% if filters.due == 'week' %}selected{% endif %}>7일 이내</option>
+                    <option value="none" {% if filters.due == 'none' %}selected{% endif %}>마감일 없음</option>
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-3">
+                <label class="small font-weight-bold">담당자</label>
+                <select name="manager" class="form-control">
+                    <option value="">전체</option>
+                    {% for manager in managers %}
+                        <option value="{{ manager }}" {% if filters.manager == manager %}selected{% endif %}>{{ manager }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-lg-1 col-md-6 d-flex">
+                <button type="submit" class="btn btn-primary flex-fill mr-2">검색</button>
+                <a href="/admin/todo/list" class="btn btn-outline-secondary">초기화</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-5">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>업무</th>
+                        <th style="width: 160px;">연결</th>
+                        <th style="width: 100px;">담당자</th>
+                        <th style="width: 100px;">우선순위</th>
+                        <th style="width: 110px;">상태</th>
+                        <th style="width: 110px;">마감일</th>
+                        <th style="width: 220px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for todo in todos %}
+                    {% set overdue = todo.status != 'done' and todo.due_date and todo.due_date < "now"|date('Y-m-d') %}
+                    <tr>
+                        <td>
+                            <a href="/admin/todo/{{ todo.id }}/edit">{{ todo.title }}</a>
+                            {% if todo.content %}<div class="small text-muted">{{ todo.content|striptags|slice(0, 80) }}{% if todo.content|length > 80 %}...{% endif %}</div>{% endif %}
+                        </td>
+                        <td class="small">
+                            {% if todo.company_id and todo.company_name %}
+                                <a href="/admin/company/{{ todo.company_id }}/view">{{ todo.company_name }}</a><br>
+                            {% endif %}
+                            {% if todo.project_id and todo.project_name %}
+                                <a href="/admin/project/{{ todo.project_id }}/view">{{ todo.project_name }}</a>
+                            {% endif %}
+                            {% if not todo.company_name and not todo.project_name %}-{% endif %}
+                        </td>
+                        <td>{{ todo.manager ?: '-' }}</td>
+                        <td>
+                            <span class="badge badge-{{ todo.priority == 'high' ? 'danger' : (todo.priority == 'low' ? 'secondary' : 'primary') }}">
+                                {{ todo.priority }}
+                            </span>
+                        </td>
+                        <td><span class="badge badge-status badge-{{ todo.status }}">{{ todo.status }}</span></td>
+                        <td class="small">
+                            {% if todo.due_date %}
+                                {{ todo.due_date }}
+                                {% if overdue %}<span class="badge badge-danger ml-1">지연</span>{% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/admin/todo/{{ todo.id }}/edit" class="btn btn-sm btn-outline-warning">수정</a>
+                            {% if todo.status != 'done' %}
+                                <form method="post" action="/admin/todo/{{ todo.id }}/status" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                    <input type="hidden" name="status" value="done">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">완료</button>
+                                </form>
+                            {% endif %}
+                            <form method="post" action="/admin/todo/{{ todo.id }}/delete" class="d-inline" onsubmit="return confirm('삭제할까요?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center text-muted p-4">등록된 할 일이 없습니다.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

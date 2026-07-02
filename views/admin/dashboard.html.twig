@@ -17,6 +17,15 @@
 
 <div class="row">
     <div class="col-xl-3 col-md-6 mb-4">
+        <a href="/admin/todo/list?due=today" class="card border-left-info shadow h-100 py-2 text-decoration-none">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">오늘 할 일</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ todo_summary.today }}</div>
+                <div class="small text-muted mt-1">지연 {{ todo_summary.overdue }} / 진행중 {{ todo_summary.doing }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
         <a href="/admin/project/list?expiry=expired" class="card border-left-danger shadow h-100 py-2 text-decoration-none">
             <div class="card-body">
                 <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">만료 프로젝트</div>
@@ -51,6 +60,45 @@
                 <div class="small text-muted mt-1">전체 문의 {{ inquiry_summary.total }}</div>
             </div>
         </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">오늘 볼 할 일</h6>
+                <a href="/admin/todo/list" class="small">전체 보기</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>업무</th>
+                                <th style="width: 180px;">연결</th>
+                                <th style="width: 100px;">우선순위</th>
+                                <th style="width: 100px;">상태</th>
+                                <th style="width: 110px;">마감일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for todo in dashboard_todos %}
+                            <tr>
+                                <td><a href="/admin/todo/{{ todo.id }}/edit">{{ todo.title }}</a></td>
+                                <td class="small">{{ todo.project_name ?? todo.company_name ?? '-' }}</td>
+                                <td><span class="badge badge-{{ todo.priority == 'high' ? 'danger' : (todo.priority == 'low' ? 'secondary' : 'primary') }}">{{ todo.priority }}</span></td>
+                                <td><span class="badge badge-status badge-{{ todo.status }}">{{ todo.status }}</span></td>
+                                <td class="small">{{ todo.due_date ?? '-' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted p-4">확인할 할 일이 없습니다.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
