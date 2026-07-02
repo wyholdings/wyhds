@@ -15,9 +15,79 @@ class ProjectModel
         $this->createTableIfNotExists();
     }
 
-    public function getAll(): array
+    public function getAll(array $filters = []): array
     {
-        $stmt = $this->db->query("SELECT * FROM projects ORDER BY id DESC, created_at DESC");
+        [$whereSql, $params] = $this->buildFilterSql($filters);
+
+        $stmt = $this->db->prepare("SELECT * FROM projects {$whereSql} ORDER BY id DESC, created_at DESC");
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getSummary(): array
+    {
+        $stmt = $this->db->query("
+            SELECT
+                COUNT(*) AS total,
+                SUM(status = 'active') AS active,
+                SUM(status = 'hold') AS hold,
+                SUM(status = 'inactive') AS inactive,
+                SUM(status = 'expired') AS status_expired,
+                SUM(
+                    COALESCE(url_expiry_date < CURDATE(), 0)
+                    OR COALESCE(ssl_expiry_date < CURDATE(), 0)
+                    OR COALESCE(hosting_expiry_date < CURDATE(), 0)
+                    OR COALESCE(maintenance_expiry_date < CURDATE(), 0)
+                ) AS expired,
+                SUM(
+                    COALESCE(url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    OR COALESCE(ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    OR COALESCE(hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    OR COALESCE(maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                ) AS due_30,
+                SUM(url_expiry_date IS NULL AND ssl_expiry_date IS NULL AND hosting_expiry_date IS NULL AND maintenance_expiry_date IS NULL) AS no_expiry
+            FROM projects
+        ");
+
+        $summary = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'total' => (int)($summary['total'] ?? 0),
+            'active' => (int)($summary['active'] ?? 0),
+            'hold' => (int)($summary['hold'] ?? 0),
+            'inactive' => (int)($summary['inactive'] ?? 0),
+            'status_expired' => (int)($summary['status_expired'] ?? 0),
+            'expired' => (int)($summary['expired'] ?? 0),
+            'due_30' => (int)($summary['due_30'] ?? 0),
+            'no_expiry' => (int)($summary['no_expiry'] ?? 0),
+        ];
+    }
+
+    public function getExpiringSoon(int $limit = 8, int $days = 30): array
+    {
+        $sql = "
+            SELECT *,
+                LEAST(
+                    COALESCE(url_expiry_date, '9999-12-31'),
+                    COALESCE(ssl_expiry_date, '9999-12-31'),
+                    COALESCE(hosting_expiry_date, '9999-12-31'),
+                    COALESCE(maintenance_expiry_date, '9999-12-31')
+                ) AS nearest_expiry_date
+            FROM projects
+            WHERE
+                COALESCE(url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                OR COALESCE(ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                OR COALESCE(hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                OR COALESCE(maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+            ORDER BY nearest_expiry_date ASC
+            LIMIT :limit
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -111,6 +181,49 @@ class ProjectModel
                 INDEX idx_maintenance_expiry (maintenance_expiry_date)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");
+    }
+
+    private function buildFilterSql(array $filters): array
+    {
+        $conditions = [];
+        $params = [];
+
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $conditions[] = "(name LIKE :q OR client_name LIKE :q OR site_url LIKE :q OR manager LIKE :q OR memo LIKE :q)";
+            $params[':q'] = '%' . $q . '%';
+        }
+
+        $status = trim((string)($filters['status'] ?? ''));
+        if ($status !== '') {
+            $conditions[] = "status = :status";
+            $params[':status'] = $status;
+        }
+
+        $expiry = trim((string)($filters['expiry'] ?? ''));
+        if ($expiry === 'expired') {
+            $conditions[] = "(
+                COALESCE(url_expiry_date < CURDATE(), 0)
+                OR COALESCE(ssl_expiry_date < CURDATE(), 0)
+                OR COALESCE(hosting_expiry_date < CURDATE(), 0)
+                OR COALESCE(maintenance_expiry_date < CURDATE(), 0)
+            )";
+        } elseif (in_array($expiry, ['7', '30', '60'], true)) {
+            $days = (int)$expiry;
+            $conditions[] = "(
+                COALESCE(url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                OR COALESCE(ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                OR COALESCE(hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                OR COALESCE(maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+            )";
+        } elseif ($expiry === 'none') {
+            $conditions[] = "url_expiry_date IS NULL AND ssl_expiry_date IS NULL AND hosting_expiry_date IS NULL AND maintenance_expiry_date IS NULL";
+        }
+
+        return [
+            $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '',
+            $params,
+        ];
     }
 }
 

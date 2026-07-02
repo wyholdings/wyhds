@@ -18,9 +18,18 @@ class CompanyController
     public function list()
     {
         $companyModel = new CompanyModel();
-        $companies = $companyModel->getAll();
+        $filters = $this->filtersFromQuery($_GET);
+        $companies = $companyModel->getAll($filters);
+
+        foreach ($companies as &$company) {
+            $company['contract_end_days'] = $this->daysUntil($company['contract_end'] ?? null);
+        }
+        unset($company);
+
         echo $this->twig->render('admin/company/list.html.twig', [
-            'companies' => $companies
+            'companies' => $companies,
+            'filters' => $filters,
+            'summary' => $companyModel->getSummary(),
         ]);
     }
 
@@ -105,5 +114,32 @@ class CompanyController
         $model->deleteCompany($id);
         header("Location: /admin/company/list");
         exit;
+    }
+
+    private function filtersFromQuery(array $query): array
+    {
+        return [
+            'q' => trim((string)($query['q'] ?? '')),
+            'status' => trim((string)($query['status'] ?? '')),
+            'type' => trim((string)($query['type'] ?? '')),
+            'contract' => trim((string)($query['contract'] ?? '')),
+        ];
+    }
+
+    private function daysUntil(?string $date): ?int
+    {
+        if (!$date) {
+            return null;
+        }
+
+        try {
+            $target = new \DateTimeImmutable($date);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $today = new \DateTimeImmutable('today');
+        $diff = $today->diff($target);
+        return (int)$diff->format('%r%a');
     }
 }

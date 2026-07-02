@@ -4,9 +4,96 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
         <h1 class="h3 mb-0 text-gray-800">프로젝트 목록</h1>
-        <p class="text-muted mb-0">총 {{ projects|length }}개 프로젝트</p>
+        <p class="text-muted mb-0">조회 {{ projects|length }}개 / 전체 {{ summary.total }}개 프로젝트</p>
     </div>
     <a href="/admin/project/add" class="btn btn-sm btn-primary">+ 프로젝트 등록</a>
+</div>
+
+<div class="row">
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="small text-muted">전체</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="small text-muted">진행중</div>
+                <div class="h5 mb-0 font-weight-bold text-success">{{ summary.active }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="small text-muted">보류</div>
+                <div class="h5 mb-0 font-weight-bold text-warning">{{ summary.hold }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="small text-muted">만료 항목</div>
+                <div class="h5 mb-0 font-weight-bold text-danger">{{ summary.expired }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="small text-muted">임박 30일</div>
+                <div class="h5 mb-0 font-weight-bold text-danger">{{ summary.due_30 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <div class="small text-muted">만료일 없음</div>
+                <div class="h5 mb-0 font-weight-bold text-secondary">{{ summary.no_expiry }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" action="/admin/project/list" class="form-row align-items-end">
+            <div class="form-group col-lg-5 col-md-6">
+                <label class="small font-weight-bold">검색</label>
+                <input type="search" name="q" class="form-control" value="{{ filters.q }}" placeholder="프로젝트명, 고객사, URL, 담당자">
+            </div>
+            <div class="form-group col-lg-2 col-md-3">
+                <label class="small font-weight-bold">상태</label>
+                <select name="status" class="form-control">
+                    <option value="">전체</option>
+                    <option value="active" {% if filters.status == 'active' %}selected{% endif %}>진행중</option>
+                    <option value="hold" {% if filters.status == 'hold' %}selected{% endif %}>보류</option>
+                    <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>종료</option>
+                    <option value="expired" {% if filters.status == 'expired' %}selected{% endif %}>만료</option>
+                </select>
+            </div>
+            <div class="form-group col-lg-3 col-md-3">
+                <label class="small font-weight-bold">만료 상태</label>
+                <select name="expiry" class="form-control">
+                    <option value="">전체</option>
+                    <option value="expired" {% if filters.expiry == 'expired' %}selected{% endif %}>이미 만료</option>
+                    <option value="7" {% if filters.expiry == '7' %}selected{% endif %}>7일 이내</option>
+                    <option value="30" {% if filters.expiry == '30' %}selected{% endif %}>30일 이내</option>
+                    <option value="60" {% if filters.expiry == '60' %}selected{% endif %}>60일 이내</option>
+                    <option value="none" {% if filters.expiry == 'none' %}selected{% endif %}>만료일 없음</option>
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-12 d-flex">
+                <button type="submit" class="btn btn-primary flex-fill mr-2">검색</button>
+                <a href="/admin/project/list" class="btn btn-outline-secondary">초기화</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="card shadow-sm">
@@ -95,7 +182,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="9" class="text-center text-muted p-4">등록된 프로젝트가 없습니다.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted p-4">조건에 맞는 프로젝트가 없습니다.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

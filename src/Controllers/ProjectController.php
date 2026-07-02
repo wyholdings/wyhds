@@ -17,7 +17,8 @@ class ProjectController
     public function list(): void
     {
         $model = new ProjectModel();
-        $projects = $model->getAll();
+        $filters = $this->filtersFromQuery($_GET);
+        $projects = $model->getAll($filters);
 
         foreach ($projects as &$project) {
             $project['url_expiry_days'] = $this->daysUntil($project['url_expiry_date'] ?? null);
@@ -29,6 +30,8 @@ class ProjectController
 
         echo $this->twig->render('admin/project/list.html.twig', [
             'projects' => $projects,
+            'filters' => $filters,
+            'summary' => $model->getSummary(),
         ]);
     }
 
@@ -109,6 +112,15 @@ class ProjectController
             'manager'         => trim((string)($input['manager'] ?? '')),
             'status'          => $input['status'] ?? 'active',
             'memo'            => trim((string)($input['memo'] ?? '')),
+        ];
+    }
+
+    private function filtersFromQuery(array $query): array
+    {
+        return [
+            'q' => trim((string)($query['q'] ?? '')),
+            'status' => trim((string)($query['status'] ?? '')),
+            'expiry' => trim((string)($query['expiry'] ?? '')),
         ];
     }
 

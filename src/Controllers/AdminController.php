@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use Twig\Environment;
 use App\Models\AdminModel;
+use App\Models\CompanyModel;
+use App\Models\ProjectModel;
 use App\Models\ToolUsageModel;
 use App\Models\ToolRelatedClickModel;
 use App\Models\VisitorLogModel;
@@ -22,8 +24,27 @@ class AdminController
     // 대시보드
     public function dashboard(): void
     {
+        $companyModel = new CompanyModel();
+        $projectModel = new ProjectModel();
+        $expiringProjects = $projectModel->getExpiringSoon(8, 30);
+        $contractDueCompanies = $companyModel->getContractDueSoon(8, 30);
+
+        foreach ($expiringProjects as &$project) {
+            $project['nearest_expiry_days'] = $this->daysUntil($project['nearest_expiry_date'] ?? null);
+        }
+        unset($project);
+
+        foreach ($contractDueCompanies as &$company) {
+            $company['contract_end_days'] = $this->daysUntil($company['contract_end'] ?? null);
+        }
+        unset($company);
+
         echo $this->twig->render('admin/dashboard.html.twig', [
             'page_title' => '관리자 대시보드',
+            'company_summary' => $companyModel->getSummary(),
+            'project_summary' => $projectModel->getSummary(),
+            'expiring_projects' => $expiringProjects,
+            'contract_due_companies' => $contractDueCompanies,
         ]);
     }
 
@@ -148,5 +169,22 @@ class AdminController
         session_destroy();
         header('Location: /admin/login');
         exit;
+    }
+
+    private function daysUntil(?string $date): ?int
+    {
+        if (!$date) {
+            return null;
+        }
+
+        try {
+            $target = new \DateTimeImmutable($date);
+        } catch (Throwable $e) {
+            return null;
+        }
+
+        $today = new \DateTimeImmutable('today');
+        $diff = $today->diff($target);
+        return (int)$diff->format('%r%a');
     }
 }
