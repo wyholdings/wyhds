@@ -29,8 +29,8 @@ class CompanyModel
                 SUM(status = 'active') AS active,
                 SUM(status = 'hold') AS hold,
                 SUM(status = 'inactive') AS inactive,
-                SUM(contract_end IS NOT NULL AND contract_end < CURDATE()) AS expired,
-                SUM(contract_end IS NOT NULL AND contract_end BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)) AS due_30
+                SUM(contract_end IS NOT NULL AND contract_end > '1000-01-01' AND contract_end < CURDATE()) AS expired,
+                SUM(contract_end IS NOT NULL AND contract_end > '1000-01-01' AND contract_end BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)) AS due_30
             FROM companies
         ");
 
@@ -54,11 +54,65 @@ class CompanyModel
             SELECT *
             FROM companies
             WHERE contract_end IS NOT NULL
+                AND contract_end > '1000-01-01'
                 AND contract_end BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY)
             ORDER BY contract_end ASC
             LIMIT :limit
         ");
         $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getExpiredContracts(int $limit = 8): array
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("
+            SELECT *
+            FROM companies
+            WHERE contract_end IS NOT NULL
+                AND contract_end > '1000-01-01'
+                AND contract_end < CURDATE()
+            ORDER BY contract_end ASC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getByStatus(string $status, int $limit = 8): array
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("
+            SELECT *
+            FROM companies
+            WHERE status = :status
+            ORDER BY updated_at DESC, id DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getRecent(int $limit = 8): array
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("
+            SELECT *
+            FROM companies
+            ORDER BY created_at DESC, id DESC
+            LIMIT :limit
+        ");
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -167,11 +221,11 @@ class CompanyModel
 
         $contract = trim((string)($filters['contract'] ?? ''));
         if ($contract === 'expired') {
-            $conditions[] = "contract_end IS NOT NULL AND contract_end < CURDATE()";
+            $conditions[] = "contract_end IS NOT NULL AND contract_end > '1000-01-01' AND contract_end < CURDATE()";
         } elseif (in_array($contract, ['7', '30', '60'], true)) {
-            $conditions[] = "contract_end IS NOT NULL AND contract_end BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL " . (int)$contract . " DAY)";
+            $conditions[] = "contract_end IS NOT NULL AND contract_end > '1000-01-01' AND contract_end BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL " . (int)$contract . " DAY)";
         } elseif ($contract === 'none') {
-            $conditions[] = "contract_end IS NULL";
+            $conditions[] = "contract_end IS NULL OR contract_end <= '1000-01-01'";
         }
 
         return [

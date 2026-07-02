@@ -5,6 +5,7 @@ namespace App\Controllers;
 use Twig\Environment;
 use App\Models\AdminModel;
 use App\Models\CompanyModel;
+use App\Models\InquiryModel;
 use App\Models\ProjectModel;
 use App\Models\ToolUsageModel;
 use App\Models\ToolRelatedClickModel;
@@ -26,10 +27,22 @@ class AdminController
     {
         $companyModel = new CompanyModel();
         $projectModel = new ProjectModel();
+        $inquiryModel = new InquiryModel();
         $expiringProjects = $projectModel->getExpiringSoon(8, 30);
+        $expiredProjects = $projectModel->getExpiredItems(8);
+        $holdProjects = $projectModel->getByStatus('hold', 8);
+        $recentProjects = $projectModel->getRecent(6);
         $contractDueCompanies = $companyModel->getContractDueSoon(8, 30);
+        $expiredCompanies = $companyModel->getExpiredContracts(8);
+        $holdCompanies = $companyModel->getByStatus('hold', 8);
+        $recentCompanies = $companyModel->getRecent(6);
 
         foreach ($expiringProjects as &$project) {
+            $project['nearest_expiry_days'] = $this->daysUntil($project['nearest_expiry_date'] ?? null);
+        }
+        unset($project);
+
+        foreach ($expiredProjects as &$project) {
             $project['nearest_expiry_days'] = $this->daysUntil($project['nearest_expiry_date'] ?? null);
         }
         unset($project);
@@ -39,12 +52,34 @@ class AdminController
         }
         unset($company);
 
+        foreach ($expiredCompanies as &$company) {
+            $company['contract_end_days'] = $this->daysUntil($company['contract_end'] ?? null);
+        }
+        unset($company);
+
+        $companySummary = $companyModel->getSummary();
+        $projectSummary = $projectModel->getSummary();
+        $inquirySummary = $inquiryModel->getSummary();
+
         echo $this->twig->render('admin/dashboard.html.twig', [
             'page_title' => '관리자 대시보드',
-            'company_summary' => $companyModel->getSummary(),
-            'project_summary' => $projectModel->getSummary(),
+            'company_summary' => $companySummary,
+            'project_summary' => $projectSummary,
+            'inquiry_summary' => $inquirySummary,
+            'work_summary' => [
+                'project_attention' => $projectSummary['expired'] + $projectSummary['due_30'] + $projectSummary['hold'],
+                'company_attention' => $companySummary['expired'] + $companySummary['due_30'] + $companySummary['hold'],
+                'new_inquiries' => $inquirySummary['recent_7'],
+            ],
             'expiring_projects' => $expiringProjects,
+            'expired_projects' => $expiredProjects,
+            'hold_projects' => $holdProjects,
+            'recent_projects' => $recentProjects,
             'contract_due_companies' => $contractDueCompanies,
+            'expired_companies' => $expiredCompanies,
+            'hold_companies' => $holdCompanies,
+            'recent_companies' => $recentCompanies,
+            'recent_inquiries' => $inquiryModel->getRecent(6),
         ]);
     }
 
@@ -173,7 +208,7 @@ class AdminController
 
     private function daysUntil(?string $date): ?int
     {
-        if (!$date) {
+        if (!$date || $date === '0000-00-00') {
             return null;
         }
 

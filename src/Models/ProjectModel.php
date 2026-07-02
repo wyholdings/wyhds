@@ -13,7 +13,6 @@ class ProjectModel
     {
         $this->db = Database::getInstance()->getConnection();
         $this->createTableIfNotExists();
-        $this->ensureCompanyLinkColumns();
     }
 
     public function getAll(array $filters = []): array
@@ -41,18 +40,23 @@ class ProjectModel
                 SUM(status = 'inactive') AS inactive,
                 SUM(status = 'expired') AS status_expired,
                 SUM(
-                    COALESCE(url_expiry_date < CURDATE(), 0)
-                    OR COALESCE(ssl_expiry_date < CURDATE(), 0)
-                    OR COALESCE(hosting_expiry_date < CURDATE(), 0)
-                    OR COALESCE(maintenance_expiry_date < CURDATE(), 0)
+                    COALESCE(url_expiry_date > '1000-01-01' AND url_expiry_date < CURDATE(), 0)
+                    OR COALESCE(ssl_expiry_date > '1000-01-01' AND ssl_expiry_date < CURDATE(), 0)
+                    OR COALESCE(hosting_expiry_date > '1000-01-01' AND hosting_expiry_date < CURDATE(), 0)
+                    OR COALESCE(maintenance_expiry_date > '1000-01-01' AND maintenance_expiry_date < CURDATE(), 0)
                 ) AS expired,
                 SUM(
-                    COALESCE(url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
-                    OR COALESCE(ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
-                    OR COALESCE(hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
-                    OR COALESCE(maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    COALESCE(url_expiry_date > '1000-01-01' AND url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    OR COALESCE(ssl_expiry_date > '1000-01-01' AND ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    OR COALESCE(hosting_expiry_date > '1000-01-01' AND hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
+                    OR COALESCE(maintenance_expiry_date > '1000-01-01' AND maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY), 0)
                 ) AS due_30,
-                SUM(url_expiry_date IS NULL AND ssl_expiry_date IS NULL AND hosting_expiry_date IS NULL AND maintenance_expiry_date IS NULL) AS no_expiry
+                SUM(
+                    (url_expiry_date IS NULL OR url_expiry_date <= '1000-01-01')
+                    AND (ssl_expiry_date IS NULL OR ssl_expiry_date <= '1000-01-01')
+                    AND (hosting_expiry_date IS NULL OR hosting_expiry_date <= '1000-01-01')
+                    AND (maintenance_expiry_date IS NULL OR maintenance_expiry_date <= '1000-01-01')
+                ) AS no_expiry
             FROM projects
         ");
 
@@ -75,24 +79,82 @@ class ProjectModel
         $sql = "
             SELECT p.*, c.name AS company_name, c.manager AS company_manager,
                 LEAST(
-                    COALESCE(p.url_expiry_date, '9999-12-31'),
-                    COALESCE(p.ssl_expiry_date, '9999-12-31'),
-                    COALESCE(p.hosting_expiry_date, '9999-12-31'),
-                    COALESCE(p.maintenance_expiry_date, '9999-12-31')
+                    IF(p.url_expiry_date > '1000-01-01', p.url_expiry_date, '9999-12-31'),
+                    IF(p.ssl_expiry_date > '1000-01-01', p.ssl_expiry_date, '9999-12-31'),
+                    IF(p.hosting_expiry_date > '1000-01-01', p.hosting_expiry_date, '9999-12-31'),
+                    IF(p.maintenance_expiry_date > '1000-01-01', p.maintenance_expiry_date, '9999-12-31')
                 ) AS nearest_expiry_date
             FROM projects p
             LEFT JOIN companies c ON c.id = p.company_id
             WHERE
-                COALESCE(p.url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
-                OR COALESCE(p.ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
-                OR COALESCE(p.hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
-                OR COALESCE(p.maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                COALESCE(p.url_expiry_date > '1000-01-01' AND p.url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                OR COALESCE(p.ssl_expiry_date > '1000-01-01' AND p.ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                OR COALESCE(p.hosting_expiry_date > '1000-01-01' AND p.hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
+                OR COALESCE(p.maintenance_expiry_date > '1000-01-01' AND p.maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY), 0)
             ORDER BY nearest_expiry_date ASC
             LIMIT :limit
         ";
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getExpiredItems(int $limit = 8): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT p.*, c.name AS company_name,
+                LEAST(
+                    IF(p.url_expiry_date > '1000-01-01' AND p.url_expiry_date < CURDATE(), p.url_expiry_date, '9999-12-31'),
+                    IF(p.ssl_expiry_date > '1000-01-01' AND p.ssl_expiry_date < CURDATE(), p.ssl_expiry_date, '9999-12-31'),
+                    IF(p.hosting_expiry_date > '1000-01-01' AND p.hosting_expiry_date < CURDATE(), p.hosting_expiry_date, '9999-12-31'),
+                    IF(p.maintenance_expiry_date > '1000-01-01' AND p.maintenance_expiry_date < CURDATE(), p.maintenance_expiry_date, '9999-12-31')
+                ) AS nearest_expiry_date
+            FROM projects p
+            LEFT JOIN companies c ON c.id = p.company_id
+            WHERE
+                COALESCE(p.url_expiry_date > '1000-01-01' AND p.url_expiry_date < CURDATE(), 0)
+                OR COALESCE(p.ssl_expiry_date > '1000-01-01' AND p.ssl_expiry_date < CURDATE(), 0)
+                OR COALESCE(p.hosting_expiry_date > '1000-01-01' AND p.hosting_expiry_date < CURDATE(), 0)
+                OR COALESCE(p.maintenance_expiry_date > '1000-01-01' AND p.maintenance_expiry_date < CURDATE(), 0)
+            ORDER BY nearest_expiry_date ASC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getByStatus(string $status, int $limit = 8): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT p.*, c.name AS company_name
+            FROM projects p
+            LEFT JOIN companies c ON c.id = p.company_id
+            WHERE p.status = :status
+            ORDER BY p.updated_at DESC, p.id DESC
+            LIMIT :limit
+        ");
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getRecent(int $limit = 8): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT p.*, c.name AS company_name
+            FROM projects p
+            LEFT JOIN companies c ON c.id = p.company_id
+            ORDER BY p.created_at DESC, p.id DESC
+            LIMIT :limit
+        ");
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -215,19 +277,6 @@ class ProjectModel
         ");
     }
 
-    private function ensureCompanyLinkColumns(): void
-    {
-        $stmt = $this->db->query("SHOW COLUMNS FROM projects LIKE 'company_id'");
-        if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
-            $this->db->exec("ALTER TABLE projects ADD COLUMN company_id INT UNSIGNED DEFAULT NULL AFTER id");
-        }
-
-        $stmt = $this->db->query("SHOW INDEX FROM projects WHERE Key_name = 'idx_company_id'");
-        if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
-            $this->db->exec("ALTER TABLE projects ADD INDEX idx_company_id (company_id)");
-        }
-    }
-
     private function buildFilterSql(array $filters): array
     {
         $conditions = [];
@@ -254,21 +303,21 @@ class ProjectModel
         $expiry = trim((string)($filters['expiry'] ?? ''));
         if ($expiry === 'expired') {
             $conditions[] = "(
-                COALESCE(p.url_expiry_date < CURDATE(), 0)
-                OR COALESCE(p.ssl_expiry_date < CURDATE(), 0)
-                OR COALESCE(p.hosting_expiry_date < CURDATE(), 0)
-                OR COALESCE(p.maintenance_expiry_date < CURDATE(), 0)
+                COALESCE(p.url_expiry_date > '1000-01-01' AND p.url_expiry_date < CURDATE(), 0)
+                OR COALESCE(p.ssl_expiry_date > '1000-01-01' AND p.ssl_expiry_date < CURDATE(), 0)
+                OR COALESCE(p.hosting_expiry_date > '1000-01-01' AND p.hosting_expiry_date < CURDATE(), 0)
+                OR COALESCE(p.maintenance_expiry_date > '1000-01-01' AND p.maintenance_expiry_date < CURDATE(), 0)
             )";
         } elseif (in_array($expiry, ['7', '30', '60'], true)) {
             $days = (int)$expiry;
             $conditions[] = "(
-                COALESCE(p.url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
-                OR COALESCE(p.ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
-                OR COALESCE(p.hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
-                OR COALESCE(p.maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                COALESCE(p.url_expiry_date > '1000-01-01' AND p.url_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                OR COALESCE(p.ssl_expiry_date > '1000-01-01' AND p.ssl_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                OR COALESCE(p.hosting_expiry_date > '1000-01-01' AND p.hosting_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
+                OR COALESCE(p.maintenance_expiry_date > '1000-01-01' AND p.maintenance_expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY), 0)
             )";
         } elseif ($expiry === 'none') {
-            $conditions[] = "p.url_expiry_date IS NULL AND p.ssl_expiry_date IS NULL AND p.hosting_expiry_date IS NULL AND p.maintenance_expiry_date IS NULL";
+            $conditions[] = "(p.url_expiry_date IS NULL OR p.url_expiry_date <= '1000-01-01') AND (p.ssl_expiry_date IS NULL OR p.ssl_expiry_date <= '1000-01-01') AND (p.hosting_expiry_date IS NULL OR p.hosting_expiry_date <= '1000-01-01') AND (p.maintenance_expiry_date IS NULL OR p.maintenance_expiry_date <= '1000-01-01')";
         }
 
         return [

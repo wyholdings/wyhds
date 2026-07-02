@@ -7,7 +7,7 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-        <p class="text-muted mb-0">업체/프로젝트 운영 현황</p>
+        <p class="text-muted mb-0">오늘 확인할 업체/프로젝트 업무</p>
     </div>
     <div>
         <a href="/admin/company/add" class="btn btn-sm btn-outline-primary">업체 등록</a>
@@ -17,44 +17,40 @@
 
 <div class="row">
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
+        <a href="/admin/project/list?expiry=expired" class="card border-left-danger shadow h-100 py-2 text-decoration-none">
             <div class="card-body">
-                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                    전체 프로젝트</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ project_summary.total }}</div>
-                <div class="small text-muted mt-1">진행중 {{ project_summary.active }} / 보류 {{ project_summary.hold }}</div>
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">만료 프로젝트</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ project_summary.expired }}</div>
+                <div class="small text-muted mt-1">처리 필요 프로젝트 {{ work_summary.project_attention }}</div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-danger shadow h-100 py-2">
+        <a href="/admin/project/list?expiry=30" class="card border-left-warning shadow h-100 py-2 text-decoration-none">
             <div class="card-body">
-                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                    프로젝트 만료 관리</div>
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">30일 이내 만료</div>
                 <div class="h5 mb-0 font-weight-bold text-gray-800">{{ project_summary.due_30 }}</div>
-                <div class="small text-muted mt-1">30일 이내, 만료 항목 {{ project_summary.expired }}</div>
+                <div class="small text-muted mt-1">만료일 없음 {{ project_summary.no_expiry }}</div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
+        <a href="/admin/company/list?contract=30" class="card border-left-primary shadow h-100 py-2 text-decoration-none">
             <div class="card-body">
-                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                    전체 업체</div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ company_summary.total }}</div>
-                <div class="small text-muted mt-1">활성 {{ company_summary.active }} / 보류 {{ company_summary.hold }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                    계약 종료 관리</div>
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">계약 확인 업체</div>
                 <div class="h5 mb-0 font-weight-bold text-gray-800">{{ company_summary.due_30 }}</div>
-                <div class="small text-muted mt-1">30일 이내, 만료 업체 {{ company_summary.expired }}</div>
+                <div class="small text-muted mt-1">만료 {{ company_summary.expired }} / 보류 {{ company_summary.hold }}</div>
             </div>
-        </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <a href="/admin/inquiry/list" class="card border-left-success shadow h-100 py-2 text-decoration-none">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">최근 7일 문의</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ inquiry_summary.recent_7 }}</div>
+                <div class="small text-muted mt-1">전체 문의 {{ inquiry_summary.total }}</div>
+            </div>
+        </a>
     </div>
 </div>
 
@@ -62,8 +58,8 @@
     <div class="col-xl-7 mb-4">
         <div class="card shadow-sm h-100">
             <div class="card-header py-3 d-flex align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">30일 이내 만료 프로젝트</h6>
-                <a href="/admin/project/list?expiry=30" class="small">전체 보기</a>
+                <h6 class="m-0 font-weight-bold text-danger">우선 처리 프로젝트</h6>
+                <a href="/admin/project/list?expiry=expired" class="small">만료 전체</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -71,13 +67,13 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>프로젝트</th>
-                                <th style="width: 160px;">고객사</th>
-                                <th style="width: 130px;">가까운 만료일</th>
-                                <th style="width: 90px;">남은일</th>
+                                <th style="width: 160px;">업체</th>
+                                <th style="width: 130px;">만료일</th>
+                                <th style="width: 90px;">상태</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for project in expiring_projects %}
+                            {% for project in expired_projects %}
                             <tr>
                                 <td><a href="/admin/project/{{ project.id }}/view">{{ project.name }}</a></td>
                                 <td class="small">
@@ -88,12 +84,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="small">{{ project.nearest_expiry_date }}</td>
-                                <td>
-                                    <span class="badge badge-warning">D-{{ project.nearest_expiry_days }}</span>
-                                </td>
+                                <td><span class="badge badge-danger">만료</span></td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center text-muted p-4">30일 이내 만료 프로젝트가 없습니다.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted p-4">만료 프로젝트가 없습니다.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -105,8 +99,43 @@
     <div class="col-xl-5 mb-4">
         <div class="card shadow-sm h-100">
             <div class="card-header py-3 d-flex align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">30일 이내 계약 종료 업체</h6>
-                <a href="/admin/company/list?contract=30" class="small">전체 보기</a>
+                <h6 class="m-0 font-weight-bold text-warning">30일 이내 만료</h6>
+                <a href="/admin/project/list?expiry=30" class="small">전체 보기</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>프로젝트</th>
+                                <th style="width: 110px;">만료일</th>
+                                <th style="width: 80px;">남은일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in expiring_projects %}
+                            <tr>
+                                <td><a href="/admin/project/{{ project.id }}/view">{{ project.name }}</a></td>
+                                <td class="small">{{ project.nearest_expiry_date }}</td>
+                                <td><span class="badge badge-warning">D-{{ project.nearest_expiry_days }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted p-4">30일 이내 만료 프로젝트가 없습니다.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">계약 관리 업체</h6>
+                <a href="/admin/company/list?contract=expired" class="small">만료 전체</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -115,10 +144,20 @@
                             <tr>
                                 <th>업체</th>
                                 <th style="width: 130px;">계약 종료</th>
-                                <th style="width: 90px;">남은일</th>
+                                <th style="width: 90px;">상태</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for company in expired_companies %}
+                            <tr>
+                                <td>
+                                    <a href="/admin/company/{{ company.id }}/view">{{ company.name }}</a>
+                                    {% if company.manager %}<div class="small text-muted">{{ company.manager }}</div>{% endif %}
+                                </td>
+                                <td class="small">{{ company.contract_end }}</td>
+                                <td><span class="badge badge-danger">만료</span></td>
+                            </tr>
+                            {% endfor %}
                             {% for company in contract_due_companies %}
                             <tr>
                                 <td>
@@ -129,11 +168,117 @@
                                 <td><span class="badge badge-warning">D-{{ company.contract_end_days }}</span></td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="3" class="text-center text-muted p-4">30일 이내 계약 종료 업체가 없습니다.</td></tr>
+                                {% if expired_companies is empty %}
+                                <tr><td colspan="3" class="text-center text-muted p-4">확인할 계약 업체가 없습니다.</td></tr>
+                                {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">보류 항목</h6>
+                <div>
+                    <a href="/admin/project/list?status=hold" class="small mr-2">프로젝트</a>
+                    <a href="/admin/company/list?status=hold" class="small">업체</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>구분</th>
+                                <th>이름</th>
+                                <th style="width: 120px;">수정일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in hold_projects %}
+                            <tr>
+                                <td><span class="badge badge-status badge-hold">프로젝트</span></td>
+                                <td><a href="/admin/project/{{ project.id }}/view">{{ project.name }}</a></td>
+                                <td class="small">{{ project.updated_at|date('Y-m-d') }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% for company in hold_companies %}
+                            <tr>
+                                <td><span class="badge badge-status badge-hold">업체</span></td>
+                                <td><a href="/admin/company/{{ company.id }}/view">{{ company.name }}</a></td>
+                                <td class="small">{{ company.updated_at|date('Y-m-d') }}</td>
+                            </tr>
+                            {% else %}
+                                {% if hold_projects is empty %}
+                                <tr><td colspan="3" class="text-center text-muted p-4">보류 항목이 없습니다.</td></tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">최근 문의</h6>
+                <a href="/admin/inquiry/list" class="small">전체 보기</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for inquiry in recent_inquiries %}
+                    <a href="/admin/inquiry/{{ inquiry.id }}/view" class="list-group-item list-group-item-action">
+                        <div class="font-weight-bold text-gray-800">{{ inquiry.company }}</div>
+                        <div class="small text-muted">{{ inquiry.name }} / {{ inquiry.created_at|date('Y-m-d') }}</div>
+                    </a>
+                {% else %}
+                    <div class="list-group-item text-center text-muted p-4">최근 문의가 없습니다.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">최근 프로젝트</h6>
+                <a href="/admin/project/list" class="small">전체 보기</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for project in recent_projects %}
+                    <a href="/admin/project/{{ project.id }}/view" class="list-group-item list-group-item-action">
+                        <div class="font-weight-bold text-gray-800">{{ project.name }}</div>
+                        <div class="small text-muted">{{ project.company_name ?? project.client_name ?? '-' }} / {{ project.created_at|date('Y-m-d') }}</div>
+                    </a>
+                {% else %}
+                    <div class="list-group-item text-center text-muted p-4">최근 프로젝트가 없습니다.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">최근 업체</h6>
+                <a href="/admin/company/list" class="small">전체 보기</a>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for company in recent_companies %}
+                    <a href="/admin/company/{{ company.id }}/view" class="list-group-item list-group-item-action">
+                        <div class="font-weight-bold text-gray-800">{{ company.name }}</div>
+                        <div class="small text-muted">{{ company.manager ?? '-' }} / {{ company.created_at|date('Y-m-d') }}</div>
+                    </a>
+                {% else %}
+                    <div class="list-group-item text-center text-muted p-4">최근 업체가 없습니다.</div>
+                {% endfor %}
             </div>
         </div>
     </div>

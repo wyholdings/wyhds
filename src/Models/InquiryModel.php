@@ -16,6 +16,34 @@ class InquiryModel
         return $stmt->fetchAll();
     }
 
+    public function getRecent(int $limit = 8): array
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("SELECT * FROM contacts ORDER BY created_at DESC, id DESC LIMIT :limit");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getSummary(): array
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->query("
+            SELECT
+                COUNT(*) AS total,
+                SUM(created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) AS recent_7
+            FROM contacts
+        ");
+        $summary = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'total' => (int)($summary['total'] ?? 0),
+            'recent_7' => (int)($summary['recent_7'] ?? 0),
+        ];
+    }
 
     // 문의 정보를 데이터베이스에서 가져오는 메서드
     public function getInquiry($id)
