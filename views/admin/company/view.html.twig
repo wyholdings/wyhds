@@ -25,6 +25,17 @@
         </div>
 
         <div class="form-group">
+            <label><strong>사업자등록증</strong></label>
+            <p class="form-control-plaintext">
+                {% if company.business_license_file %}
+                    <a href="{{ company.business_license_file }}" target="_blank" rel="noopener noreferrer">파일 보기</a>
+                {% else %}
+                    -
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="form-group">
             <label><strong>업체 타입</strong></label>
             <p class="form-control-plaintext">{{ company.type ?? '-' }}</p>
         </div>

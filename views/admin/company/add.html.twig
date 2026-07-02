@@ -15,7 +15,7 @@
                 {% endfor %}
             </div>
         {% endif %}
-        <form method="post" action="{{ company ? '/admin/company/' ~ company.id ~ '/edit' : '/admin/company/add' }}">
+        <form method="post" enctype="multipart/form-data" action="{{ company ? '/admin/company/' ~ company.id ~ '/edit' : '/admin/company/add' }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-section">
                 <div class="form-section-title">기본 정보</div>
@@ -26,6 +26,16 @@
                 <div class="form-group">
                     <label>사업자등록번호</label>
                     <input type="text" name="business_number" class="form-control" value="{{ company.business_number ?? '' }}">
+                </div>
+                <div class="form-group">
+                    <label>사업자등록증 파일</label>
+                    <input type="file" name="business_license_file" class="form-control-file" accept=".pdf,.jpg,.jpeg,.png,.webp">
+                    {% if company.business_license_file %}
+                        <div class="small mt-2">
+                            <a href="{{ company.business_license_file }}" target="_blank" rel="noopener noreferrer">현재 파일 보기</a>
+                        </div>
+                    {% endif %}
+                    <div class="small text-muted mt-1">PDF, JPG, PNG, WEBP / 최대 10MB</div>
                 </div>
                 <div class="form-group">
                     <label>업체 타입</label>

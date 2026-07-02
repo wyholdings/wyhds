@@ -20,7 +20,9 @@ class CompanyController
     {
         $companyModel = new CompanyModel();
         $filters = $this->filtersFromQuery($_GET);
-        $companies = $companyModel->getAll($filters);
+        $allCompanies = $companyModel->getAll($filters);
+        $pagination = $this->paginate($allCompanies, (int)($_GET['page'] ?? 1));
+        $companies = $pagination['items'];
 
         foreach ($companies as &$company) {
             $company['contract_end_days'] = $this->daysUntil($company['contract_end'] ?? null);
@@ -33,6 +35,7 @@ class CompanyController
             'summary' => $companyModel->getSummary(),
             'managers' => $companyModel->getManagers(),
             'export_query' => $this->queryString($filters),
+            'pagination' => $pagination,
         ]);
     }
 
@@ -42,12 +45,13 @@ class CompanyController
         $companies = $companyModel->getAll($this->filtersFromQuery($_GET));
 
         $this->sendCsv('companies_' . date('Ymd_His') . '.csv', [
-            ['ID', '업체명', '사업자등록번호', '타입', '계약시작일', '계약종료일', '담당자', '전화번호', '이메일', '주소', '상태', '메모', '등록일', '수정일'],
+            ['ID', '업체명', '사업자등록번호', '사업자등록증', '타입', '계약시작일', '계약종료일', '담당자', '전화번호', '이메일', '주소', '상태', '메모', '등록일', '수정일'],
         ], array_map(static function (array $company): array {
             return [
                 $company['id'] ?? '',
                 $company['name'] ?? '',
                 $company['business_number'] ?? '',
+                $company['business_license_file'] ?? '',
                 $company['type'] ?? '',
                 $company['contract_start'] ?? '',
                 $company['contract_end'] ?? '',
@@ -71,8 +75,14 @@ class CompanyController
             $model = new CompanyModel();
             $data = $this->normalizeData($_POST);
             $errors = $this->validateData($data);
+            [$uploadedPath, $uploadError] = $this->handleLicenseUpload();
+            if ($uploadError) {
+                $errors[] = $uploadError;
+            }
+            $data['business_license_file'] = $uploadedPath;
 
             if ($errors) {
+                $this->deleteUploadedFile($uploadedPath);
                 http_response_code(422);
                 echo $this->twig->render('admin/company/add.html.twig', [
                     'company' => $data,
@@ -131,10 +141,24 @@ class CompanyController
         // POST 요청으로 데이터가 전달되면 업데이트 처리
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->requireValidCsrf();
-            $data = $this->normalizeData($_POST);
+            $company = $model->getCompany($id);
+            if (!$company) {
+                http_response_code(404);
+                echo $this->twig->render('errors/404.html.twig');
+                exit;
+            }
+
+            $data = $this->normalizeData($_POST, $company['business_license_file'] ?? null);
             $errors = $this->validateData($data);
+            [$uploadedPath, $uploadError] = $this->handleLicenseUpload();
+            if ($uploadError) {
+                $errors[] = $uploadError;
+            } elseif ($uploadedPath) {
+                $data['business_license_file'] = $uploadedPath;
+            }
 
             if ($errors) {
+                $this->deleteUploadedFile($uploadedPath);
                 $data['id'] = $id;
                 http_response_code(422);
                 echo $this->twig->render('admin/company/add.html.twig', [
@@ -210,11 +234,75 @@ class CompanyController
         exit;
     }
 
-    private function normalizeData(array $input): array
+    private function paginate(array $items, int $page, int $perPage = 10): array
+    {
+        $total = count($items);
+        $totalPages = max(1, (int)ceil($total / $perPage));
+        $page = max(1, min($page, $totalPages));
+
+        return [
+            'items' => array_slice($items, ($page - 1) * $perPage, $perPage),
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'total_pages' => $totalPages,
+            'query' => $this->queryString($this->filtersFromQuery($_GET)),
+        ];
+    }
+
+    private function handleLicenseUpload(): array
+    {
+        if (!isset($_FILES['business_license_file']) || ($_FILES['business_license_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return [null, null];
+        }
+
+        $file = $_FILES['business_license_file'];
+        if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            return [null, '사업자등록증 파일 업로드에 실패했습니다.'];
+        }
+
+        if (($file['size'] ?? 0) > 10 * 1024 * 1024) {
+            return [null, '사업자등록증 파일은 10MB 이하만 업로드할 수 있습니다.'];
+        }
+
+        $extension = strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION));
+        if (!in_array($extension, ['pdf', 'jpg', 'jpeg', 'png', 'webp'], true)) {
+            return [null, '사업자등록증 파일은 PDF, JPG, PNG, WEBP만 가능합니다.'];
+        }
+
+        $uploadDir = dirname(__DIR__, 2) . '/public/uploads/company_licenses';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filename = date('YmdHis') . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $targetPath = $uploadDir . '/' . $filename;
+
+        if (!move_uploaded_file((string)$file['tmp_name'], $targetPath)) {
+            return [null, '사업자등록증 파일 저장에 실패했습니다.'];
+        }
+
+        return ['/uploads/company_licenses/' . $filename, null];
+    }
+
+    private function deleteUploadedFile(?string $relativePath): void
+    {
+        if (!$relativePath) {
+            return;
+        }
+
+        $absolutePath = dirname(__DIR__, 2) . '/public' . $relativePath;
+        if (is_file($absolutePath)) {
+            unlink($absolutePath);
+        }
+    }
+
+    private function normalizeData(array $input, ?string $currentLicenseFile = null): array
     {
         return [
             'name' => trim((string)($input['name'] ?? '')),
             'business_number' => trim((string)($input['business_number'] ?? '')),
+            'business_license_file' => $currentLicenseFile,
             'type' => $input['type'] ?? 'client',
             'contract_start' => $this->nullableDate($input['contract_start'] ?? null),
             'contract_end' => $this->nullableDate($input['contract_end'] ?? null),

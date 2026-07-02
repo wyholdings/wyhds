@@ -4,7 +4,7 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
         <h1 class="h3 mb-0 text-gray-800">프로젝트 목록</h1>
-        <p class="text-muted mb-0">조회 {{ projects|length }}개 / 전체 {{ summary.total }}개 프로젝트</p>
+        <p class="text-muted mb-0">조회 {{ pagination.total }}개 / 전체 {{ summary.total }}개 프로젝트</p>
     </div>
     <div>
         <a href="/admin/project/export{% if export_query %}?{{ export_query }}{% endif %}" class="btn btn-sm btn-outline-success">CSV 다운로드</a>
@@ -117,7 +117,7 @@
     </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card shadow-sm mb-4">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -216,5 +216,28 @@
             </table>
         </div>
     </div>
+</div>
+
+<div class="d-flex align-items-center justify-content-between mb-5">
+    <div class="small text-muted">
+        {{ pagination.page }} / {{ pagination.total_pages }} 페이지, 페이지당 {{ pagination.per_page }}개
+    </div>
+    {% if pagination.total_pages > 1 %}
+        <nav aria-label="프로젝트 페이지">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if pagination.page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="/admin/project/list?{% if pagination.query %}{{ pagination.query }}&{% endif %}page={{ pagination.page - 1 }}">이전</a>
+                </li>
+                {% for page in 1..pagination.total_pages %}
+                    <li class="page-item {% if pagination.page == page %}active{% endif %}">
+                        <a class="page-link" href="/admin/project/list?{% if pagination.query %}{{ pagination.query }}&{% endif %}page={{ page }}">{{ page }}</a>
+                    </li>
+                {% endfor %}
+                <li class="page-item {% if pagination.page >= pagination.total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="/admin/project/list?{% if pagination.query %}{{ pagination.query }}&{% endif %}page={{ pagination.page + 1 }}">다음</a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
 </div>
 {% endblock %}

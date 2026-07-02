@@ -19,7 +19,9 @@ class ProjectController
     {
         $model = new ProjectModel();
         $filters = $this->filtersFromQuery($_GET);
-        $projects = $model->getAll($filters);
+        $allProjects = $model->getAll($filters);
+        $pagination = $this->paginate($allProjects, (int)($_GET['page'] ?? 1));
+        $projects = $pagination['items'];
 
         foreach ($projects as &$project) {
             $project['url_expiry_days'] = $this->daysUntil($project['url_expiry_date'] ?? null);
@@ -36,6 +38,7 @@ class ProjectController
             'companies' => (new CompanyModel())->getAll(),
             'managers' => $model->getManagers(),
             'export_query' => $this->queryString($filters),
+            'pagination' => $pagination,
         ]);
     }
 
@@ -273,6 +276,22 @@ class ProjectController
 
         fclose($output);
         exit;
+    }
+
+    private function paginate(array $items, int $page, int $perPage = 10): array
+    {
+        $total = count($items);
+        $totalPages = max(1, (int)ceil($total / $perPage));
+        $page = max(1, min($page, $totalPages));
+
+        return [
+            'items' => array_slice($items, ($page - 1) * $perPage, $perPage),
+            'page' => $page,
+            'per_page' => $perPage,
+            'total' => $total,
+            'total_pages' => $totalPages,
+            'query' => $this->queryString($this->filtersFromQuery($_GET)),
+        ];
     }
 
     private function nullableInt($value): ?int

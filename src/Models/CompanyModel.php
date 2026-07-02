@@ -140,15 +140,16 @@ class CompanyModel
         $db = Database::getInstance()->getConnection();
 
         $sql = "INSERT INTO companies 
-            (name, business_number, type, contract_start, contract_end, manager, phone, email, address, status, memo, created_at, updated_at)
+            (name, business_number, business_license_file, type, contract_start, contract_end, manager, phone, email, address, status, memo, created_at, updated_at)
             VALUES 
-            (:name, :business_number, :type, :contract_start, :contract_end, :manager, :phone, :email, :address, :status, :memo, NOW(), NOW())";
+            (:name, :business_number, :business_license_file, :type, :contract_start, :contract_end, :manager, :phone, :email, :address, :status, :memo, NOW(), NOW())";
 
         $stmt = $db->prepare($sql);
 
         return $stmt->execute([
             ':name'            => $data['name'],
             ':business_number' => $data['business_number'],
+            ':business_license_file' => $data['business_license_file'],
             ':type'            => $data['type'],
             ':contract_start'  => $data['contract_start'],
             ':contract_end'    => $data['contract_end'],
@@ -183,6 +184,7 @@ class CompanyModel
             UPDATE companies SET
                 name = :name,
                 business_number = :business_number,
+                business_license_file = :business_license_file,
                 type = :type,
                 contract_start = :contract_start,
                 contract_end = :contract_end,
