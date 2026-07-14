@@ -1,5 +1,19 @@
 {% extends 'layout/base.html.twig' %}
 
+{% block styles %}
+    <link rel="stylesheet" href="/assets/css/case-study.css?v=20260714">
+    {% if portfolio|default(null) %}
+        <script type="application/ld+json">{{ {
+            '@context': 'https://schema.org',
+            '@type': 'CreativeWork',
+            'name': portfolio.title,
+            'description': portfolio.subtitle ?: portfolio.description,
+            'dateCreated': portfolio.project_date ?: null,
+            'url': canonical_url|default('/portfolio/' ~ portfolio.id)
+        }|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }}</script>
+    {% endif %}
+{% endblock %}
+
 {% block body %}
 <div id="wrap" >
 
@@ -22,6 +36,7 @@
             <div class="boardcont">
                 {% if portfolio|default(null) %}
                 <div class="desc">
+                    <p class="case-eyebrow">CASE STUDY</p>
                     <h4>{{ portfolio.title }}</h4>
                     <div class="text">
                         {% if portfolio.subtitle %}
@@ -29,8 +44,40 @@
                         {% endif %}
                         {{ portfolio.description|nl2br }}
                     </div>
+                    {% if portfolio.case_problem|default('') or portfolio.case_scope|default('') or portfolio.case_result|default('') %}
+                        <div class="case-story">
+                            {% if portfolio.case_problem|default('') %}
+                                <section class="case-story__item">
+                                    <span>01</span>
+                                    <div>
+                                        <h5>고객 과제</h5>
+                                        <p>{{ portfolio.case_problem|nl2br }}</p>
+                                    </div>
+                                </section>
+                            {% endif %}
+                            {% if portfolio.case_scope|default('') %}
+                                <section class="case-story__item">
+                                    <span>02</span>
+                                    <div>
+                                        <h5>구축 범위</h5>
+                                        <p>{{ portfolio.case_scope|nl2br }}</p>
+                                    </div>
+                                </section>
+                            {% endif %}
+                            {% if portfolio.case_result|default('') %}
+                                <section class="case-story__item case-story__item--result">
+                                    <span>03</span>
+                                    <div>
+                                        <h5>구축 결과</h5>
+                                        <p>{{ portfolio.case_result|nl2br }}</p>
+                                    </div>
+                                </section>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                     <div class="btnbox">
-                        <a href="/contact" class="solid_btn">견적 문의하기</a>
+                        <a href="/automation-diagnosis?from=portfolio-{{ portfolio.id }}" class="solid_btn">내 업무 자동화 진단하기</a>
+                        <a href="/contact?inquiry=business" class="line_btn">유사 프로젝트 문의</a>
                         {% if portfolio.site_link %}
                             <a href="{{ portfolio.site_link }}" class="line_btn" target="_blank">사이트 바로가기</a>
                         {% endif %}
@@ -85,9 +132,11 @@
             <div class="imgcont">
 
                 <!--사진 첨부하면 이렇게-->
-                <p class="img">
-                    <img src="{{ portfolio.body_image}}" alt="">
-                </p>
+                {% if portfolio|default(null) and portfolio.body_image|default('') %}
+                    <p class="img">
+                        <img src="{{ portfolio.body_image}}" alt="{{ portfolio.title }} 구축 화면">
+                    </p>
+                {% endif %}
 
             </div>
 

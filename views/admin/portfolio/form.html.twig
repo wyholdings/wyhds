@@ -30,6 +30,20 @@
                 <label for="description">설명</label>
                 <textarea class="form-control" id="description" name="description" rows="8">{{ portfolio.description|default('') }}</textarea>
             </div>
+            <hr>
+            <p class="text-muted mb-3">구축 사례 상세에 노출되는 내용입니다. 각 항목은 줄바꿈으로 구분해 작성할 수 있습니다.</p>
+            <div class="form-group">
+                <label for="case_problem">고객 과제</label>
+                <textarea class="form-control" id="case_problem" name="case_problem" rows="4" placeholder="예: 기존 사이트의 정보 구조가 복잡해 신규 고객이 핵심 서비스를 파악하기 어려웠습니다.">{{ portfolio.case_problem|default('') }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="case_scope">구축 범위</label>
+                <textarea class="form-control" id="case_scope" name="case_scope" rows="4" placeholder="예: 전략·UI/UX·반응형 홈페이지·문의 전환 동선 설계">{{ portfolio.case_scope|default('') }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="case_result">구축 결과</label>
+                <textarea class="form-control" id="case_result" name="case_result" rows="4" placeholder="예: 서비스 이해도를 높이고 문의 전환 경로를 단순화했습니다.">{{ portfolio.case_result|default('') }}</textarea>
+            </div>
             <div class="form-group">
                 <label for="site_link">사이트 링크</label>
                 <input type="url" class="form-control" id="site_link" name="site_link" value="{{ portfolio.site_link|default('') }}" placeholder="https://example.com">

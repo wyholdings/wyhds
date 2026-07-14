@@ -36,10 +36,18 @@ class HomeController
     function portfolioView($id): void
     {
         $contactToken = $this->ensureContactFormToken();
+        $portfolio = $this->getPortfolio((int)$id);
+        $title = $portfolio ? ($portfolio['title'] . ' 구축 사례 | 우용디앤에스') : '구축 사례 | 우용디앤에스';
+        $description = $portfolio
+            ? trim((string)($portfolio['subtitle'] ?: $portfolio['description']))
+            : '우용디앤에스의 웹사이트·자동화 구축 사례를 확인해 보세요.';
         echo $this->twig->render('portfolio/portfolio_view.html.twig', [
             'contact_form_token' => $contactToken,
             'project_id' => $id,
-            'portfolio' => $this->getPortfolio((int)$id),
+            'portfolio' => $portfolio,
+            'title' => $title,
+            'description' => $description,
+            'canonical_url' => '/portfolio/' . (int)$id,
         ]);
     }
 

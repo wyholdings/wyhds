@@ -28,9 +28,9 @@ class PortfolioModel
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare(
             'INSERT INTO portfolios
-                (title, subtitle, description, site_link, client, project_date, keywords, thumbnail_image, body_image, created_at, updated_at)
+                (title, subtitle, description, case_problem, case_scope, case_result, site_link, client, project_date, keywords, thumbnail_image, body_image, created_at, updated_at)
              VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
         );
         $stmt->execute($this->values($data));
 
@@ -45,6 +45,9 @@ class PortfolioModel
              SET title = ?,
                  subtitle = ?,
                  description = ?,
+                 case_problem = ?,
+                 case_scope = ?,
+                 case_result = ?,
                  site_link = ?,
                  client = ?,
                  project_date = ?,
@@ -72,6 +75,9 @@ class PortfolioModel
             trim((string)($data['title'] ?? '')),
             trim((string)($data['subtitle'] ?? '')),
             trim((string)($data['description'] ?? '')),
+            trim((string)($data['case_problem'] ?? '')),
+            trim((string)($data['case_scope'] ?? '')),
+            trim((string)($data['case_result'] ?? '')),
             trim((string)($data['site_link'] ?? '')),
             trim((string)($data['client'] ?? '')),
             ($data['project_date'] ?? '') !== '' ? $data['project_date'] : null,
