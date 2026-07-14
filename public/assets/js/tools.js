@@ -1336,6 +1336,58 @@
         setStatus('수수료, 배송비, 광고비와 부가세를 반영해 계산했습니다.', 'success');
     }
 
+    function quoteAmountValues() {
+        const supply = Number(getValue('#quote-supply'));
+        const vatRate = Number(getValue('#quote-vat-rate')) || 0;
+        const withholdingRate = Number(getValue('#quote-withholding-rate')) || 0;
+        const directCost = Number(getValue('#quote-direct-cost')) || 0;
+        const otherCost = Number(getValue('#quote-other-cost')) || 0;
+        const targetMarginRate = Number(getValue('#quote-target-margin')) || 0;
+        const values = [supply, vatRate, withholdingRate, directCost, otherCost, targetMarginRate];
+        if (!Number.isFinite(supply) || supply < 0 || values.some(function (value) { return !Number.isFinite(value) || value < 0; })) {
+            throw new Error('공급가액과 비용을 0 이상으로 입력해 주세요.');
+        }
+        if (targetMarginRate >= 100) throw new Error('목표 마진율은 100%보다 작아야 합니다.');
+
+        const vat = supply * vatRate / 100;
+        const total = supply + vat;
+        const withholding = supply * withholdingRate / 100;
+        const receivable = total - withholding;
+        const costs = directCost + otherCost;
+        const profit = supply - costs;
+        const targetSupply = costs / (1 - targetMarginRate / 100);
+        return { supply, vatRate, withholdingRate, directCost, otherCost, targetMarginRate, vat, total, withholding, receivable, costs, profit, targetSupply };
+    }
+
+    function calculateQuoteAmount() {
+        const result = quoteAmountValues();
+        document.getElementById('quote-total').textContent = formatNumber(Math.round(result.total)) + '원';
+        document.getElementById('quote-vat').textContent = formatNumber(Math.round(result.vat)) + '원';
+        document.getElementById('quote-withholding').textContent = formatNumber(Math.round(result.withholding)) + '원';
+        document.getElementById('quote-receivable').textContent = formatNumber(Math.round(result.receivable)) + '원';
+        document.getElementById('quote-profit').textContent = formatNumber(Math.round(result.profit)) + '원';
+        document.getElementById('quote-target-supply').textContent = formatNumber(Math.ceil(result.targetSupply / 1000) * 1000) + '원';
+        setStatus('견적 합계, 원천징수와 프로젝트 수익성을 계산했습니다.', 'success');
+        return result;
+    }
+
+    function printQuoteDraft() {
+        const result = calculateQuoteAmount();
+        const escapeHtml = function (value) {
+            const element = document.createElement('div');
+            element.textContent = String(value || '');
+            return element.innerHTML;
+        };
+        const won = function (value) { return formatNumber(Math.round(value)) + '원'; };
+        const title = getValue('#quote-title').trim() || '견적서';
+        const client = getValue('#quote-client').trim() || '-';
+        const issuedAt = new Date().toLocaleDateString('ko-KR');
+        const popup = window.open('', '_blank');
+        if (!popup) throw new Error('팝업이 차단되었습니다. 브라우저에서 팝업을 허용한 뒤 다시 시도해 주세요.');
+        popup.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title><style>body{margin:0;padding:40px;color:#172033;font:14px/1.6 Arial,sans-serif}.sheet{max-width:760px;margin:auto}h1{margin:0 0 32px;font-size:28px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:28px;padding:16px;background:#f5f8fc}.meta b{display:inline-block;width:82px}table{width:100%;border-collapse:collapse;margin:18px 0 28px}th,td{padding:12px;border:1px solid #dbe3ef;text-align:left}th{background:#f5f8fc}td:last-child,th:last-child{text-align:right}.total{font-size:18px;font-weight:700}.note{margin-top:28px;color:#64748b;font-size:12px}@media print{body{padding:0}}</style></head><body><main class="sheet"><h1>견 적 서</h1><section class="meta"><div><b>견적명</b>' + escapeHtml(title) + '</div><div><b>발행일</b>' + escapeHtml(issuedAt) + '</div><div><b>고객명</b>' + escapeHtml(client) + '</div><div><b>통화</b>KRW</div></section><table><thead><tr><th>항목</th><th>금액</th></tr></thead><tbody><tr><td>공급가액</td><td>' + won(result.supply) + '</td></tr><tr><td>부가세 (' + formatNumber(result.vatRate) + '%)</td><td>' + won(result.vat) + '</td></tr><tr class="total"><td>견적 합계</td><td>' + won(result.total) + '</td></tr></tbody></table><p class="note">본 문서는 금액 검토용 견적서 초안입니다. 계약·세금계산서 발행 전 사업자 유형, 과세 여부 및 계약 조건을 확인해 주세요.</p></main><script>window.onload=function(){window.print();};<\/script></body></html>');
+        popup.document.close();
+    }
+
     function escapeAttribute(text) {
         return String(text).replace(/[&<>"']/g, function (char) {
             return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
@@ -2057,6 +2109,10 @@
                 calculateShippingMargin();
             } else if (action === 'integrated-selling-margin-calculate') {
                 calculateIntegratedSellingMargin();
+            } else if (action === 'quote-calculate') {
+                calculateQuoteAmount();
+            } else if (action === 'quote-print') {
+                printQuoteDraft();
             } else if (action === 'meta-generate') {
                 generateMetaTags();
             } else if (action === 'slug-generate') {
@@ -2135,6 +2191,7 @@
         calculateShippingMargin();
     }
     if (slug === 'integrated-selling-margin') calculateIntegratedSellingMargin();
+    if (slug === 'quote-amount-designer') calculateQuoteAmount();
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
         if (input) input.addEventListener('input', countWords);
