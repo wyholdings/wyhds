@@ -6,6 +6,33 @@
         recent: 'wy_tools_recent',
         theme: 'wy_tools_theme'
     };
+    const trackingToolSlug = page ? page.dataset.toolSlug : '';
+    let toolStartTracked = false;
+    let pendingToolAction = '';
+
+    function trackToolEvent(eventName, context) {
+        if (!trackingToolSlug) return;
+        const payload = new URLSearchParams();
+        payload.set('tool_slug', trackingToolSlug);
+        payload.set('event_name', eventName);
+        if (context) payload.set('context', context);
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('/tools/event', payload);
+            return;
+        }
+        fetch('/tools/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: payload.toString(),
+            keepalive: true
+        }).catch(function () {});
+    }
+
+    function trackToolStart() {
+        if (toolStartTracked) return;
+        toolStartTracked = true;
+        trackToolEvent('tool_start');
+    }
 
     function readJson(key, fallback) {
         try {
@@ -174,6 +201,7 @@
                     }
                 });
                 renderFavorites();
+                trackToolEvent('favorite', index >= 0 ? 'remove' : 'add');
             });
         });
         renderFavorites();
@@ -245,6 +273,12 @@
         statusEl.textContent = message || '';
         statusEl.classList.remove('is-error', 'is-success');
         if (type) statusEl.classList.add('is-' + type);
+        if (type === 'success' && pendingToolAction) {
+            trackToolEvent('tool_complete', pendingToolAction);
+            pendingToolAction = '';
+        } else if (type === 'error') {
+            pendingToolAction = '';
+        }
     }
 
     function getValue(selector) {
@@ -263,6 +297,7 @@
         const text = 'value' in el ? el.value : el.textContent;
         navigator.clipboard.writeText(text || '').then(function () {
             setStatus('복사되었습니다.', 'success');
+            trackToolEvent('copy');
         }).catch(function () {
             setStatus('클립보드 복사에 실패했습니다.', 'error');
         });
@@ -829,6 +864,7 @@
         link.href = dataUrl;
         link.download = 'qr-code.png';
         link.click();
+        trackToolEvent('download', 'qr');
     }
 
     function analyzeCron(expression) {
@@ -2015,6 +2051,7 @@
         link.click();
         URL.revokeObjectURL(link.href);
         setStatus('이미지를 다운로드했습니다.', 'success');
+        trackToolEvent('download', 'image');
     }
 
     function generateBcryptSnippet() {
@@ -2121,6 +2158,7 @@
         link.click();
         URL.revokeObjectURL(link.href);
         setStatus('PDF를 다운로드했습니다.', 'success');
+        trackToolEvent('download', 'pdf');
     }
 
     function selectedPdfBatchFiles() {
@@ -2224,11 +2262,26 @@
         link.click();
         URL.revokeObjectURL(link.href);
         setStatus('처리 결과를 다운로드했습니다.', 'success');
+        trackToolEvent('download', 'pdf_batch');
+    }
+
+    const toolPanel = document.querySelector('.tool-panel');
+    if (toolPanel) {
+        ['input', 'change'].forEach(function (eventName) {
+            toolPanel.addEventListener(eventName, function (event) {
+                if (event.target.matches('input, textarea, select')) trackToolStart();
+            });
+        });
     }
 
     document.addEventListener('click', function (event) {
+        const premiumCta = event.target.closest('[data-premium-cta]');
+        if (premiumCta) trackToolEvent('premium_cta', premiumCta.dataset.premiumCta || 'cta');
+        const businessInquiry = event.target.closest('[data-business-inquiry]');
+        if (businessInquiry) trackToolEvent('business_inquiry', businessInquiry.dataset.businessInquiry || 'cta');
         const shareButton = event.target.closest('[data-share]');
         if (shareButton) {
+            trackToolEvent('share');
             if (navigator.share) {
                 navigator.share({ title: document.title, url: location.href }).catch(function () {});
             } else {
@@ -2251,6 +2304,7 @@
             link.click();
             URL.revokeObjectURL(link.href);
             setStatus('파일을 다운로드했습니다.', 'success');
+            trackToolEvent('download', 'text');
             return;
         }
 
@@ -2272,6 +2326,9 @@
 
         try {
             const action = button.dataset.action;
+            trackToolStart();
+            const downloadActions = ['qr-download', 'image-download', 'pdf-download', 'pdf-batch-download'];
+            pendingToolAction = downloadActions.includes(action) ? '' : action;
             if (action === 'json-format') {
                 setValue('#tool-output', JSON.stringify(JSON.parse(getValue('#tool-input')), null, 2));
                 setStatus('유효한 JSON입니다.', 'success');

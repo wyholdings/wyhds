@@ -8,6 +8,7 @@ $router->get('/contact', [App\Controllers\HomeController::class, 'contact']);
 $router->get('/tools', [App\Controllers\ToolsController::class, 'index']);
 $router->get('/tools/category/{slug}', [App\Controllers\ToolsController::class, 'category']);
 $router->post('/tools/related-click', [App\Controllers\ToolsController::class, 'relatedClick']);
+$router->post('/tools/event', [App\Controllers\ToolsController::class, 'event']);
 $router->get('/tools/{slug}', [App\Controllers\ToolsController::class, 'show']);
 $router->get('/login', [App\Controllers\AuthController::class, 'showLoginForm']);
 $router->post('/login', [App\Controllers\AuthController::class, 'login']);

@@ -10,6 +10,7 @@ use App\Models\ProjectModel;
 use App\Models\TodoModel;
 use App\Models\ToolUsageModel;
 use App\Models\ToolRelatedClickModel;
+use App\Models\ToolEventModel;
 use App\Models\VisitorLogModel;
 use App\Services\ToolRegistry;
 use Throwable;
@@ -109,6 +110,17 @@ class AdminController
             'related_clicks' => [],
             'related_daily_clicks' => [],
             'total_related_clicks' => 0,
+            'event_totals' => [
+                'tool_start' => ['events' => 0, 'sessions' => 0],
+                'tool_complete' => ['events' => 0, 'sessions' => 0],
+                'copy' => ['events' => 0, 'sessions' => 0],
+                'download' => ['events' => 0, 'sessions' => 0],
+                'share' => ['events' => 0, 'sessions' => 0],
+                'favorite' => ['events' => 0, 'sessions' => 0],
+                'premium_cta' => ['events' => 0, 'sessions' => 0],
+                'business_inquiry' => ['events' => 0, 'sessions' => 0],
+            ],
+            'event_top_tools' => [],
             'error' => null,
         ];
 
@@ -116,6 +128,7 @@ class AdminController
             $usage = new ToolUsageModel();
             $visitors = new VisitorLogModel();
             $relatedClicks = new ToolRelatedClickModel();
+            $events = new ToolEventModel();
 
             $data['summary'] = $visitors->getToolTrafficSummary($days);
             $data['total_tool_views'] = $usage->getTotalViews($days);
@@ -168,6 +181,24 @@ class AdminController
                 ];
             }, $relatedClicks->getSummary(20, $days));
             $data['related_daily_clicks'] = $relatedClicks->getDailyClicks(14);
+            $data['event_totals'] = array_replace($data['event_totals'], $events->getTotals($days));
+            $data['event_top_tools'] = array_map(static function (array $row) use ($toolsBySlug): array {
+                $slug = (string)$row['tool_slug'];
+                $starts = (int)$row['starts'];
+                $completes = (int)$row['completes'];
+                return [
+                    'name' => $toolsBySlug[$slug]['name'] ?? $slug,
+                    'url' => $toolsBySlug[$slug]['url'] ?? '/tools/' . $slug,
+                    'starts' => $starts,
+                    'completes' => $completes,
+                    'completion_rate' => $starts > 0 ? ($completes / $starts * 100) : 0,
+                    'copies' => (int)$row['copies'],
+                    'downloads' => (int)$row['downloads'],
+                    'shares' => (int)$row['shares'],
+                    'favorites' => (int)$row['favorites'],
+                    'last_event_at' => $row['last_event_at'] ?? '',
+                ];
+            }, $events->getTopTools(20, $days));
         } catch (Throwable $e) {
             $data['error'] = $e->getMessage();
         }

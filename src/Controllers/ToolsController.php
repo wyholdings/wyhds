@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\ToolUsageModel;
 use App\Models\ToolRelatedClickModel;
+use App\Models\ToolEventModel;
 use App\Services\ToolRegistry;
 use Twig\Environment;
 
@@ -133,6 +134,28 @@ class ToolsController
             $this->resolveClientIp()
         );
 
+        echo json_encode(['success' => true]);
+    }
+
+    public function event(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        $toolSlug = trim((string)($_POST['tool_slug'] ?? ''));
+        $eventName = trim((string)($_POST['event_name'] ?? ''));
+        $context = trim((string)($_POST['context'] ?? ''));
+        $allowedEvents = [
+            'tool_start', 'tool_complete', 'copy', 'download', 'share', 'favorite', 'premium_cta', 'business_inquiry',
+        ];
+
+        if ($toolSlug === '' || !in_array($eventName, $allowedEvents, true) || $this->registry->find($toolSlug) === null) {
+            http_response_code(400);
+            echo json_encode(['success' => false]);
+            return;
+        }
+
+        $sessionHash = session_id() !== '' ? hash('sha256', session_id()) : '';
+        (new ToolEventModel())->record($toolSlug, $eventName, substr($context, 0, 60), $sessionHash);
         echo json_encode(['success' => true]);
     }
 

@@ -15,6 +15,21 @@
     </form>
 </div>
 
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-primary shadow h-100 py-2"><div class="card-body"><div class="text-xs font-weight-bold text-primary text-uppercase mb-1">도구 시작</div><div class="h5 mb-0 font-weight-bold text-gray-800">{{ event_totals.tool_start.events|number_format }}</div></div></div></div>
+    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-success shadow h-100 py-2"><div class="card-body"><div class="text-xs font-weight-bold text-success text-uppercase mb-1">도구 완료</div><div class="h5 mb-0 font-weight-bold text-gray-800">{{ event_totals.tool_complete.events|number_format }}</div></div></div></div>
+    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-info shadow h-100 py-2"><div class="card-body"><div class="text-xs font-weight-bold text-info text-uppercase mb-1">복사 / 다운로드</div><div class="h5 mb-0 font-weight-bold text-gray-800">{{ event_totals.copy.events|number_format }} / {{ event_totals.download.events|number_format }}</div></div></div></div>
+    <div class="col-xl-3 col-md-6 mb-4"><div class="card border-left-warning shadow h-100 py-2"><div class="card-body"><div class="text-xs font-weight-bold text-warning text-uppercase mb-1">공유 / 즐겨찾기</div><div class="h5 mb-0 font-weight-bold text-gray-800">{{ event_totals.share.events|number_format }} / {{ event_totals.favorite.events|number_format }}</div></div></div></div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3"><h2 class="h6 m-0 font-weight-bold text-primary">도구 행동 전환</h2></div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th>도구</th><th class="text-right">시작</th><th class="text-right">완료</th><th class="text-right">완료율</th><th class="text-right">복사</th><th class="text-right">다운로드</th><th>최근 행동</th></tr></thead>
+        <tbody>{% for item in event_top_tools %}<tr><td><a href="{{ item.url }}" target="_blank">{{ item.name }}</a></td><td class="text-right">{{ item.starts|number_format }}</td><td class="text-right">{{ item.completes|number_format }}</td><td class="text-right">{{ item.completion_rate|number_format(1) }}%</td><td class="text-right">{{ item.copies|number_format }}</td><td class="text-right">{{ item.downloads|number_format }}</td><td>{{ item.last_event_at }}</td></tr>{% else %}<tr><td colspan="7" class="text-center text-muted py-4">도구 행동 데이터가 없습니다.</td></tr>{% endfor %}</tbody>
+    </table></div></div>
+</div>
+
 {% if error %}
     <div class="alert alert-warning">통계 데이터를 불러오지 못했습니다: {{ error }}</div>
 {% endif %}
