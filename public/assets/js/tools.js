@@ -1292,6 +1292,50 @@
         setStatus('배송비 포함 마진을 계산했습니다.', 'success');
     }
 
+    function calculateIntegratedSellingMargin() {
+        const price = Number(getValue('#integrated-price'));
+        const customerShipping = Number(getValue('#integrated-customer-shipping')) || 0;
+        const cost = Number(getValue('#integrated-cost'));
+        const sellerShipping = Number(getValue('#integrated-seller-shipping')) || 0;
+        const packaging = Number(getValue('#integrated-packaging')) || 0;
+        const adCost = Number(getValue('#integrated-ad-cost')) || 0;
+        const platformFeeRate = Number(getValue('#integrated-platform-fee')) || 0;
+        const paymentFeeRate = Number(getValue('#integrated-payment-fee')) || 0;
+        const targetMarginRate = Number(getValue('#integrated-target-margin')) || 0;
+        const values = [price, customerShipping, cost, sellerShipping, packaging, adCost, platformFeeRate, paymentFeeRate, targetMarginRate];
+        if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(cost) || cost < 0 || values.some(function (value) { return !Number.isFinite(value) || value < 0; })) {
+            throw new Error('판매가와 원가를 포함한 모든 값을 0 이상으로 입력해 주세요.');
+        }
+
+        const feeRate = (platformFeeRate + paymentFeeRate) / 100;
+        const targetRate = targetMarginRate / 100;
+        if (feeRate >= 1 || feeRate + targetRate >= 1) {
+            throw new Error('수수료율과 목표 순이익률의 합계는 100%보다 작아야 합니다.');
+        }
+
+        const grossSales = price + customerShipping;
+        const totalFee = grossSales * feeRate;
+        const totalCosts = cost + sellerShipping + packaging + adCost + totalFee;
+        const cashProfit = grossSales - totalCosts;
+        const outputVat = grossSales / 11;
+        const inputVat = totalCosts / 11;
+        const estimatedVat = outputVat - inputVat;
+        const netProfit = cashProfit - estimatedVat;
+        const netSales = grossSales / 1.1;
+        const netMarginRate = netSales > 0 ? netProfit / netSales * 100 : 0;
+        const fixedCosts = cost + sellerShipping + packaging + adCost;
+        const breakEven = (fixedCosts / (1 - feeRate)) - customerShipping;
+        const targetPrice = (fixedCosts / (1 - feeRate - targetRate)) - customerShipping;
+
+        document.getElementById('integrated-net-profit').textContent = formatNumber(Math.round(netProfit)) + '원';
+        document.getElementById('integrated-margin-rate').textContent = formatNumber(netMarginRate) + '%';
+        document.getElementById('integrated-break-even').textContent = formatNumber(Math.max(0, Math.ceil(breakEven / 10) * 10)) + '원';
+        document.getElementById('integrated-target-price').textContent = formatNumber(Math.max(0, Math.ceil(targetPrice / 10) * 10)) + '원';
+        document.getElementById('integrated-vat').textContent = formatNumber(Math.round(estimatedVat)) + '원';
+        document.getElementById('integrated-total-fee').textContent = formatNumber(Math.round(totalFee)) + '원';
+        setStatus('수수료, 배송비, 광고비와 부가세를 반영해 계산했습니다.', 'success');
+    }
+
     function escapeAttribute(text) {
         return String(text).replace(/[&<>"']/g, function (char) {
             return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
@@ -2011,6 +2055,8 @@
                 buildUtmUrl();
             } else if (action === 'shipping-margin-calculate') {
                 calculateShippingMargin();
+            } else if (action === 'integrated-selling-margin-calculate') {
+                calculateIntegratedSellingMargin();
             } else if (action === 'meta-generate') {
                 generateMetaTags();
             } else if (action === 'slug-generate') {
@@ -2088,6 +2134,7 @@
         setValue('#ship-cost', '15000');
         calculateShippingMargin();
     }
+    if (slug === 'integrated-selling-margin') calculateIntegratedSellingMargin();
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
         if (input) input.addEventListener('input', countWords);
