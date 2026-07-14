@@ -193,6 +193,25 @@ return [
     'split-pdf' => $tool('split-pdf', 'Split PDF', 'pdf', 'PDF 문서를 페이지 단위로 분리합니다.', ['widget' => 'pdf-split', 'related' => ['merge-pdf', 'rotate-pdf']]),
     'compress-pdf' => $tool('compress-pdf', 'Compress PDF', 'pdf', 'PDF 파일 용량을 줄입니다.', ['widget' => 'pdf-compress', 'related' => ['merge-pdf', 'split-pdf']]),
     'rotate-pdf' => $tool('rotate-pdf', 'Rotate PDF', 'pdf', 'PDF 페이지 방향을 회전합니다.', ['widget' => 'pdf-rotate', 'related' => ['split-pdf', 'merge-pdf']]),
+    'pdf-batch-processor' => $tool('pdf-batch-processor', 'PDF 일괄처리', 'pdf', '여러 PDF를 한 번에 병합, 개별 분할, 회전, 최적화하고 결과를 ZIP으로 내려받습니다.', [
+        'widget' => 'pdf-batch',
+        'is_recent' => true,
+        'premium_ready' => true,
+        'meta_title' => 'PDF 일괄처리 - 병합·분할·회전·최적화 ZIP 다운로드 | WY Tools',
+        'meta_description' => '여러 PDF 파일을 브라우저에서 한 번에 병합, 페이지별 분할, 회전, 최적화하고 결과를 ZIP으로 다운로드하는 무료 PDF 일괄처리 도구입니다.',
+        'keywords' => ['PDF 일괄처리', 'PDF 일괄 병합', 'PDF 일괄 분할', 'PDF 일괄 회전', 'PDF ZIP 다운로드', 'PDF 대량 처리'],
+        'related' => ['merge-pdf', 'split-pdf', 'rotate-pdf', 'compress-pdf'],
+        'how_to_use' => ['처리할 PDF를 최대 10개, 총 50MB까지 선택합니다.', '병합, 페이지별 분할, 회전, 최적화 중 원하는 작업을 선택합니다.', '처리 후 단일 PDF 또는 여러 결과가 담긴 ZIP 파일을 내려받습니다.'],
+        'examples' => [
+            ['title' => '여러 계약서 병합', 'input' => '계약서 PDF 5개 / 작업: 하나로 병합', 'output' => '선택한 순서대로 페이지를 합친 하나의 PDF를 다운로드합니다.'],
+            ['title' => '스캔 문서 방향 일괄 수정', 'input' => '스캔 PDF 8개 / 작업: 90도 회전', 'output' => '각 파일을 회전 처리한 결과를 ZIP 파일로 다운로드합니다.'],
+        ],
+        'faqs' => [
+            ['q' => 'PDF 파일은 서버로 업로드되나요?', 'a' => '아니요. 모든 처리는 브라우저에서 이뤄지며 파일은 서버로 전송하거나 저장하지 않습니다.'],
+            ['q' => '무료 사용 한도는 어떻게 되나요?', 'a' => '안정적인 브라우저 처리를 위해 한 번에 최대 10개 파일, 총 50MB까지 지원합니다. 더 큰 작업과 작업 프리셋은 향후 Pro 기능으로 검토합니다.'],
+            ['q' => '최적화는 이미지 품질을 낮추나요?', 'a' => '현재 최적화는 PDF를 재저장해 구조를 정리하는 방식입니다. 스캔 이미지가 많은 PDF는 파일 크기가 크게 줄지 않을 수 있습니다.'],
+        ],
+    ]),
 
     'json-csv' => $tool('json-csv', 'JSON to CSV Converter', 'converter', 'JSON 데이터를 CSV 형식으로 변환합니다.', ['widget' => 'json-csv', 'related' => ['json-formatter', 'csv-viewer', 'json-xml']]),
     'json-xml' => $tool('json-xml', 'JSON to XML Converter', 'converter', 'JSON과 XML 데이터를 상호 변환합니다.', ['widget' => 'json-xml', 'related' => ['json-formatter', 'json-csv']]),

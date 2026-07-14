@@ -238,6 +238,7 @@
     const statusEl = document.getElementById('tool-status');
     let processedImage = null;
     let processedPdf = null;
+    let processedPdfBatch = null;
 
     function setStatus(message, type) {
         if (!statusEl) return;
@@ -2122,6 +2123,109 @@
         setStatus('PDF를 다운로드했습니다.', 'success');
     }
 
+    function selectedPdfBatchFiles() {
+        const input = document.getElementById('pdf-batch-files');
+        const files = input && input.files ? Array.from(input.files) : [];
+        if (!files.length) throw new Error('처리할 PDF 파일을 선택해 주세요.');
+        if (files.length > 10) throw new Error('한 번에 최대 10개 PDF까지 처리할 수 있습니다.');
+        const totalBytes = files.reduce(function (sum, file) { return sum + file.size; }, 0);
+        if (totalBytes > 50 * 1024 * 1024) throw new Error('선택한 PDF의 총 용량은 50MB까지 가능합니다.');
+        files.forEach(function (file) {
+            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) throw new Error('PDF 파일만 선택할 수 있습니다.');
+        });
+        return files;
+    }
+
+    function pdfBaseName(filename) {
+        return filename.replace(/\.pdf$/i, '') || 'document';
+    }
+
+    function renderPdfBatchResults(outputs) {
+        const list = document.getElementById('pdf-batch-results');
+        if (!list) return;
+        list.textContent = '';
+        outputs.forEach(function (output) {
+            const item = document.createElement('li');
+            item.textContent = output.filename + ' · ' + formatNumber(output.blob.size / 1024) + ' KB';
+            list.appendChild(item);
+        });
+    }
+
+    async function processPdfBatch() {
+        if (!window.PDFLib) throw new Error('PDF 처리 라이브러리를 불러오지 못했습니다.');
+        const files = selectedPdfBatchFiles();
+        const operation = getValue('#pdf-batch-operation');
+        const rotation = parseInt(getValue('#pdf-batch-rotation'), 10) || 90;
+        const outputs = [];
+        let pageCount = 0;
+
+        if (operation === 'merge') {
+            const merged = await PDFLib.PDFDocument.create();
+            for (const file of files) {
+                const source = await PDFLib.PDFDocument.load(await fileToArrayBuffer(file));
+                const pages = await merged.copyPages(source, source.getPageIndices());
+                pages.forEach(function (pdfPage) { merged.addPage(pdfPage); pageCount += 1; });
+            }
+            const bytes = await merged.save({ useObjectStreams: true });
+            outputs.push({ filename: 'merged-pdf.pdf', blob: new Blob([bytes], { type: 'application/pdf' }) });
+        } else {
+            for (const file of files) {
+                const source = await PDFLib.PDFDocument.load(await fileToArrayBuffer(file));
+                const indices = source.getPageIndices();
+                pageCount += indices.length;
+                if (operation === 'split') {
+                    for (const index of indices) {
+                        const document = await PDFLib.PDFDocument.create();
+                        const copied = await document.copyPages(source, [index]);
+                        document.addPage(copied[0]);
+                        const bytes = await document.save({ useObjectStreams: true });
+                        outputs.push({ filename: pdfBaseName(file.name) + '-page-' + (index + 1) + '.pdf', blob: new Blob([bytes], { type: 'application/pdf' }) });
+                    }
+                } else {
+                    const document = await PDFLib.PDFDocument.create();
+                    const copied = await document.copyPages(source, indices);
+                    copied.forEach(function (pdfPage) {
+                        if (operation === 'rotate') pdfPage.setRotation(PDFLib.degrees((pdfPage.getRotation().angle + rotation) % 360));
+                        document.addPage(pdfPage);
+                    });
+                    const bytes = await document.save({ useObjectStreams: true });
+                    const suffix = operation === 'rotate' ? '-rotated' : '-optimized';
+                    outputs.push({ filename: pdfBaseName(file.name) + suffix + '.pdf', blob: new Blob([bytes], { type: 'application/pdf' }) });
+                }
+            }
+        }
+        const totalOutputBytes = outputs.reduce(function (sum, output) { return sum + output.blob.size; }, 0);
+        processedPdfBatch = { outputs: outputs };
+        document.getElementById('pdf-batch-file-count').textContent = formatNumber(files.length);
+        document.getElementById('pdf-batch-page-count').textContent = formatNumber(pageCount);
+        document.getElementById('pdf-batch-output-size').textContent = formatNumber(totalOutputBytes / 1024) + ' KB';
+        renderPdfBatchResults(outputs);
+        setStatus(outputs.length + '개 PDF 결과를 만들었습니다.', 'success');
+    }
+
+    async function downloadProcessedPdfBatch() {
+        if (!processedPdfBatch || !processedPdfBatch.outputs.length) throw new Error('먼저 PDF 일괄 처리를 실행해 주세요.');
+        const outputs = processedPdfBatch.outputs;
+        let blob;
+        let filename;
+        if (outputs.length === 1) {
+            blob = outputs[0].blob;
+            filename = outputs[0].filename;
+        } else {
+            if (!window.JSZip) throw new Error('ZIP 생성 라이브러리를 불러오지 못했습니다.');
+            const zip = new JSZip();
+            outputs.forEach(function (output) { zip.file(output.filename, output.blob); });
+            blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+            filename = 'wy-tools-pdf-batch.zip';
+        }
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setStatus('처리 결과를 다운로드했습니다.', 'success');
+    }
+
     document.addEventListener('click', function (event) {
         const shareButton = event.target.closest('[data-share]');
         if (shareButton) {
@@ -2314,6 +2418,10 @@
                 processPdf('compress').catch(function (error) { setStatus(error.message, 'error'); });
             } else if (action === 'pdf-download') {
                 downloadProcessedPdf();
+            } else if (action === 'pdf-batch-process') {
+                processPdfBatch().catch(function (error) { setStatus(error.message, 'error'); });
+            } else if (action === 'pdf-batch-download') {
+                downloadProcessedPdfBatch().catch(function (error) { setStatus(error.message, 'error'); });
             } else if (action === 'unit-convert') {
                 convertUnit();
             } else if (action === 'unit-swap') {
