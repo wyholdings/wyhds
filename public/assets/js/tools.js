@@ -505,6 +505,150 @@
         return rows;
     }
 
+    let csvCompareFiles = { a: null, b: null };
+
+    function readCsvCompareFile(file) {
+        return new Promise(function (resolve, reject) {
+            if (!file) return reject(new Error('CSV A와 CSV B 파일을 모두 선택해 주세요.'));
+            if (file.size > 2 * 1024 * 1024) return reject(new Error(file.name + ' 파일이 2MB를 초과합니다.'));
+            const reader = new FileReader();
+            reader.onerror = function () { reject(new Error(file.name + ' 파일을 읽지 못했습니다.')); };
+            reader.onload = function () {
+                const rows = parseCsv(String(reader.result || '').replace(/^\uFEFF/, ''));
+                if (rows.length < 2) return reject(new Error(file.name + ' 파일에는 헤더와 한 행 이상의 데이터가 필요합니다.'));
+                const headers = rows[0].map(function (header) { return header.trim(); });
+                if (headers.some(function (header) { return !header; }) || new Set(headers).size !== headers.length) return reject(new Error(file.name + ' 파일의 헤더는 비어 있거나 중복될 수 없습니다.'));
+                const data = rows.slice(1).filter(function (row) { return row.some(function (cell) { return String(cell).trim() !== ''; }); });
+                if (data.length > 10000) return reject(new Error(file.name + ' 파일은 데이터 10,000행까지 비교할 수 있습니다.'));
+                resolve({ name: file.name, headers: headers, rows: data.map(function (row) {
+                    return headers.reduce(function (item, header, index) { item[header] = row[index] ?? ''; return item; }, {});
+                }) });
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+    }
+
+    function makeCsvCompareSelect(headers, selected, includeEmpty) {
+        const select = document.createElement('select');
+        select.className = 'tool-input';
+        if (includeEmpty) {
+            const empty = document.createElement('option');
+            empty.value = '';
+            empty.textContent = '비교 안 함';
+            select.appendChild(empty);
+        }
+        headers.forEach(function (header) {
+            const option = document.createElement('option');
+            option.value = header;
+            option.textContent = header;
+            option.selected = header === selected;
+            select.appendChild(option);
+        });
+        return select;
+    }
+
+    function renderCsvCompareSettings() {
+        const settings = document.getElementById('csv-compare-settings');
+        const keyA = document.getElementById('csv-compare-key-a');
+        const keyB = document.getElementById('csv-compare-key-b');
+        const mappingList = document.getElementById('csv-compare-mappings');
+        if (!settings || !csvCompareFiles.a || !csvCompareFiles.b) return;
+        keyA.replaceChildren(makeCsvCompareSelect(csvCompareFiles.a.headers, csvCompareFiles.a.headers[0], false));
+        const matchingKey = csvCompareFiles.b.headers.includes(csvCompareFiles.a.headers[0]) ? csvCompareFiles.a.headers[0] : csvCompareFiles.b.headers[0];
+        keyB.replaceChildren(makeCsvCompareSelect(csvCompareFiles.b.headers, matchingKey, false));
+        mappingList.textContent = '';
+        csvCompareFiles.a.headers.forEach(function (sourceHeader) {
+            const row = document.createElement('label');
+            row.className = 'csv-mapping-row';
+            const name = document.createElement('span');
+            name.textContent = 'CSV A: ' + sourceHeader;
+            const target = csvCompareFiles.b.headers.includes(sourceHeader) ? sourceHeader : '';
+            const select = makeCsvCompareSelect(csvCompareFiles.b.headers, target, true);
+            select.dataset.csvCompareSource = sourceHeader;
+            row.append(name, select);
+            mappingList.appendChild(row);
+        });
+        settings.hidden = false;
+    }
+
+    async function loadCsvCompareFiles() {
+        const fileA = document.getElementById('csv-compare-file-a')?.files[0];
+        const fileB = document.getElementById('csv-compare-file-b')?.files[0];
+        const files = await Promise.all([readCsvCompareFile(fileA), readCsvCompareFile(fileB)]);
+        csvCompareFiles = { a: files[0], b: files[1] };
+        renderCsvCompareSettings();
+        document.getElementById('csv-compare-results').hidden = true;
+        setStatus('CSV A ' + files[0].rows.length + '행, CSV B ' + files[1].rows.length + '행의 컬럼을 불러왔습니다.', 'success');
+    }
+
+    function runCsvComparison() {
+        if (!csvCompareFiles.a || !csvCompareFiles.b) throw new Error('먼저 CSV 파일과 컬럼을 불러와 주세요.');
+        const keyA = getValue('#csv-compare-key-a');
+        const keyB = getValue('#csv-compare-key-b');
+        const mappings = Array.from(document.querySelectorAll('[data-csv-compare-source]')).map(function (select) {
+            return { source: select.dataset.csvCompareSource, target: select.value };
+        }).filter(function (mapping) { return mapping.target !== ''; });
+        if (!keyA || !keyB || !mappings.length) throw new Error('키 컬럼과 한 개 이상의 비교 컬럼을 선택해 주세요.');
+        const indexRows = function (rows, key) {
+            const index = new Map();
+            const duplicates = new Set();
+            rows.forEach(function (row) {
+                const value = String(row[key] ?? '').trim();
+                if (!value) return;
+                if (index.has(value)) duplicates.add(value); else index.set(value, row);
+            });
+            return { index: index, duplicates: duplicates };
+        };
+        const indexedA = indexRows(csvCompareFiles.a.rows, keyA);
+        const indexedB = indexRows(csvCompareFiles.b.rows, keyB);
+        const seenB = new Set();
+        const results = [];
+        const counts = { same: 0, changed: 0, missing: 0, added: 0 };
+        indexedA.index.forEach(function (rowA, key) {
+            const rowB = indexedB.index.get(key);
+            if (!rowB) {
+                counts.missing += 1;
+                results.push({ status: 'CSV_B_누락', key: key, changed: '' });
+                return;
+            }
+            seenB.add(key);
+            const changed = mappings.filter(function (mapping) { return String(rowA[mapping.source] ?? '').trim() !== String(rowB[mapping.target] ?? '').trim(); }).map(function (mapping) { return mapping.source + ' → ' + mapping.target; });
+            if (changed.length) {
+                counts.changed += 1;
+                results.push({ status: '변경', key: key, changed: changed.join(' | ') });
+            } else {
+                counts.same += 1;
+                results.push({ status: '동일', key: key, changed: '' });
+            }
+        });
+        indexedB.index.forEach(function (_, key) {
+            if (seenB.has(key)) return;
+            counts.added += 1;
+            results.push({ status: 'CSV_B_추가', key: key, changed: '' });
+        });
+        const output = [['status', 'key', 'changed_columns']].concat(results.map(function (row) { return [row.status, row.key, row.changed]; })).map(function (row) { return row.map(csvEscape).join(','); }).join('\n');
+        setValue('#csv-compare-output', output);
+        document.getElementById('csv-compare-same').textContent = formatNumber(counts.same);
+        document.getElementById('csv-compare-changed').textContent = formatNumber(counts.changed);
+        document.getElementById('csv-compare-missing').textContent = formatNumber(counts.missing);
+        document.getElementById('csv-compare-added').textContent = formatNumber(counts.added);
+        const preview = document.getElementById('csv-compare-preview');
+        preview.textContent = '';
+        const table = document.createElement('table');
+        table.innerHTML = '<thead><tr><th>상태</th><th>키</th><th>변경 컬럼</th></tr></thead>';
+        const body = document.createElement('tbody');
+        results.slice(0, 100).forEach(function (row) {
+            const tr = document.createElement('tr');
+            [row.status, row.key, row.changed].forEach(function (value) { const td = document.createElement('td'); td.textContent = value; tr.appendChild(td); });
+            body.appendChild(tr);
+        });
+        table.appendChild(body);
+        preview.appendChild(table);
+        document.getElementById('csv-compare-results').hidden = false;
+        const duplicates = indexedA.duplicates.size + indexedB.duplicates.size;
+        setStatus('비교를 완료했습니다. 동일 ' + counts.same + '건, 변경 ' + counts.changed + '건' + (duplicates ? ', 중복 키 ' + duplicates + '건' : '') + '입니다.', duplicates ? '' : 'success');
+    }
+
     function csvEscape(value) {
         const text = value == null ? '' : String(value);
         return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
@@ -2189,6 +2333,10 @@
                 generateChecklist();
             } else if (action === 'csv-sort-filter') {
                 csvSortFilter();
+            } else if (action === 'csv-compare-load') {
+                loadCsvCompareFiles().catch(function (error) { setStatus(error.message, 'error'); });
+            } else if (action === 'csv-compare-run') {
+                runCsvComparison();
             } else if (action === 'table-to-markdown') {
                 tableToMarkdown();
             } else if (action === 'table-to-html') {

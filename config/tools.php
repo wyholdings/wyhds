@@ -129,6 +129,25 @@ return [
         'keywords' => ['CSV 정렬', 'CSV 필터', 'CSV 데이터 정리'],
         'related' => ['csv-viewer', 'json-csv'],
     ]),
+    'csv-column-mapper-compare' => $tool('csv-column-mapper-compare', 'CSV 컬럼 매핑·비교', 'text', '두 CSV 파일의 키 컬럼과 비교 컬럼을 매핑해 누락, 추가, 변경된 데이터를 브라우저에서 비교합니다.', [
+        'widget' => 'csv-column-mapper-compare',
+        'is_recent' => true,
+        'premium_ready' => true,
+        'meta_title' => 'CSV 컬럼 매핑·비교 - 두 CSV 중복·누락·변경값 확인 | WY Tools',
+        'meta_description' => '두 CSV 파일의 키 컬럼과 비교 항목을 연결해 동일, 변경, 누락, 추가 데이터를 확인하고 비교 결과 CSV를 다운로드합니다. 파일은 브라우저에서만 처리됩니다.',
+        'keywords' => ['CSV 비교', 'CSV 컬럼 매핑', 'CSV 중복 확인', 'CSV 누락 비교', 'CSV 변경 비교', '엑셀 CSV 비교'],
+        'related' => ['csv-viewer', 'csv-sort-filter', 'json-csv', 'text-diff'],
+        'how_to_use' => ['비교할 CSV A와 CSV B 파일을 선택하고 컬럼을 불러옵니다.', '각 파일에서 같은 데이터를 식별할 키 컬럼을 선택한 뒤 비교할 컬럼을 연결합니다.', '비교 결과에서 동일·변경·누락·추가 건수를 확인하고 결과 CSV를 내려받습니다.'],
+        'examples' => [
+            ['title' => '상품 목록 업데이트 확인', 'input' => 'CSV A 상품번호 / CSV B SKU를 키로 연결하고 가격·재고·상품명을 매핑', 'output' => '가격이나 재고가 바뀐 상품, 신규 상품, 삭제된 상품을 구분합니다.'],
+            ['title' => '고객 데이터 정합성 점검', 'input' => '기존 고객 CSV와 새 고객 CSV의 이메일 또는 고객 ID를 키로 선택', 'output' => '누락·추가·변경된 고객 정보를 비교 결과 CSV로 저장합니다.'],
+        ],
+        'faqs' => [
+            ['q' => 'CSV 파일은 서버에 업로드되나요?', 'a' => '아니요. 선택한 파일은 브라우저 안에서만 읽고 비교하며 서버로 전송하거나 저장하지 않습니다.'],
+            ['q' => '서로 다른 컬럼 이름도 비교할 수 있나요?', 'a' => '네. 예를 들어 CSV A의 상품번호를 CSV B의 SKU와 키로 연결하고, 각 비교 항목도 원하는 컬럼끼리 매핑할 수 있습니다.'],
+            ['q' => '무료 사용 한도는 어떻게 되나요?', 'a' => '현재는 안정적인 브라우저 처리를 위해 파일당 2MB, 데이터 행 10,000행까지 지원합니다. 대용량 처리와 저장 매핑은 향후 Pro 기능으로 검토합니다.'],
+        ],
+    ]),
     'excel-table-converter' => $tool('excel-table-converter', '엑셀 표 변환기', 'text', '엑셀에서 복사한 탭 구분 표를 Markdown, HTML, CSV로 변환합니다.', [
         'widget' => 'excel-table-converter',
         'keywords' => ['엑셀 표 변환', 'Markdown 표 변환', 'HTML 테이블 변환'],

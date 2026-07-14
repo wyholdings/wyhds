@@ -167,6 +167,40 @@
                         <div class="csv-preview" id="csv-preview"></div>
                         <label for="tool-output">JSON Result</label>
                         <textarea id="tool-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                    {% elseif tool.widget == 'csv-column-mapper-compare' %}
+                        <div class="margin-calculator-section">
+                            <h2>CSV 파일 선택</h2>
+                            <div class="result-grid two">
+                                <label>CSV A (기준 파일)<input id="csv-compare-file-a" class="tool-input" type="file" accept=".csv,text/csv"></label>
+                                <label>CSV B (비교 파일)<input id="csv-compare-file-b" class="tool-input" type="file" accept=".csv,text/csv"></label>
+                            </div>
+                            <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="csv-compare-load">컬럼 불러오기</button></div>
+                        </div>
+                        <div id="csv-compare-settings" class="margin-calculator-section" hidden>
+                            <h2>키 컬럼과 비교 컬럼 매핑</h2>
+                            <div class="result-grid two">
+                                <label>CSV A 키 컬럼<select id="csv-compare-key-a" class="tool-input"></select></label>
+                                <label>CSV B 키 컬럼<select id="csv-compare-key-b" class="tool-input"></select></label>
+                            </div>
+                            <p class="tool-note">각 행을 식별할 고유값을 키로 선택하세요. 아래에서 CSV A의 컬럼을 CSV B의 대응 컬럼에 연결할 수 있습니다.</p>
+                            <div id="csv-compare-mappings" class="csv-mapping-list"></div>
+                            <div class="tool-actions">
+                                <button type="button" class="tool-btn primary" data-action="csv-compare-run">비교 실행</button>
+                                <button type="button" class="tool-btn" data-download="#csv-compare-output">결과 CSV 다운로드</button>
+                            </div>
+                        </div>
+                        <div id="csv-compare-results" hidden>
+                            <div class="result-grid four margin-result-grid">
+                                <div><span>동일</span><strong id="csv-compare-same">-</strong></div>
+                                <div><span>변경</span><strong id="csv-compare-changed">-</strong></div>
+                                <div><span>CSV B에 누락</span><strong id="csv-compare-missing">-</strong></div>
+                                <div><span>CSV B에 추가</span><strong id="csv-compare-added">-</strong></div>
+                            </div>
+                            <label for="csv-compare-output">비교 결과 CSV</label>
+                            <textarea id="csv-compare-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                            <div class="csv-preview" id="csv-compare-preview"></div>
+                        </div>
+                        <p class="tool-note">파일당 최대 2MB, 데이터 10,000행까지 비교합니다. 처리 중에도 파일 내용은 브라우저 밖으로 전송되지 않습니다.</p>
                     {% elseif tool.widget == 'md5' %}
                         <label for="tool-input">Text</label>
                         <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
