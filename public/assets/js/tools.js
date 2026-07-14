@@ -1453,6 +1453,45 @@
         setStatus('웹사이트 개발 범위와 상담용 요약을 생성했습니다.', 'success');
     }
 
+    function calculateFreelancerCashflow() {
+        const openingCash = Number(getValue('#cashflow-opening-cash')) || 0;
+        const revenue = Number(getValue('#cashflow-revenue')) || 0;
+        const otherIncome = Number(getValue('#cashflow-other-income')) || 0;
+        const fixedCost = Number(getValue('#cashflow-fixed-cost')) || 0;
+        const variableCost = Number(getValue('#cashflow-variable-cost')) || 0;
+        const livingCost = Number(getValue('#cashflow-living-cost')) || 0;
+        const debt = Number(getValue('#cashflow-debt')) || 0;
+        const savings = Number(getValue('#cashflow-savings')) || 0;
+        const vatRate = Number(getValue('#cashflow-vat-rate')) || 0;
+        const incomeTaxRate = Number(getValue('#cashflow-income-tax-rate')) || 0;
+        const values = [openingCash, revenue, otherIncome, fixedCost, variableCost, livingCost, debt, savings, vatRate, incomeTaxRate];
+        if (values.some(function (value) { return !Number.isFinite(value) || value < 0; })) {
+            throw new Error('모든 금액과 적립률을 0 이상으로 입력해 주세요.');
+        }
+        const reserveRate = (vatRate + incomeTaxRate) / 100;
+        if (reserveRate >= 1) throw new Error('세금 적립률의 합계는 100%보다 작아야 합니다.');
+
+        const totalIncome = revenue + otherIncome;
+        const businessCost = fixedCost + variableCost;
+        const taxReserve = revenue * reserveRate;
+        const requiredOutflow = businessCost + livingCost + debt + savings + taxReserve;
+        const closingCash = openingCash + totalIncome - requiredOutflow;
+        const availableCash = Math.max(0, closingCash);
+        const nextMonthNeed = businessCost + livingCost + debt + savings;
+        const targetRevenue = Math.max(0, (nextMonthNeed - otherIncome) / (1 - reserveRate));
+        const essentialMonthlyCost = businessCost + livingCost + debt;
+        const runway = essentialMonthlyCost > 0 ? availableCash / essentialMonthlyCost : 0;
+        const won = function (value) { return formatNumber(Math.round(value)) + '원'; };
+        document.getElementById('cashflow-total-income').textContent = won(totalIncome);
+        document.getElementById('cashflow-business-cost').textContent = won(businessCost);
+        document.getElementById('cashflow-tax-reserve').textContent = won(taxReserve);
+        document.getElementById('cashflow-closing-cash').textContent = won(closingCash);
+        document.getElementById('cashflow-available-cash').textContent = won(availableCash);
+        document.getElementById('cashflow-target-revenue').textContent = won(Math.ceil(targetRevenue / 10000) * 10000);
+        document.getElementById('cashflow-runway').textContent = essentialMonthlyCost > 0 ? formatNumber(runway) + '개월' : '-';
+        setStatus(closingCash < 0 ? '이번 달 예상 현금이 부족합니다. 지출·세금 적립·목표 매출을 조정해 보세요.' : '세금과 저축을 반영한 이번 달 현금흐름을 계산했습니다.', closingCash < 0 ? 'error' : 'success');
+    }
+
     function escapeAttribute(text) {
         return String(text).replace(/[&<>"']/g, function (char) {
             return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
@@ -2180,6 +2219,8 @@
                 printQuoteDraft();
             } else if (action === 'scope-estimate') {
                 calculateWebsiteScope();
+            } else if (action === 'cashflow-calculate') {
+                calculateFreelancerCashflow();
             } else if (action === 'meta-generate') {
                 generateMetaTags();
             } else if (action === 'slug-generate') {
@@ -2260,6 +2301,7 @@
     if (slug === 'integrated-selling-margin') calculateIntegratedSellingMargin();
     if (slug === 'quote-amount-designer') calculateQuoteAmount();
     if (slug === 'website-scope-estimator') calculateWebsiteScope();
+    if (slug === 'freelancer-cashflow-planner') calculateFreelancerCashflow();
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
         if (input) input.addEventListener('input', countWords);

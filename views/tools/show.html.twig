@@ -846,6 +846,38 @@
                         <label for="scope-output">상담 문의 요약</label>
                         <textarea id="scope-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
                         <p class="tool-note">금액은 기본 기능 기준의 사전 상담 범위입니다. 디자인 완성도, 콘텐츠 제작, 외부 솔루션·API 조건, 보안·인프라 요구사항에 따라 실제 견적과 일정이 달라질 수 있습니다.</p>
+                    {% elseif tool.widget == 'freelancer-cashflow-planner' %}
+                        <div class="margin-calculator-section">
+                            <h2>이번 달 수입·보유 현금</h2>
+                            <div class="result-grid three">
+                                <label>월초 보유 현금 (원)<input id="cashflow-opening-cash" class="tool-input" type="number" min="0" step="1" value="2000000"></label>
+                                <label>입금 예정 매출 (원)<input id="cashflow-revenue" class="tool-input" type="number" min="0" step="1" value="5000000"></label>
+                                <label>기타 수입 (원)<input id="cashflow-other-income" class="tool-input" type="number" min="0" step="1" value="0"></label>
+                            </div>
+                        </div>
+                        <div class="margin-calculator-section">
+                            <h2>이번 달 지출·적립</h2>
+                            <div class="result-grid three">
+                                <label>사업 고정비 (원)<input id="cashflow-fixed-cost" class="tool-input" type="number" min="0" step="1" value="300000"></label>
+                                <label>사업 변동비 (원)<input id="cashflow-variable-cost" class="tool-input" type="number" min="0" step="1" value="500000"></label>
+                                <label>생활비 (원)<input id="cashflow-living-cost" class="tool-input" type="number" min="0" step="1" value="1500000"></label>
+                                <label>대출·카드 상환 (원)<input id="cashflow-debt" class="tool-input" type="number" min="0" step="1" value="0"></label>
+                                <label>목표 저축·비상금 (원)<input id="cashflow-savings" class="tool-input" type="number" min="0" step="1" value="500000"></label>
+                                <label>부가세 적립률 (%)<input id="cashflow-vat-rate" class="tool-input" type="number" min="0" max="100" step="0.1" value="10"></label>
+                                <label>종합소득세 적립률 (%)<input id="cashflow-income-tax-rate" class="tool-input" type="number" min="0" max="100" step="0.1" value="10"></label>
+                            </div>
+                        </div>
+                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="cashflow-calculate">현금흐름 계산</button></div>
+                        <div class="result-grid three margin-result-grid">
+                            <div><span>이번 달 총수입</span><strong id="cashflow-total-income">-</strong></div>
+                            <div><span>사업비 합계</span><strong id="cashflow-business-cost">-</strong></div>
+                            <div><span>세금 적립액</span><strong id="cashflow-tax-reserve">-</strong></div>
+                            <div><span>월말 예상 현금</span><strong id="cashflow-closing-cash">-</strong></div>
+                            <div><span>현재 가용 현금</span><strong id="cashflow-available-cash">-</strong></div>
+                            <div><span>다음 달 목표 매출</span><strong id="cashflow-target-revenue">-</strong></div>
+                            <div><span>현금 여력</span><strong id="cashflow-runway">-</strong></div>
+                        </div>
+                        <p class="tool-note">세금 적립률은 현금 관리용 가정입니다. 원천징수, 매입세액, 간이과세·면세 여부와 실제 세금 신고액을 반영해 적립률을 조정해 주세요.</p>
                     {% elseif tool.widget == 'date-calculator' %}
                         <label for="date-start">Start date</label>
                         <input id="date-start" class="tool-input" type="date">
