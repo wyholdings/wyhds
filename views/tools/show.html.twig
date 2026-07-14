@@ -798,6 +798,54 @@
                             <div><span>목표 공급가</span><strong id="quote-target-supply">-</strong></div>
                         </div>
                         <p class="tool-note">원천징수는 실제 입금액 확인을 위한 항목이며 프로젝트 원가에는 포함하지 않습니다. 부가세·원천징수 적용 여부는 계약 상대방과 사업자 유형에 따라 확인해 주세요.</p>
+                    {% elseif tool.widget == 'website-scope-estimator' %}
+                        <div class="margin-calculator-section">
+                            <h2>기본 범위</h2>
+                            <div class="result-grid two">
+                                <label>웹사이트 유형
+                                    <select id="scope-site-type" class="tool-input">
+                                        <option value="landing">랜딩 페이지·소규모 소개</option>
+                                        <option value="corporate" selected>기업·기관 홈페이지</option>
+                                        <option value="shopping">쇼핑몰·판매 사이트</option>
+                                        <option value="member">회원 서비스·커뮤니티</option>
+                                        <option value="event">행사·등록 시스템</option>
+                                        <option value="custom">맞춤형 웹 서비스</option>
+                                    </select>
+                                </label>
+                                <label>예상 페이지 수<input id="scope-page-count" class="tool-input" type="number" min="1" max="200" step="1" value="10"></label>
+                            </div>
+                        </div>
+                        <div class="margin-calculator-section">
+                            <h2>필요 기능</h2>
+                            <div class="scope-options">
+                                <label><input type="checkbox" data-scope-feature="admin" checked> 관리자 기능</label>
+                                <label><input type="checkbox" data-scope-feature="form" checked> 문의·신청 폼</label>
+                                <label><input type="checkbox" data-scope-feature="member"> 회원가입·로그인</label>
+                                <label><input type="checkbox" data-scope-feature="payment"> 온라인 결제</label>
+                                <label><input type="checkbox" data-scope-feature="reservation"> 예약·일정 관리</label>
+                                <label><input type="checkbox" data-scope-feature="multilingual"> 다국어</label>
+                                <label><input type="checkbox" data-scope-feature="dashboard"> 통계 대시보드</label>
+                                <label><input type="checkbox" data-scope-feature="api"> 외부 API 연동</label>
+                                <label><input type="checkbox" data-scope-feature="migration"> 기존 데이터 이전</label>
+                            </div>
+                        </div>
+                        <div class="margin-calculator-section">
+                            <h2>운영 지원</h2>
+                            <label>기본 유지보수·운영 지원 기간 (개월)<input id="scope-support-months" class="tool-input" type="number" min="0" max="60" step="1" value="0"></label>
+                        </div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="scope-estimate">견적 범위 생성</button>
+                            <button type="button" class="tool-btn" data-copy="#scope-output">문의 요약 복사</button>
+                            <a href="/contact" class="tool-btn">상담 문의하기</a>
+                        </div>
+                        <div class="result-grid three margin-result-grid">
+                            <div><span>개발비 예상 (VAT 별도)</span><strong id="scope-development-range">-</strong></div>
+                            <div><span>총 예상 (VAT 포함)</span><strong id="scope-vat-range">-</strong></div>
+                            <div><span>예상 개발 기간</span><strong id="scope-duration">-</strong></div>
+                        </div>
+                        <label for="scope-output">상담 문의 요약</label>
+                        <textarea id="scope-output" class="tool-textarea small" readonly spellcheck="false"></textarea>
+                        <p class="tool-note">금액은 기본 기능 기준의 사전 상담 범위입니다. 디자인 완성도, 콘텐츠 제작, 외부 솔루션·API 조건, 보안·인프라 요구사항에 따라 실제 견적과 일정이 달라질 수 있습니다.</p>
                     {% elseif tool.widget == 'date-calculator' %}
                         <label for="date-start">Start date</label>
                         <input id="date-start" class="tool-input" type="date">

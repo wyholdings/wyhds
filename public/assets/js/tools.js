@@ -1388,6 +1388,71 @@
         popup.document.close();
     }
 
+    function calculateWebsiteScope() {
+        const siteTypes = {
+            landing: { label: '랜딩 페이지·소규모 소개', low: 800000, high: 1500000, minWeeks: 2, maxWeeks: 3 },
+            corporate: { label: '기업·기관 홈페이지', low: 1500000, high: 3000000, minWeeks: 3, maxWeeks: 6 },
+            shopping: { label: '쇼핑몰·판매 사이트', low: 3500000, high: 7000000, minWeeks: 5, maxWeeks: 10 },
+            member: { label: '회원 서비스·커뮤니티', low: 4000000, high: 8000000, minWeeks: 6, maxWeeks: 12 },
+            event: { label: '행사·등록 시스템', low: 3500000, high: 8000000, minWeeks: 5, maxWeeks: 12 },
+            custom: { label: '맞춤형 웹 서비스', low: 6000000, high: 12000000, minWeeks: 8, maxWeeks: 16 }
+        };
+        const features = {
+            admin: { label: '관리자 기능', low: 500000, high: 1200000, minWeeks: 0.5, maxWeeks: 2 },
+            form: { label: '문의·신청 폼', low: 300000, high: 700000, minWeeks: 0.3, maxWeeks: 1 },
+            member: { label: '회원가입·로그인', low: 1500000, high: 3000000, minWeeks: 1, maxWeeks: 3 },
+            payment: { label: '온라인 결제', low: 1500000, high: 3000000, minWeeks: 1, maxWeeks: 3 },
+            reservation: { label: '예약·일정 관리', low: 1200000, high: 2500000, minWeeks: 1, maxWeeks: 3 },
+            multilingual: { label: '다국어', low: 1000000, high: 2500000, minWeeks: 1, maxWeeks: 3 },
+            dashboard: { label: '통계 대시보드', low: 1500000, high: 3500000, minWeeks: 1, maxWeeks: 4 },
+            api: { label: '외부 API 연동', low: 1500000, high: 4000000, minWeeks: 1, maxWeeks: 4 },
+            migration: { label: '기존 데이터 이전', low: 500000, high: 2000000, minWeeks: 0.5, maxWeeks: 3 }
+        };
+        const type = siteTypes[getValue('#scope-site-type')] || siteTypes.corporate;
+        const pageCount = Number(getValue('#scope-page-count'));
+        const supportMonths = Number(getValue('#scope-support-months')) || 0;
+        if (!Number.isFinite(pageCount) || pageCount < 1 || pageCount > 200 || !Number.isFinite(supportMonths) || supportMonths < 0) {
+            throw new Error('페이지 수와 운영 기간을 올바르게 입력해 주세요.');
+        }
+        const selected = Array.from(document.querySelectorAll('[data-scope-feature]:checked')).map(function (input) { return input.dataset.scopeFeature; });
+        const extraPages = Math.max(0, pageCount - 5);
+        let low = type.low + extraPages * 80000;
+        let high = type.high + extraPages * 160000;
+        let minWeeks = type.minWeeks + extraPages * 0.2;
+        let maxWeeks = type.maxWeeks + extraPages * 0.4;
+        selected.forEach(function (key) {
+            const feature = features[key];
+            if (!feature) return;
+            low += feature.low;
+            high += feature.high;
+            minWeeks += feature.minWeeks;
+            maxWeeks += feature.maxWeeks;
+        });
+        const supportLow = supportMonths * 150000;
+        const supportHigh = supportMonths * 300000;
+        const totalLow = low + supportLow;
+        const totalHigh = high + supportHigh;
+        const formatRange = function (from, to) { return formatNumber(Math.round(from / 10000)) + '만 ~ ' + formatNumber(Math.round(to / 10000)) + '만원'; };
+        document.getElementById('scope-development-range').textContent = formatRange(low, high);
+        document.getElementById('scope-vat-range').textContent = formatRange(totalLow * 1.1, totalHigh * 1.1);
+        document.getElementById('scope-duration').textContent = Math.ceil(minWeeks) + ' ~ ' + Math.ceil(maxWeeks) + '주';
+        const featureLabels = selected.map(function (key) { return features[key] ? features[key].label : ''; }).filter(Boolean);
+        const summary = [
+            '[웹사이트 개발 상담 요청]',
+            '사이트 유형: ' + type.label,
+            '예상 페이지: ' + pageCount + '페이지',
+            '선택 기능: ' + (featureLabels.length ? featureLabels.join(', ') : '기본 기능'),
+            '운영 지원: ' + (supportMonths ? supportMonths + '개월' : '미포함'),
+            '개발비 예상(VAT 별도): ' + formatRange(low, high),
+            '총 예상(VAT 포함, 운영 지원 포함): ' + formatRange(totalLow * 1.1, totalHigh * 1.1),
+            '예상 개발 기간: ' + Math.ceil(minWeeks) + ' ~ ' + Math.ceil(maxWeeks) + '주',
+            '',
+            '상세 요구사항 및 콘텐츠 준비 상태를 기준으로 최종 범위와 견적을 협의하고 싶습니다.'
+        ].join('\n');
+        setValue('#scope-output', summary);
+        setStatus('웹사이트 개발 범위와 상담용 요약을 생성했습니다.', 'success');
+    }
+
     function escapeAttribute(text) {
         return String(text).replace(/[&<>"']/g, function (char) {
             return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
@@ -2113,6 +2178,8 @@
                 calculateQuoteAmount();
             } else if (action === 'quote-print') {
                 printQuoteDraft();
+            } else if (action === 'scope-estimate') {
+                calculateWebsiteScope();
             } else if (action === 'meta-generate') {
                 generateMetaTags();
             } else if (action === 'slug-generate') {
@@ -2192,6 +2259,7 @@
     }
     if (slug === 'integrated-selling-margin') calculateIntegratedSellingMargin();
     if (slug === 'quote-amount-designer') calculateQuoteAmount();
+    if (slug === 'website-scope-estimator') calculateWebsiteScope();
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
         if (input) input.addEventListener('input', countWords);
