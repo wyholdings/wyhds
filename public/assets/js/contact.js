@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const messageBox = document.getElementById('formMessage');
     const submitButton = form.querySelector('button[type="submit"]');
     const phoneInput = form.querySelector('input[name="phone"]');
+    const inquiryType = form.dataset.inquiryType || '';
 
     function formatPhoneNumber(value) {
         const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -47,8 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!phoneRegex.test(phone)) return alert('연락처 형식이 잘못되었습니다.');
         if (!email) return alert('이메일을 입력하세요.');
         if (!emailRegex.test(email)) return alert('이메일 형식이 올바르지 않습니다.');
-        if (!money) return alert('예산을 선택하세요.');
-        if (!dueDate) return alert('희망 완료일자를 입력하세요.');
+        if (inquiryType !== 'pro' && !money) return alert('예산을 선택하세요.');
+        if (inquiryType !== 'pro' && !dueDate) return alert('희망 완료일자를 입력하세요.');
         if (!message) return alert('내용을 입력하세요.');
         if (!token) return alert('새로고침 후 다시 시도해 주세요.');
 

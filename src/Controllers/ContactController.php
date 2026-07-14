@@ -60,6 +60,8 @@ class ContactController
         $budget  = (int)($_POST['money'] ?? 0);
         $dueDate = trim((string)($_POST['due_date'] ?? ''));
         $message = trim((string)($_POST['message'] ?? ''));
+        $inquiryType = (string)($_POST['inquiry_type'] ?? '');
+        $isProWaitlist = $inquiryType === 'pro';
 
         if (
             $this->stringLength($company) > 120 ||
@@ -79,7 +81,7 @@ class ContactController
             exit;
         }
 
-        if ($company && $name && filter_var($email, FILTER_VALIDATE_EMAIL) && $phone && $budget > 0 && $message) {
+        if ($company && $name && filter_var($email, FILTER_VALIDATE_EMAIL) && $phone && ($isProWaitlist || $budget > 0) && $message) {
             if ($dueDate !== '') {
                 $message = "[희망 완료일자] {$dueDate}\n\n{$message}";
             }

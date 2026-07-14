@@ -1082,6 +1082,20 @@
                         <textarea id="tool-output" class="tool-textarea" readonly>{{ tool.name }} is registered in WY Tools. The interactive engine for this tool will be added in a later step.</textarea>
                     {% endif %}
                     <p class="tool-status" id="tool-status" aria-live="polite"></p>
+                    <section class="tool-conversion-cta" aria-label="추가 서비스 안내">
+                        <div class="tool-conversion-item">
+                            <span>WY Tools Pro</span>
+                            <h2>반복 작업을 더 빠르게 처리하세요</h2>
+                            <p>대용량 처리, 저장 프리셋, 작업 기록 같은 Pro 기능이 필요하신가요?</p>
+                            <a class="tool-btn primary" href="/contact?inquiry=pro&amp;tool={{ tool.slug|url_encode }}" data-premium-cta="result">Pro 대기등록</a>
+                        </div>
+                        <div class="tool-conversion-item">
+                            <span>기업 자동화·구축</span>
+                            <h2>이 업무를 서비스로 만들고 싶으신가요?</h2>
+                            <p>반복 계산, 파일 처리, 견적·등록 업무를 맞춤형 웹 시스템으로 구축해 드립니다.</p>
+                            <a class="tool-btn" href="/contact?inquiry=business&amp;tool={{ tool.slug|url_encode }}" data-business-inquiry="result">자동화 상담하기</a>
+                        </div>
+                    </section>
                 </div>
 
                 {% include 'tools/partials/_ad_slot.html.twig' with { position: 'middle' } %}

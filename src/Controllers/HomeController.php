@@ -54,8 +54,13 @@ class HomeController
     public function contact(): void
     {
         $contactToken = $this->ensureContactFormToken();
+        $inquiryType = (string)($_GET['inquiry'] ?? '');
+        $inquiryType = in_array($inquiryType, ['pro', 'business'], true) ? $inquiryType : '';
+        $toolSlug = preg_replace('/[^a-z0-9-]/', '', (string)($_GET['tool'] ?? ''));
         echo $this->twig->render('contact.html.twig', [
             'contact_form_token' => $contactToken,
+            'contact_inquiry_type' => $inquiryType,
+            'contact_tool_slug' => $toolSlug,
         ]);
     }
 

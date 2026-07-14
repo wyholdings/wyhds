@@ -318,6 +318,41 @@
     color: #0f7a56;
 }
 
+.tool-conversion-cta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.tool-conversion-item {
+    padding: 20px;
+    border: 1px solid #dce7f5;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f7fbff, #fff);
+}
+
+.tool-conversion-item span {
+    color: #005bac;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.tool-conversion-item h2 {
+    margin: 7px 0 8px;
+    color: #1f2a44;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.tool-conversion-item p {
+    min-height: 42px;
+    margin: 0 0 14px;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
 .tool-help {
     display: grid;
     gap: 20px;
@@ -630,6 +665,10 @@
     }
 
     .scope-options {
+        grid-template-columns: 1fr;
+    }
+
+    .tool-conversion-cta {
         grid-template-columns: 1fr;
     }
 

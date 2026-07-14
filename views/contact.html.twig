@@ -2,21 +2,24 @@
 
 {% block body %}
 <main class="contact-page">
+    {% set is_pro_waitlist = contact_inquiry_type|default('') == 'pro' %}
+    {% set is_business_inquiry = contact_inquiry_type|default('') == 'business' %}
     <section id="contact" class="scholar-contact contact-standalone">
         <div class="scholar-shell contact-grid">
             <div class="contact-copy">
                 <span>CONTACT</span>
-                <h3>학회 홈페이지 제작이<br>필요하신가요?</h3>
-                <p>기관 정보와 예산, 희망 완료일자, 필요한 내용을 남겨주시면 빠르게 견적을 안내해 드리겠습니다.</p>
+                <h3>{% if is_pro_waitlist %}WY Tools Pro 기능이<br>필요하신가요?{% elseif is_business_inquiry %}반복 업무 자동화가<br>필요하신가요?{% else %}학회 홈페이지 제작이<br>필요하신가요?{% endif %}</h3>
+                <p>{% if is_pro_waitlist %}필요한 기능과 연락처를 남겨주시면 Pro 출시와 우선 기능 검토 소식을 안내해 드리겠습니다.{% elseif is_business_inquiry %}자동화하려는 업무와 필요한 기능을 남겨주시면 구축 방향을 검토해 드리겠습니다.{% else %}기관 정보와 예산, 희망 완료일자, 필요한 내용을 남겨주시면 빠르게 견적을 안내해 드리겠습니다.{% endif %}</p>
             </div>
-            <form id="contactForm" class="quick-form" method="post" action="/contact/submit" novalidate>
+            <form id="contactForm" class="quick-form" method="post" action="/contact/submit" novalidate data-inquiry-type="{{ contact_inquiry_type|default('') }}">
                 <input type="hidden" name="contact_token" value="{{ contact_form_token|default(contact_token|default('')) }}">
                 <input type="hidden" name="contact_method" value="" tabindex="-1" autocomplete="off" class="contact-honeypot" aria-hidden="true">
+                <input type="hidden" name="inquiry_type" value="{{ contact_inquiry_type|default('') }}">
                 <input type="text" name="company" placeholder="기관명/학회명/회사명" required>
                 <input type="text" name="name" placeholder="담당자명" required>
                 <input type="tel" name="phone" placeholder="연락처" inputmode="numeric" maxlength="13" autocomplete="tel" required>
                 <input type="email" name="email" placeholder="이메일" inputmode="email" required>
-                <select name="money" required>
+                <select name="money" {% if not is_pro_waitlist %}required{% endif %}>
                     <option value="">예산 선택</option>
                     <option value="300">300만원 이하</option>
                     <option value="500">300만원 - 500만원</option>
@@ -24,9 +27,13 @@
                     <option value="2000">1,000만원 - 2,000만원</option>
                     <option value="3000">2,000만원 이상</option>
                 </select>
-                <input type="text" name="due_date" placeholder="희망 완료일자" required>
-                <textarea name="message" placeholder="문의 내용을 간단히 입력해주세요." required></textarea>
-                <button type="submit">무료 견적 문의하기 <i data-lucide="send"></i></button>
+                <input type="text" name="due_date" placeholder="희망 완료일자" {% if not is_pro_waitlist %}required{% endif %}>
+                <textarea name="message" placeholder="문의 내용을 간단히 입력해주세요." required>{% if is_pro_waitlist %}[WY Tools Pro 대기등록]
+사용 도구: {{ contact_tool_slug|default('-') }}
+필요한 기능: {% elseif is_business_inquiry %}[WY Tools 자동화 구축 상담]
+사용 도구: {{ contact_tool_slug|default('-') }}
+자동화하려는 업무와 필요한 기능: {% endif %}</textarea>
+                <button type="submit">{% if is_pro_waitlist %}Pro 대기등록{% elseif is_business_inquiry %}자동화 상담 문의하기{% else %}무료 견적 문의하기{% endif %} <i data-lucide="send"></i></button>
                 <p id="formMessage" class="form-message" aria-live="polite"></p>
             </form>
         </div>
