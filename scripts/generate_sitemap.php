@@ -32,6 +32,16 @@ foreach ($registry->categories() as $category) {
 
 foreach ($registry->active() as $tool) {
     $priority = ($tool['category'] ?? '') === 'calculator' ? '0.78' : '0.72';
+    if (in_array($tool['slug'], [
+        'integrated-selling-margin-calculator',
+        'quote-amount-designer',
+        'website-scope-estimator',
+        'freelancer-cashflow-planner',
+        'csv-column-mapper-compare',
+        'pdf-batch-processor',
+    ], true)) {
+        $priority = '0.84';
+    }
     if (!empty($tool['is_popular'])) {
         $priority = ($tool['category'] ?? '') === 'calculator' ? '0.84' : '0.78';
     }

@@ -859,6 +859,15 @@
     line-height: 1.75;
 }
 
+.seo-guide p {
+    max-width: 850px;
+}
+
+.tool-updated {
+    color: #7b8798 !important;
+    font-size: 12px;
+}
+
 .wy-tool-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

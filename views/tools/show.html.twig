@@ -31,6 +31,7 @@
     'name': tool.name,
     'url': canonical_url,
     'description': tool.description,
+    'dateModified': tool.updated_at|default(null),
     'applicationCategory': 'WebApplication',
     'operatingSystem': 'Any',
     'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'KRW'}
@@ -1116,6 +1117,13 @@
                     {% endfor %}
                 </section>
 
+                {% for section in tool.seo_sections|default([]) %}
+                    <section class="content-block seo-guide">
+                        <h2>{{ section.title }}</h2>
+                        <p>{{ section.content }}</p>
+                    </section>
+                {% endfor %}
+
                 <section class="content-block">
                     <h2>FAQ</h2>
                     <div class="faq-list">
@@ -1144,6 +1152,7 @@
                     {% if tool.view_count is defined and tool.view_count > 0 %}
                         <p class="tool-views">{{ tool.view_count|number_format }} views</p>
                     {% endif %}
+                    {% if tool.updated_at is defined %}<p class="tool-updated">업데이트: {{ tool.updated_at }}</p>{% endif %}
                     <a href="/tools/category/{{ tool.category }}">{{ category.name|default(tool.category) }} Tools</a>
                 </div>
                 <div class="help-box">
