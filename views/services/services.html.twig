@@ -1,5 +1,19 @@
 {% extends 'layout/base.html.twig' %}
 
+{% block styles %}
+    <link rel="stylesheet" href="/assets/css/service-packages.css?v=20260714">
+    <script type="application/ld+json">{{ {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        'name': '우용디앤에스 패키지형 서비스',
+        'itemListElement': [
+            {'@type': 'Offer', 'name': '스타트 홈페이지 패키지', 'priceCurrency': 'KRW', 'price': '1500000'},
+            {'@type': 'Offer', 'name': '기업·학회 홈페이지 패키지', 'priceCurrency': 'KRW', 'price': '3000000'},
+            {'@type': 'Offer', 'name': '행사·운영 시스템 패키지', 'priceCurrency': 'KRW', 'price': '6000000'}
+        ]
+    }|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }}</script>
+{% endblock %}
+
 {% block body %}
 <div id="wrap">
 
@@ -12,6 +26,51 @@
                 서비스 & 가격 안내
             </h3>
         </div>
+
+        <section class="package-intro" aria-labelledby="package-title">
+            <div class="package-intro__heading">
+                <p>RECOMMENDED PACKAGE</p>
+                <h1 id="package-title">필요한 범위부터 고르는<br>홈페이지·운영 시스템 패키지</h1>
+                <span>필수 기능을 먼저 담고, 필요한 옵션만 더해 예산과 일정을 명확하게 설계합니다.</span>
+            </div>
+            <div class="package-grid">
+                <article class="package-card">
+                    <p class="package-card__label">01 · START</p>
+                    <h2>스타트 홈페이지</h2>
+                    <p class="package-card__summary">브랜드와 서비스를 명확히 소개하고 문의를 받기 위한 기본 홈페이지</p>
+                    <p class="package-card__price"><small>제작비</small> 150만원~</p>
+                    <ul>
+                        <li>메인 디자인 1종</li><li>서브 5페이지 내외</li><li>모바일 반응형</li><li>기본 SEO·문의폼·관리자</li>
+                    </ul>
+                    <a href="/contact?package=starter-site">이 패키지 상담하기</a>
+                </article>
+                <article class="package-card package-card--featured">
+                    <p class="package-card__badge">가장 많이 선택</p>
+                    <p class="package-card__label">02 · BUSINESS</p>
+                    <h2>기업·학회 홈페이지</h2>
+                    <p class="package-card__summary">콘텐츠 구조와 운영 편의성까지 고려한 기관·기업 맞춤형 홈페이지</p>
+                    <p class="package-card__price"><small>제작비</small> 300만원~</p>
+                    <ul>
+                        <li>콘텐츠 구조 기획</li><li>페이지·관리자 기능 확장</li><li>반응형·다국어 확장 고려</li><li>운영·유지보수 기반 설계</li>
+                    </ul>
+                    <a href="/contact?package=business-site">이 패키지 상담하기</a>
+                </article>
+                <article class="package-card">
+                    <p class="package-card__label">03 · SYSTEM</p>
+                    <h2>행사·운영 시스템</h2>
+                    <p class="package-card__summary">등록과 데이터 관리 등 실제 운영 업무를 함께 해결하는 맞춤 시스템</p>
+                    <p class="package-card__price"><small>제작비</small> 600만원~</p>
+                    <ul>
+                        <li>관리자·데이터 관리</li><li>회원·권한·신청 기능</li><li>결제·API 등 외부 연동</li><li>행사 운영 흐름 맞춤 설계</li>
+                    </ul>
+                    <a href="/contact?package=event-system">이 패키지 상담하기</a>
+                </article>
+            </div>
+            <div class="package-intro__foot">
+                <p>패키지 금액은 기본 범위 기준입니다. 콘텐츠 제작, 다국어, 결제, 외부 API, 데이터 이전 등은 요구사항에 따라 추가됩니다.</p>
+                <a href="/tools/website-scope-estimator">먼저 필요한 범위 계산하기 →</a>
+            </div>
+        </section>
 
         
         <div class="subtab">

@@ -55,6 +55,10 @@ class HomeController
     {
         $contactToken = $this->ensureContactFormToken();
         echo $this->twig->render('services/services.html.twig', [
+            'title' => '홈페이지·행사 시스템 패키지 | 서비스·가격 안내 - 우용디앤에스',
+            'description' => '스타트 홈페이지, 기업·학회 홈페이지, 행사·운영 시스템 패키지의 기본 범위와 예상 비용을 확인하고 맞춤 견적을 문의하세요.',
+            'keywords' => '홈페이지 제작 패키지, 기업 홈페이지 제작 비용, 학회 홈페이지 제작, 행사 등록 시스템, 홈페이지 견적',
+            'canonical_url' => 'https://wyhds.com/services',
             'contact_form_token' => $contactToken,
         ]);
     }
@@ -77,10 +81,17 @@ class HomeController
         $inquiryType = (string)($_GET['inquiry'] ?? '');
         $inquiryType = in_array($inquiryType, ['pro', 'business'], true) ? $inquiryType : '';
         $toolSlug = preg_replace('/[^a-z0-9-]/', '', (string)($_GET['tool'] ?? ''));
+        $packages = [
+            'starter-site' => '스타트 홈페이지 패키지',
+            'business-site' => '기업·학회 홈페이지 패키지',
+            'event-system' => '행사·운영 시스템 패키지',
+        ];
+        $packageKey = preg_replace('/[^a-z-]/', '', (string)($_GET['package'] ?? ''));
         echo $this->twig->render('contact.html.twig', [
             'contact_form_token' => $contactToken,
             'contact_inquiry_type' => $inquiryType,
             'contact_tool_slug' => $toolSlug,
+            'contact_package' => $packages[$packageKey] ?? '',
         ]);
     }
 

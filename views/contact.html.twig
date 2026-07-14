@@ -4,12 +4,13 @@
 <main class="contact-page">
     {% set is_pro_waitlist = contact_inquiry_type|default('') == 'pro' %}
     {% set is_business_inquiry = contact_inquiry_type|default('') == 'business' %}
+    {% set is_package_inquiry = contact_package|default('') != '' %}
     <section id="contact" class="scholar-contact contact-standalone">
         <div class="scholar-shell contact-grid">
             <div class="contact-copy">
                 <span>CONTACT</span>
-                <h3>{% if is_pro_waitlist %}WY Tools Pro 기능이<br>필요하신가요?{% elseif is_business_inquiry %}반복 업무 자동화가<br>필요하신가요?{% else %}학회 홈페이지 제작이<br>필요하신가요?{% endif %}</h3>
-                <p>{% if is_pro_waitlist %}필요한 기능과 연락처를 남겨주시면 Pro 출시와 우선 기능 검토 소식을 안내해 드리겠습니다.{% elseif is_business_inquiry %}자동화하려는 업무와 필요한 기능을 남겨주시면 구축 방향을 검토해 드리겠습니다.{% else %}기관 정보와 예산, 희망 완료일자, 필요한 내용을 남겨주시면 빠르게 견적을 안내해 드리겠습니다.{% endif %}</p>
+                <h3>{% if is_pro_waitlist %}WY Tools Pro 기능이<br>필요하신가요?{% elseif is_business_inquiry %}반복 업무 자동화가<br>필요하신가요?{% elseif is_package_inquiry %}선택하신 패키지를<br>상담해 드릴게요.{% else %}학회 홈페이지 제작이<br>필요하신가요?{% endif %}</h3>
+                <p>{% if is_pro_waitlist %}필요한 기능과 연락처를 남겨주시면 Pro 출시와 우선 기능 검토 소식을 안내해 드리겠습니다.{% elseif is_business_inquiry %}자동화하려는 업무와 필요한 기능을 남겨주시면 구축 방향을 검토해 드리겠습니다.{% elseif is_package_inquiry %}{{ contact_package }}를 기준으로 필요한 기능과 일정을 확인해 맞춤 견적을 안내해 드리겠습니다.{% else %}기관 정보와 예산, 희망 완료일자, 필요한 내용을 남겨주시면 빠르게 견적을 안내해 드리겠습니다.{% endif %}</p>
             </div>
             <form id="contactForm" class="quick-form" method="post" action="/contact/submit" novalidate data-inquiry-type="{{ contact_inquiry_type|default('') }}">
                 <input type="hidden" name="contact_token" value="{{ contact_form_token|default(contact_token|default('')) }}">
@@ -32,8 +33,10 @@
 사용 도구: {{ contact_tool_slug|default('-') }}
 필요한 기능: {% elseif is_business_inquiry %}[WY Tools 자동화 구축 상담]
 사용 도구: {{ contact_tool_slug|default('-') }}
-자동화하려는 업무와 필요한 기능: {% endif %}</textarea>
-                <button type="submit">{% if is_pro_waitlist %}Pro 대기등록{% elseif is_business_inquiry %}자동화 상담 문의하기{% else %}무료 견적 문의하기{% endif %} <i data-lucide="send"></i></button>
+자동화하려는 업무와 필요한 기능: {% elseif is_package_inquiry %}[패키지형 서비스 상담]
+선택 패키지: {{ contact_package }}
+필요한 기능 및 참고사항: {% endif %}</textarea>
+                <button type="submit">{% if is_pro_waitlist %}Pro 대기등록{% elseif is_business_inquiry %}자동화 상담 문의하기{% elseif is_package_inquiry %}패키지 상담 문의하기{% else %}무료 견적 문의하기{% endif %} <i data-lucide="send"></i></button>
                 <p id="formMessage" class="form-message" aria-live="polite"></p>
             </form>
         </div>
