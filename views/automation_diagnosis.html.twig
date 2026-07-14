@@ -1,0 +1,102 @@
+{% extends 'layout/base.html.twig' %}
+
+{% block styles %}
+    <link href="/assets/css/automation-diagnosis.css" rel="stylesheet" />
+{% endblock %}
+
+{% block body %}
+<main class="automation-diagnosis-page">
+    <section class="automation-hero">
+        <div class="automation-shell">
+            <p class="automation-eyebrow">WORKFLOW DIAGNOSIS</p>
+            <h1>반복 업무, 자동화할 수 있을까요?</h1>
+            <p>현재 업무 방식과 시간을 선택하면 자동화 우선순위와 권장 구축 범위를 1분 안에 정리해 드립니다.</p>
+            <div class="automation-hero-points">
+                <span>CSV·엑셀·PDF</span><span>견적·문의·등록 관리</span><span>맞춤형 관리자 시스템</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="automation-body">
+        <div class="automation-shell automation-grid">
+            <form id="automationDiagnosisForm" class="diagnosis-form" novalidate>
+                <div class="diagnosis-step">
+                    <span>01</span><h2>어떤 업무를 하시나요?</h2>
+                    <label for="diagnosis-business">업종 또는 조직 유형</label>
+                    <select id="diagnosis-business" class="diagnosis-input">
+                        <option value="1인 사업자·프리랜서">1인 사업자·프리랜서</option>
+                        <option value="온라인 셀러·쇼핑몰">온라인 셀러·쇼핑몰</option>
+                        <option value="학회·협회·행사 운영">학회·협회·행사 운영</option>
+                        <option value="일반 기업·기관">일반 기업·기관</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+
+                <div class="diagnosis-step">
+                    <span>02</span><h2>반복되는 업무를 선택하세요</h2>
+                    <div class="diagnosis-check-grid">
+                        <label><input type="checkbox" name="work" value="CSV·엑셀 데이터 정리 및 비교">CSV·엑셀 데이터 정리 및 비교</label>
+                        <label><input type="checkbox" name="work" value="PDF 병합·분할·문서 취합">PDF 병합·분할·문서 취합</label>
+                        <label><input type="checkbox" name="work" value="견적서·정산·매출 계산">견적서·정산·매출 계산</label>
+                        <label><input type="checkbox" name="work" value="문의·신청·고객 정보 관리">문의·신청·고객 정보 관리</label>
+                        <label><input type="checkbox" name="work" value="회원·등록·결제 관리">회원·등록·결제 관리</label>
+                        <label><input type="checkbox" name="work" value="여러 서비스·외부 API 데이터 연동">여러 서비스·외부 API 데이터 연동</label>
+                    </div>
+                </div>
+
+                <div class="diagnosis-step diagnosis-two-columns">
+                    <div>
+                        <span>03</span><h2>반복 업무에 쓰는 시간</h2>
+                        <label for="diagnosis-hours">주간 예상 시간</label>
+                        <select id="diagnosis-hours" class="diagnosis-input">
+                            <option value="1">2시간 미만</option>
+                            <option value="2">2~5시간</option>
+                            <option value="3" selected>6~10시간</option>
+                            <option value="4">10시간 초과</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span>04</span><h2>현재 업무 방식</h2>
+                        <label for="diagnosis-method">가장 가까운 방식</label>
+                        <select id="diagnosis-method" class="diagnosis-input">
+                            <option value="수작업으로 파일을 열고 복사·붙여넣기">수작업으로 파일을 열고 복사·붙여넣기</option>
+                            <option value="엑셀 수식·매크로를 일부 사용">엑셀 수식·매크로를 일부 사용</option>
+                            <option value="여러 서비스에서 데이터를 내려받아 취합">여러 서비스에서 데이터를 내려받아 취합</option>
+                            <option value="이미 내부 시스템이 있으나 기능이 부족">이미 내부 시스템이 있으나 기능이 부족</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="diagnosis-step">
+                    <span>05</span><h2>추가로 알려주세요</h2>
+                    <label for="diagnosis-note">자동화하고 싶은 구체적인 업무 또는 불편한 점 (선택)</label>
+                    <textarea id="diagnosis-note" class="diagnosis-input" rows="4" placeholder="예: 매주 쇼핑몰 3곳의 주문 CSV를 내려받아 재고와 배송 상태를 직접 비교합니다."></textarea>
+                </div>
+                <button type="submit" class="diagnosis-submit">자동화 진단 결과 보기</button>
+            </form>
+
+            <aside class="diagnosis-result" id="diagnosisResult" aria-live="polite">
+                <p class="diagnosis-result-label">AUTOMATION SCORE</p>
+                <h2>업무 정보를 입력하면<br>권장 자동화 범위를 보여 드립니다.</h2>
+                <p>결과는 상담 전 요구사항을 정리하는 참고용입니다.</p>
+                <div id="diagnosisResultContent"></div>
+            </aside>
+        </div>
+    </section>
+
+    <section class="automation-proof">
+        <div class="automation-shell">
+            <h2>이런 업무부터 자동화 효과가 큽니다</h2>
+            <div class="automation-proof-grid">
+                <article><strong>반복 입력</strong><p>여러 파일과 서비스에서 같은 정보를 옮겨 적는 업무</p></article>
+                <article><strong>누락·오류 확인</strong><p>상품, 고객, 신청자, 정산 데이터의 차이를 찾는 업무</p></article>
+                <article><strong>업무 진행 관리</strong><p>문의부터 견적, 접수, 결제, 완료까지 흐름을 관리하는 업무</p></article>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+    <script src="/assets/js/automation-diagnosis.js"></script>
+{% endblock %}

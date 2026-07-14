@@ -51,6 +51,18 @@ class HomeController
         ]);
     }
 
+    public function automationDiagnosis(): void
+    {
+        $contactToken = $this->ensureContactFormToken();
+        echo $this->twig->render('automation_diagnosis.html.twig', [
+            'title' => '업무 자동화 진단 | 반복 업무·CSV·PDF·견적 관리 자동화 - 우용디앤에스',
+            'description' => '반복 업무와 주간 소요 시간을 선택해 업무 자동화 우선순위, 권장 구축 범위, 상담 요청 요약을 확인하세요.',
+            'keywords' => '업무 자동화 진단, 엑셀 자동화, CSV 자동화, PDF 자동화, 업무 시스템 구축, 관리자 페이지 개발',
+            'canonical_url' => 'https://wyhds.com/automation-diagnosis',
+            'contact_form_token' => $contactToken,
+        ]);
+    }
+
     public function contact(): void
     {
         $contactToken = $this->ensureContactFormToken();

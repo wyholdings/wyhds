@@ -21,6 +21,11 @@
     <priority>0.80</priority>
   </url>
   <url>
+    <loc>https://wyhds.com/automation-diagnosis</loc>
+    <lastmod>2026-07-14T00:00:00+00:00</lastmod>
+    <priority>0.82</priority>
+  </url>
+  <url>
     <loc>https://wyhds.com/tools</loc>
     <lastmod>2026-07-14T00:00:00+00:00</lastmod>
     <priority>0.90</priority>

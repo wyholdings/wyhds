@@ -15,6 +15,7 @@ $urls = [
     ['loc' => '/about', 'lastmod' => $today, 'priority' => '0.80'],
     ['loc' => '/portfolio', 'lastmod' => $today, 'priority' => '0.80'],
     ['loc' => '/services', 'lastmod' => $today, 'priority' => '0.80'],
+    ['loc' => '/automation-diagnosis', 'lastmod' => $today, 'priority' => '0.82'],
     ['loc' => '/tools', 'lastmod' => $today, 'priority' => '0.90'],
 ];
 

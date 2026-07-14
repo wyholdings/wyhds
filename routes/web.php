@@ -3,6 +3,7 @@
 $router->get('/', [App\Controllers\HomeController::class, 'index']);
 $router->get('/demo', [App\Controllers\HomeController::class, 'demo']);
 $router->get('/services', [App\Controllers\HomeController::class, 'services']);
+$router->get('/automation-diagnosis', [App\Controllers\HomeController::class, 'automationDiagnosis']);
 $router->get('/about', [App\Controllers\HomeController::class, 'about']);
 $router->get('/contact', [App\Controllers\HomeController::class, 'contact']);
 $router->get('/tools', [App\Controllers\ToolsController::class, 'index']);
