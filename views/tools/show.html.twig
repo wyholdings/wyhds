@@ -2,6 +2,7 @@
 
 {% block styles %}
     <link href="/assets/css/tools.css" rel="stylesheet" />
+    {% if tool.faqs is not empty %}
     <script type="application/ld+json">
 {{ {
     '@context': 'https://schema.org',
@@ -13,6 +14,7 @@
     ]
 }|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}
     </script>
+    {% endif %}
     <script type="application/ld+json">
 {{ {
     '@context': 'https://schema.org',
@@ -54,9 +56,9 @@
             <h1>{{ tool.h1 }}</h1>
             <p>{{ tool.description }}</p>
             <div class="hero-actions">
-                <button type="button" class="mode-toggle" data-theme-toggle>Dark Mode</button>
-                <button type="button" class="mode-toggle" data-share>Share</button>
-                <button type="button" class="mode-toggle" data-favorite="{{ tool.slug }}">Favorite</button>
+                <button type="button" class="mode-toggle" data-theme-toggle>다크 모드</button>
+                <button type="button" class="mode-toggle" data-share>공유</button>
+                <button type="button" class="mode-toggle" data-favorite="{{ tool.slug }}">즐겨찾기</button>
             </div>
         </div>
     </section>
@@ -203,7 +205,7 @@
                         </div>
                         <p class="tool-note">파일당 최대 2MB, 데이터 10,000행까지 비교합니다. 처리 중에도 파일 내용은 브라우저 밖으로 전송되지 않습니다.</p>
                     {% elseif tool.widget == 'md5' %}
-                        <label for="tool-input">Text</label>
+                        <label for="tool-input">텍스트</label>
                         <textarea id="tool-input" class="tool-textarea" spellcheck="false"></textarea>
                         <div class="tool-actions">
                             <button type="button" class="tool-btn primary" data-action="md5-generate">Generate MD5</button>
@@ -377,12 +379,12 @@
                         <label for="tool-input">Text</label>
                         <textarea id="tool-input" class="tool-textarea" spellcheck="false" placeholder="분석할 텍스트를 입력하세요."></textarea>
                         <div class="result-grid three">
-                            <div><span>Characters</span><strong id="wc-chars">0</strong></div>
-                            <div><span>Words</span><strong id="wc-words">0</strong></div>
-                            <div><span>Lines</span><strong id="wc-lines">0</strong></div>
-                            <div><span>Sentences</span><strong id="wc-sentences">0</strong></div>
-                            <div><span>Paragraphs</span><strong id="wc-paragraphs">0</strong></div>
-                            <div><span>Bytes</span><strong id="wc-bytes">0</strong></div>
+                            <div><span>글자 수</span><strong id="wc-chars">0</strong></div>
+                            <div><span>단어 수</span><strong id="wc-words">0</strong></div>
+                            <div><span>줄 수</span><strong id="wc-lines">0</strong></div>
+                            <div><span>문장 수</span><strong id="wc-sentences">0</strong></div>
+                            <div><span>문단 수</span><strong id="wc-paragraphs">0</strong></div>
+                            <div><span>바이트</span><strong id="wc-bytes">0</strong></div>
                         </div>
                     {% elseif tool.widget == 'case-converter' %}
                         <label for="tool-input">Text</label>
@@ -1040,35 +1042,35 @@
                         <ul id="pdf-batch-results" class="pdf-batch-list"></ul>
                         <p class="tool-note">파일은 브라우저에서만 처리됩니다. 여러 결과 파일은 ZIP으로 묶어 다운로드합니다. 대용량 PDF는 기기 메모리 상황에 따라 처리 시간이 길어질 수 있습니다.</p>
                     {% elseif tool.category == 'pdf' %}
-                        <label for="pdf-files">PDF file{% if tool.widget == 'pdf-merge' %}s{% endif %}</label>
+                        <label for="pdf-files">PDF 파일{% if tool.widget == 'pdf-merge' %} 여러 개{% endif %}</label>
                         <input id="pdf-files" class="tool-input" type="file" accept="application/pdf" {% if tool.widget == 'pdf-merge' %}multiple{% endif %}>
                         {% if tool.widget == 'pdf-split' %}
-                            <label for="pdf-pages">Pages</label>
+                            <label for="pdf-pages">분할할 페이지</label>
                             <input id="pdf-pages" class="tool-input" type="text" placeholder="1,3-5">
                         {% elseif tool.widget == 'pdf-rotate' %}
-                            <label for="pdf-rotation">Rotation</label>
+                            <label for="pdf-rotation">회전 각도</label>
                             <select id="pdf-rotation" class="tool-input">
-                                <option value="90">90 degrees</option>
-                                <option value="180">180 degrees</option>
-                                <option value="270">270 degrees</option>
+                                <option value="90">90도</option>
+                                <option value="180">180도</option>
+                                <option value="270">270도</option>
                             </select>
                         {% endif %}
                         <div class="tool-actions">
                             {% if tool.widget == 'pdf-merge' %}
-                                <button type="button" class="tool-btn primary" data-action="pdf-merge">Merge PDF</button>
+                                <button type="button" class="tool-btn primary" data-action="pdf-merge">PDF 합치기</button>
                             {% elseif tool.widget == 'pdf-split' %}
-                                <button type="button" class="tool-btn primary" data-action="pdf-split">Split PDF</button>
+                                <button type="button" class="tool-btn primary" data-action="pdf-split">PDF 나누기</button>
                             {% elseif tool.widget == 'pdf-rotate' %}
-                                <button type="button" class="tool-btn primary" data-action="pdf-rotate">Rotate PDF</button>
+                                <button type="button" class="tool-btn primary" data-action="pdf-rotate">PDF 회전하기</button>
                             {% else %}
-                                <button type="button" class="tool-btn primary" data-action="pdf-compress">Optimize PDF</button>
+                                <button type="button" class="tool-btn primary" data-action="pdf-compress">PDF 최적화하기</button>
                             {% endif %}
-                            <button type="button" class="tool-btn" data-action="pdf-download">Download</button>
+                            <button type="button" class="tool-btn" data-action="pdf-download">다운로드</button>
                         </div>
                         <div class="result-grid three">
-                            <div><span>Files</span><strong id="pdf-file-count">0</strong></div>
-                            <div><span>Pages</span><strong id="pdf-page-count">-</strong></div>
-                            <div><span>Output</span><strong id="pdf-output-size">-</strong></div>
+                            <div><span>파일 수</span><strong id="pdf-file-count">0</strong></div>
+                            <div><span>페이지 수</span><strong id="pdf-page-count">-</strong></div>
+                            <div><span>결과 파일</span><strong id="pdf-output-size">-</strong></div>
                         </div>
                         <p class="tool-note">PDF는 브라우저에서 처리됩니다. 압축 도구는 PDF를 재저장해 불필요한 객체를 줄이는 방식이며, 스캔 이미지 압축률은 원본에 따라 달라집니다.</p>
                     {% else %}
@@ -1083,29 +1085,39 @@
                         <textarea id="tool-output" class="tool-textarea" readonly>{{ tool.name }} is registered in WY Tools. The interactive engine for this tool will be added in a later step.</textarea>
                     {% endif %}
                     <p class="tool-status" id="tool-status" aria-live="polite"></p>
+                    <p class="tool-note tool-processing-notice">{{ tool.processing_notice }}</p>
+                    {% if tool.conversion.pro is defined or tool.conversion.business is defined %}
                     <section class="tool-conversion-cta" aria-label="추가 서비스 안내">
+                        {% if tool.conversion.pro is defined %}
                         <div class="tool-conversion-item">
                             <span>WY Tools Pro</span>
-                            <h2>반복 작업을 더 빠르게 처리하세요</h2>
-                            <p>대용량 처리, 저장 프리셋, 작업 기록 같은 Pro 기능이 필요하신가요?</p>
+                            <h2>{{ tool.conversion.pro.title }}</h2>
+                            <p>{{ tool.conversion.pro.description }}</p>
                             <a class="tool-btn primary" href="/contact?inquiry=pro&amp;tool={{ tool.slug|url_encode }}" data-premium-cta="result">Pro 대기등록</a>
                         </div>
+                        {% endif %}
+                        {% if tool.conversion.business is defined %}
                         <div class="tool-conversion-item">
                             <span>기업 자동화·구축</span>
-                            <h2>이 업무를 서비스로 만들고 싶으신가요?</h2>
-                            <p>반복 계산, 파일 처리, 견적·등록 업무를 맞춤형 웹 시스템으로 구축해 드립니다.</p>
+                            <h2>{{ tool.conversion.business.title }}</h2>
+                            <p>{{ tool.conversion.business.description }}</p>
                             <a class="tool-btn" href="/automation-diagnosis?from={{ tool.slug|url_encode }}" data-business-inquiry="result">자동화 진단하기</a>
                         </div>
+                        {% endif %}
                     </section>
+                    {% endif %}
                 </div>
 
                 {% include 'tools/partials/_ad_slot.html.twig' with { position: 'middle' } %}
 
+                {% if tool.how_to_use is not empty %}
                 <section class="content-block">
                     <h2>사용법</h2>
                     <ol>{% for step in tool.how_to_use %}<li>{{ step }}</li>{% endfor %}</ol>
                 </section>
+                {% endif %}
 
+                {% if tool.examples is not empty %}
                 <section class="content-block">
                     <h2>예제</h2>
                     {% for example in tool.examples %}
@@ -1116,6 +1128,7 @@
                         </article>
                     {% endfor %}
                 </section>
+                {% endif %}
 
                 {% for section in tool.seo_sections|default([]) %}
                     <section class="content-block seo-guide">
@@ -1124,6 +1137,7 @@
                     </section>
                 {% endfor %}
 
+                {% if tool.faqs is not empty %}
                 <section class="content-block">
                     <h2>FAQ</h2>
                     <div class="faq-list">
@@ -1132,6 +1146,7 @@
                         {% endfor %}
                     </div>
                 </section>
+                {% endif %}
 
                 {% include 'tools/partials/_ad_slot.html.twig' with { position: 'after-faq' } %}
 

@@ -27,28 +27,15 @@ $tool = static function (
         'is_popular' => (bool)($options['is_popular'] ?? false),
         'is_recent' => (bool)($options['is_recent'] ?? false),
         'is_frequent' => (bool)($options['is_frequent'] ?? false),
-        'how_to_use' => $options['how_to_use'] ?? [
-            '입력 영역에 변환하거나 확인할 값을 입력합니다.',
-            '도구가 제공하는 옵션을 선택한 뒤 결과를 확인합니다.',
-            '필요한 결과는 복사하거나 공유해서 사용할 수 있습니다.',
-        ],
-        'examples' => $options['examples'] ?? [
-            [
-                'title' => $name . ' 사용 예시',
-                'input' => '업무나 학습 중 변환이 필요한 데이터를 입력합니다.',
-                'output' => '브라우저에서 즉시 처리된 결과를 확인합니다.',
-            ],
-        ],
-        'faqs' => $options['faqs'] ?? [
-            [
-                'q' => $name . '는 무료인가요?',
-                'a' => '네. WY Tools의 기본 온라인 도구는 무료로 사용할 수 있습니다.',
-            ],
-            [
-                'q' => '입력한 데이터는 서버에 저장되나요?',
-                'a' => '가능한 기능은 브라우저에서 처리하며, 입력값을 서버에 저장하지 않는 구조를 우선합니다.',
-            ],
-        ],
+        // 공통 SEO 문구는 검색 품질과 사용자 신뢰를 떨어뜨릴 수 있으므로,
+        // 각 도구에 실제 기능에 맞는 내용을 작성한 경우에만 노출합니다.
+        'how_to_use' => $options['how_to_use'] ?? [],
+        'examples' => $options['examples'] ?? [],
+        'faqs' => $options['faqs'] ?? [],
+        // 현재 도구의 입력값과 파일은 브라우저에서만 처리됩니다. 이벤트 기록에는
+        // 도구 식별자와 클릭 종류만 전송되며 입력값·파일 내용은 포함하지 않습니다.
+        'processing_notice' => $options['processing_notice'] ?? '입력한 내용과 파일은 서버에 전송되지 않고 이 브라우저 안에서 처리됩니다.',
+        'conversion' => $options['conversion'] ?? [],
         'related' => $related,
         'premium_ready' => (bool)($options['premium_ready'] ?? false),
         'api_ready' => (bool)($options['api_ready'] ?? false),
@@ -95,7 +82,16 @@ return [
     ]),
 
     'lorem-ipsum' => $tool('lorem-ipsum', 'Lorem Ipsum Generator', 'text', '디자인 시안과 문서 작업에 사용할 더미 텍스트를 생성합니다.', ['widget' => 'lorem-ipsum', 'is_recent' => true, 'related' => ['word-counter', 'case-converter']]),
-    'word-counter' => $tool('word-counter', 'Word Counter', 'text', '글자 수, 단어 수, 줄 수를 계산합니다.', ['widget' => 'word-counter', 'is_popular' => true, 'related' => ['case-converter', 'remove-duplicate-lines', 'text-diff']]),
+    'word-counter' => $tool('word-counter', '글자 수·단어 수 계산기', 'text', '텍스트의 글자 수, 단어 수, 줄 수, 문장 수와 바이트를 즉시 계산합니다.', [
+        'widget' => 'word-counter',
+        'is_popular' => true,
+        'meta_title' => '글자 수·단어 수 계산기 - 공백 포함 글자수·바이트 확인 | WY Tools',
+        'keywords' => ['글자 수 계산기', '단어 수 계산기', '공백 포함 글자수', '바이트 계산기'],
+        'related' => ['case-converter', 'remove-duplicate-lines', 'text-diff'],
+        'how_to_use' => ['확인할 글을 입력창에 붙여 넣거나 직접 작성합니다.', '글자 수, 공백 포함 글자 수, 단어 수와 바이트를 바로 확인합니다.', '자기소개서·SNS·문서의 글자 제한에 맞게 내용을 수정합니다.'],
+        'examples' => [['title' => '자기소개서 글자 수 확인', 'input' => '작성한 자기소개서 문단을 입력', 'output' => '공백 포함 글자 수와 바이트를 확인해 지원서 제한에 맞춥니다.']],
+        'faqs' => [['q' => '공백도 글자 수에 포함되나요?', 'a' => '글자 수에는 공백을 포함한 값과 제외한 값을 함께 표시합니다. 제출처의 기준을 확인해 맞는 값을 사용하세요.'], ['q' => '입력한 글이 저장되나요?', 'a' => '아니요. 입력한 텍스트는 서버로 전송되지 않고 현재 브라우저 안에서만 계산됩니다.']],
+    ]),
     'case-converter' => $tool('case-converter', 'Case Converter', 'text', '영문 텍스트를 대문자, 소문자, 제목 케이스 등으로 변환합니다.', ['widget' => 'case-converter', 'related' => ['word-counter', 'lorem-ipsum']]),
     'remove-duplicate-lines' => $tool('remove-duplicate-lines', 'Remove Duplicate Lines', 'text', '중복된 줄을 제거하고 고유한 목록만 남깁니다.', ['widget' => 'remove-duplicate-lines', 'related' => ['text-diff', 'word-counter']]),
     'text-diff' => $tool('text-diff', 'Text Diff', 'text', '두 텍스트의 차이를 비교합니다.', ['widget' => 'text-diff', 'related' => ['remove-duplicate-lines', 'regex-tester']]),
@@ -194,14 +190,38 @@ return [
     'webp-converter' => $tool('webp-converter', 'WEBP Converter', 'image', '이미지를 WEBP 형식으로 변환해 웹 성능을 개선합니다.', ['widget' => 'image-processor', 'related' => ['image-compress', 'image-resize']]),
     'image-to-base64' => $tool('image-to-base64', 'Image to Base64', 'image', '이미지 파일을 Base64 문자열로 변환합니다.', ['widget' => 'image-base64', 'related' => ['base64', 'webp-converter']]),
 
-    'merge-pdf' => $tool('merge-pdf', 'Merge PDF', 'pdf', '여러 PDF 파일을 하나의 문서로 합칩니다.', ['widget' => 'pdf-merge', 'is_popular' => true, 'related' => ['split-pdf', 'compress-pdf']]),
-    'split-pdf' => $tool('split-pdf', 'Split PDF', 'pdf', 'PDF 문서를 페이지 단위로 분리합니다.', ['widget' => 'pdf-split', 'related' => ['merge-pdf', 'rotate-pdf']]),
-    'compress-pdf' => $tool('compress-pdf', 'Compress PDF', 'pdf', 'PDF 파일 용량을 줄입니다.', ['widget' => 'pdf-compress', 'related' => ['merge-pdf', 'split-pdf']]),
-    'rotate-pdf' => $tool('rotate-pdf', 'Rotate PDF', 'pdf', 'PDF 페이지 방향을 회전합니다.', ['widget' => 'pdf-rotate', 'related' => ['split-pdf', 'merge-pdf']]),
+    'merge-pdf' => $tool('merge-pdf', 'PDF 합치기', 'pdf', '여러 PDF 파일을 원하는 순서로 하나의 문서로 합칩니다.', [
+        'widget' => 'pdf-merge', 'is_popular' => true, 'meta_title' => 'PDF 합치기 - 여러 PDF 파일 병합 | WY Tools', 'keywords' => ['PDF 합치기', 'PDF 병합', 'PDF 파일 합치기'], 'related' => ['split-pdf', 'compress-pdf'],
+        'how_to_use' => ['합칠 PDF 파일을 여러 개 선택합니다.', '파일 순서를 확인한 뒤 PDF 합치기를 누릅니다.', '완성된 하나의 PDF 파일을 다운로드합니다.'],
+        'examples' => [['title' => '계약서와 첨부 서류 합치기', 'input' => '계약서.pdf, 첨부서류.pdf', 'output' => '두 파일이 한 개의 PDF로 합쳐집니다.']],
+        'faqs' => [['q' => '파일 순서를 바꿀 수 있나요?', 'a' => '선택한 파일 순서대로 병합됩니다. 원하는 순서로 파일을 선택해 주세요.'], ['q' => 'PDF 파일은 서버로 전송되나요?', 'a' => '아니요. 파일은 현재 브라우저 안에서 처리됩니다.']],
+    ]),
+    'split-pdf' => $tool('split-pdf', 'PDF 나누기', 'pdf', 'PDF 문서를 지정한 페이지 기준으로 분리합니다.', [
+        'widget' => 'pdf-split', 'meta_title' => 'PDF 나누기 - 페이지별 PDF 분할 | WY Tools', 'keywords' => ['PDF 나누기', 'PDF 분할', 'PDF 페이지 추출'], 'related' => ['merge-pdf', 'rotate-pdf'],
+        'how_to_use' => ['분할할 PDF 파일을 선택합니다.', '추출할 페이지를 1, 3-5처럼 입력합니다.', 'PDF 나누기를 눌러 결과 파일을 다운로드합니다.'],
+        'examples' => [['title' => '계약서 중 서명 페이지만 추출', 'input' => '20페이지 PDF에서 18-20 입력', 'output' => '18~20페이지만 담긴 새 PDF를 만듭니다.']],
+        'faqs' => [['q' => '여러 페이지를 한 번에 지정할 수 있나요?', 'a' => '네. 쉼표와 하이픈을 사용해 1, 3-5와 같이 입력할 수 있습니다.'], ['q' => '원본 파일은 변경되나요?', 'a' => '아니요. 원본은 그대로 두고 분리된 결과 파일을 새로 만듭니다.']],
+    ]),
+    'compress-pdf' => $tool('compress-pdf', 'PDF 용량 줄이기', 'pdf', 'PDF를 다시 저장해 불필요한 객체를 줄이고 파일 용량을 최적화합니다.', [
+        'widget' => 'pdf-compress', 'meta_title' => 'PDF 용량 줄이기 - PDF 파일 최적화 | WY Tools', 'keywords' => ['PDF 용량 줄이기', 'PDF 압축', 'PDF 최적화'], 'related' => ['merge-pdf', 'split-pdf'],
+        'how_to_use' => ['용량을 줄일 PDF 파일을 선택합니다.', 'PDF 최적화하기를 눌러 결과 용량을 확인합니다.', '결과가 더 작아졌다면 다운로드해 제출하거나 공유합니다.'],
+        'examples' => [['title' => '메일 첨부 전 PDF 최적화', 'input' => '스캔 문서 PDF 1개 선택', 'output' => '불필요한 객체를 정리한 결과 PDF를 내려받습니다.']],
+        'faqs' => [['q' => '항상 용량이 크게 줄어드나요?', 'a' => '아니요. 이미 최적화된 PDF나 스캔 이미지 비중이 큰 문서는 감소 폭이 작을 수 있습니다.'], ['q' => '화질이 낮아지나요?', 'a' => '이 도구는 PDF를 재저장해 구조를 정리합니다. 결과는 내려받기 전에 용량과 내용을 확인해 주세요.']],
+    ]),
+    'rotate-pdf' => $tool('rotate-pdf', 'PDF 회전하기', 'pdf', '스캔 방향이 잘못된 PDF 페이지를 90·180·270도로 회전합니다.', [
+        'widget' => 'pdf-rotate', 'meta_title' => 'PDF 회전하기 - PDF 페이지 방향 변경 | WY Tools', 'keywords' => ['PDF 회전', 'PDF 방향 바꾸기', 'PDF 페이지 회전'], 'related' => ['split-pdf', 'merge-pdf'],
+        'how_to_use' => ['방향을 바꿀 PDF 파일을 선택합니다.', '90도, 180도, 270도 중 회전 각도를 선택합니다.', 'PDF 회전하기를 누른 뒤 결과 파일을 다운로드합니다.'],
+        'examples' => [['title' => '거꾸로 스캔된 계약서 수정', 'input' => '방향이 거꾸로 된 계약서 PDF와 180도 선택', 'output' => '모든 페이지의 방향을 180도 회전한 PDF를 만듭니다.']],
+        'faqs' => [['q' => '특정 페이지만 회전할 수 있나요?', 'a' => '현재는 선택한 PDF의 모든 페이지에 같은 회전 각도를 적용합니다.'], ['q' => '회전하면 원본 파일이 바뀌나요?', 'a' => '아니요. 원본은 유지되고 회전한 새 PDF가 생성됩니다.']],
+    ]),
     'pdf-batch-processor' => $tool('pdf-batch-processor', 'PDF 일괄처리', 'pdf', '여러 PDF를 한 번에 병합, 개별 분할, 회전, 최적화하고 결과를 ZIP으로 내려받습니다.', [
         'widget' => 'pdf-batch',
         'is_recent' => true,
         'premium_ready' => true,
+        'conversion' => [
+            'pro' => ['title' => '반복 PDF 작업을 더 빠르게 처리하세요', 'description' => '여러 파일 처리, 작업 기록, 반복 작업 설정이 필요하면 Pro 베타에 등록해 주세요.'],
+            'business' => ['title' => '사내 문서 처리 업무를 자동화하세요', 'description' => '반복되는 PDF 변환·분류·등록 업무에 맞는 자동화 시스템을 설계해 드립니다.'],
+        ],
         'meta_title' => 'PDF 일괄처리 - 병합·분할·회전·최적화 ZIP 다운로드 | WY Tools',
         'meta_description' => '여러 PDF 파일을 브라우저에서 한 번에 병합, 페이지별 분할, 회전, 최적화하고 결과를 ZIP으로 다운로드하는 무료 PDF 일괄처리 도구입니다.',
         'keywords' => ['PDF 일괄처리', 'PDF 일괄 병합', 'PDF 일괄 분할', 'PDF 일괄 회전', 'PDF ZIP 다운로드', 'PDF 대량 처리'],
@@ -462,6 +482,9 @@ return [
         'widget' => 'integrated-selling-margin',
         'is_recent' => true,
         'premium_ready' => true,
+        'conversion' => [
+            'pro' => ['title' => '상품별 마진을 저장·비교하세요', 'description' => '판매 채널과 상품별 비용 구조를 저장하고 월별 수익을 비교하는 기능을 준비 중입니다.'],
+        ],
         'meta_title' => '통합 판매 마진 계산기 - 수수료·배송비·광고비·부가세 포함 | WY Tools',
         'meta_description' => '스마트스토어·쿠팡·오픈마켓 셀러를 위한 통합 판매 마진 계산기입니다. 판매가, 원가, 플랫폼·결제 수수료, 배송비, 포장비, 광고비와 부가세를 반영해 순이익·손익분기 판매가·목표 판매가를 계산합니다.',
         'keywords' => ['통합 판매 마진 계산기', '쇼핑몰 마진 계산기', '스마트스토어 마진 계산기', '쿠팡 마진 계산기', '오픈마켓 수수료 계산', '부가세 포함 마진 계산기'],
@@ -490,6 +513,10 @@ return [
         'widget' => 'quote-amount-designer',
         'is_recent' => true,
         'premium_ready' => true,
+        'conversion' => [
+            'pro' => ['title' => '견적서를 저장하고 재사용하세요', 'description' => '회사 정보, 견적 양식, 고객별 초안을 저장하는 Pro 기능을 준비 중입니다.'],
+            'business' => ['title' => '견적 업무에 맞는 시스템이 필요하신가요?', 'description' => '입력한 견적 기준을 바탕으로 고객·견적·문서 업무를 하나의 시스템으로 구축해 드립니다.'],
+        ],
         'meta_title' => '견적서 금액 설계기 - 공급가·VAT·원천징수·마진 계산 | WY Tools',
         'meta_description' => '프리랜서와 1인 사업자를 위한 견적서 금액 설계기입니다. 공급가액, 부가세, 3.3% 원천징수, 프로젝트 원가, 목표 마진을 계산하고 PDF로 저장 가능한 견적서 초안을 만듭니다.',
         'keywords' => ['견적서 계산기', '견적서 금액 계산', '공급가액 부가세 계산', '프리랜서 견적서', '3.3 원천징수 계산', '견적서 PDF'],
@@ -518,6 +545,9 @@ return [
         'widget' => 'website-scope-estimator',
         'is_recent' => true,
         'premium_ready' => true,
+        'conversion' => [
+            'business' => ['title' => '입력한 범위로 상세 견적을 받아보세요', 'description' => '선택한 사이트 유형과 기능 범위를 상담 내용에 첨부해, 필요한 기능과 일정에 맞춘 상세 견적을 받아볼 수 있습니다.'],
+        ],
         'meta_title' => '웹사이트 견적 범위 생성기 - 홈페이지 제작 비용·기능 범위 계산 | WY Tools',
         'meta_description' => '홈페이지·쇼핑몰·회원 시스템·행사 사이트의 유형, 페이지 수, 기능, 운영 기간을 선택해 예상 개발 견적 범위와 일정, 상담 문의 요약을 생성합니다.',
         'keywords' => ['홈페이지 제작 견적', '웹사이트 견적 계산기', '웹사이트 개발 비용', '쇼핑몰 제작 비용', '홈페이지 제작 견적서', '웹사이트 기능 범위'],
@@ -546,6 +576,9 @@ return [
         'widget' => 'freelancer-cashflow-planner',
         'is_recent' => true,
         'premium_ready' => true,
+        'conversion' => [
+            'pro' => ['title' => '월별 현금흐름을 저장·비교하세요', 'description' => '월별 입력값과 결과를 저장하고 목표 매출을 비교하는 Pro 기능을 준비 중입니다.'],
+        ],
         'meta_title' => '프리랜서 현금흐름 플래너 - 월 가용 현금·세금 적립·목표 매출 계산 | WY Tools',
         'meta_description' => '프리랜서와 1인 사업자를 위한 월 현금흐름 계산기입니다. 매출, 사업비, 생활비, 부가세·종합소득세 적립액, 저축을 반영해 월말 가용 현금과 다음 달 목표 매출을 계산합니다.',
         'keywords' => ['프리랜서 현금흐름', '프리랜서 월 수입 계산', '1인 사업자 현금흐름', '세금 적립 계산기', '프리랜서 목표 매출'],
