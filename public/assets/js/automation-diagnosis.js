@@ -51,7 +51,7 @@
         ].filter(Boolean).join('\n');
         sessionStorage.setItem('wy_automation_diagnosis', summary);
         result.classList.add('is-ready');
-        content.innerHTML = '<div class="diagnosis-score">' + score + '<small>/ 10</small></div><h3>' + escapeHtml(recommendation.title) + '</h3><p>' + escapeHtml(recommendation.detail) + '</p><p class="diagnosis-range">' + escapeHtml(recommendation.range) + '</p><div class="diagnosis-saving">예상 절감 가능 시간 <strong>주 약 ' + savedHours + '시간</strong></div><a class="diagnosis-contact" href="/contact?inquiry=business&amp;source=automation-diagnosis">진단 결과로 상담 요청하기</a><button type="button" class="diagnosis-copy" data-copy-diagnosis>결과 복사</button>';
+        content.innerHTML = '<div class="diagnosis-score">' + score + '<small>/ 10</small></div><h3>' + escapeHtml(recommendation.title) + '</h3><p>' + escapeHtml(recommendation.detail) + '</p><p class="diagnosis-range">' + escapeHtml(recommendation.range) + '</p><div class="diagnosis-saving">예상 절감 가능 시간 <strong>주 약 ' + savedHours + '시간</strong></div><a class="diagnosis-contact" href="/contact?inquiry=business&amp;tool=automation-diagnosis&amp;source=automation-diagnosis">진단 결과 자동 첨부하여 상담 요청하기</a><button type="button" class="diagnosis-copy" data-copy-diagnosis>결과 복사</button>';
         content.querySelector('[data-copy-diagnosis]').addEventListener('click', function () {
             navigator.clipboard.writeText(summary).then(function () { this.textContent = '복사되었습니다'; }.bind(this));
         });
