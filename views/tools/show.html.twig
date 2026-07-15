@@ -788,8 +788,20 @@
                             <h2>목표 설정</h2>
                             <label>목표 순이익률 (%)<input id="integrated-target-margin" class="tool-input" type="number" min="0" max="99" step="0.1" value="20"></label>
                         </div>
+                        <div class="margin-calculator-section">
+                            <h2>상품별 저장·비교</h2>
+                            <div class="result-grid two">
+                                <label>상품 또는 가격안 이름<input id="integrated-plan-name" class="tool-input" type="text" maxlength="80" placeholder="예: 티셔츠 기본안"></label>
+                                <label>저장된 상품<select id="integrated-saved-plan" class="tool-input"><option value="">저장된 상품 선택</option></select></label>
+                                <label>비교할 상품<select id="integrated-compare-plan" class="tool-input"><option value="">비교할 상품 선택</option></select></label>
+                            </div>
+                        </div>
                         <div class="tool-actions">
                             <button type="button" class="tool-btn primary" data-action="integrated-selling-margin-calculate">통합 마진 계산</button>
+                            <button type="button" class="tool-btn" data-action="integrated-selling-margin-save">상품 저장</button>
+                            <button type="button" class="tool-btn" data-action="integrated-selling-margin-load">저장 상품 불러오기</button>
+                            <button type="button" class="tool-btn" data-action="integrated-selling-margin-compare">선택 상품과 비교</button>
+                            <button type="button" class="tool-btn" data-action="integrated-selling-margin-delete">선택 상품 삭제</button>
                             <button type="button" class="tool-btn" data-action="integrated-selling-margin-csv">엑셀용 CSV 다운로드</button>
                             <button type="button" class="tool-btn" data-action="integrated-selling-margin-print">결과 인쇄/PDF</button>
                         </div>
@@ -801,6 +813,7 @@
                             <div><span>예상 부가세</span><strong id="integrated-vat">-</strong></div>
                             <div><span>총 수수료</span><strong id="integrated-total-fee">-</strong></div>
                         </div>
+                        <p id="integrated-compare-summary" class="tool-note" hidden></p>
                         <p class="tool-note">모든 금액은 부가세 포함 과세 금액으로 가정합니다. 순이익은 소득세, 인건비, 반품·교환 비용, 월 고정비를 제외한 주문당 추정 금액입니다.</p>
                     {% elseif tool.widget == 'quote-amount-designer' %}
                         <div class="margin-calculator-section">

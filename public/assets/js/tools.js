@@ -1518,6 +1518,90 @@
         return { price, customerShipping, cost, sellerShipping, packaging, adCost, platformFeeRate, paymentFeeRate, targetMarginRate, grossSales, totalFee, totalCosts, estimatedVat, netProfit, netMarginRate, breakEven, targetPrice };
     }
 
+    const integratedMarginStorageKey = 'wy_integrated_margin_plans';
+    const integratedMarginFieldIds = [
+        'integrated-price', 'integrated-customer-shipping', 'integrated-cost', 'integrated-seller-shipping',
+        'integrated-packaging', 'integrated-ad-cost', 'integrated-platform-fee', 'integrated-payment-fee', 'integrated-target-margin'
+    ];
+
+    function currentIntegratedMarginValues() {
+        const values = {};
+        integratedMarginFieldIds.forEach(function (id) { values[id] = getValue('#' + id); });
+        return values;
+    }
+
+    function getIntegratedMarginPlans() {
+        try {
+            const plans = JSON.parse(localStorage.getItem(integratedMarginStorageKey) || '{}');
+            return plans && typeof plans === 'object' ? plans : {};
+        } catch (error) {
+            throw new Error('저장한 상품 정보를 읽지 못했습니다.');
+        }
+    }
+
+    function refreshIntegratedMarginPlanOptions(selectedPlan) {
+        const plans = getIntegratedMarginPlans();
+        ['integrated-saved-plan', 'integrated-compare-plan'].forEach(function (id) {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const placeholder = id === 'integrated-compare-plan' ? '비교할 상품 선택' : '저장된 상품 선택';
+            select.innerHTML = '<option value="">' + placeholder + '</option>';
+            Object.keys(plans).sort(function (a, b) { return a.localeCompare(b, 'ko'); }).forEach(function (planName) {
+                const option = document.createElement('option');
+                option.value = planName;
+                option.textContent = planName;
+                if (planName === selectedPlan) option.selected = true;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    function saveIntegratedMarginPlan() {
+        const planName = getValue('#integrated-plan-name').trim();
+        if (!planName) throw new Error('상품 또는 가격안 이름을 입력해 주세요.');
+        const result = calculateIntegratedSellingMargin();
+        const plans = getIntegratedMarginPlans();
+        plans[planName] = { savedAt: new Date().toISOString(), values: currentIntegratedMarginValues(), result };
+        localStorage.setItem(integratedMarginStorageKey, JSON.stringify(plans));
+        refreshIntegratedMarginPlanOptions(planName);
+        setStatus(planName + ' 상품의 비용 구조를 이 브라우저에 저장했습니다.', 'success');
+    }
+
+    function loadIntegratedMarginPlan() {
+        const planName = getValue('#integrated-saved-plan');
+        const saved = getIntegratedMarginPlans()[planName];
+        if (!saved || !saved.values) throw new Error('불러올 저장 상품을 선택해 주세요.');
+        integratedMarginFieldIds.forEach(function (id) {
+            const input = document.getElementById(id);
+            if (input && Object.prototype.hasOwnProperty.call(saved.values, id)) input.value = saved.values[id];
+        });
+        setValue('#integrated-plan-name', planName);
+        calculateIntegratedSellingMargin();
+        setStatus(planName + ' 상품 정보를 불러왔습니다.', 'success');
+    }
+
+    function compareIntegratedMarginPlan() {
+        const planName = getValue('#integrated-compare-plan');
+        const saved = getIntegratedMarginPlans()[planName];
+        if (!saved || !saved.result) throw new Error('비교할 저장 상품을 선택해 주세요.');
+        const current = calculateIntegratedSellingMargin();
+        const difference = function (value, unit) { return (value >= 0 ? '+' : '') + formatNumber(unit === '%' ? value : Math.round(value)) + unit; };
+        const summary = document.getElementById('integrated-compare-summary');
+        summary.textContent = planName + ' 대비 · 주문당 순이익 ' + difference(current.netProfit - saved.result.netProfit, '원') + ' · 순이익률 ' + difference(current.netMarginRate - saved.result.netMarginRate, '%') + ' · 목표 판매가 ' + difference(current.targetPrice - saved.result.targetPrice, '원');
+        summary.hidden = false;
+        setStatus(planName + ' 상품과 현재 입력값을 비교했습니다.', 'success');
+    }
+
+    function deleteIntegratedMarginPlan() {
+        const planName = getValue('#integrated-saved-plan');
+        const plans = getIntegratedMarginPlans();
+        if (!planName || !plans[planName]) throw new Error('삭제할 저장 상품을 선택해 주세요.');
+        delete plans[planName];
+        localStorage.setItem(integratedMarginStorageKey, JSON.stringify(plans));
+        refreshIntegratedMarginPlanOptions();
+        setStatus(planName + ' 상품 정보를 이 브라우저에서 삭제했습니다.', 'success');
+    }
+
     function integratedMarginRows(result) {
         const won = function (value) { return Math.round(value) + '원'; };
         return [
@@ -2744,6 +2828,14 @@
                 calculateShippingMargin();
             } else if (action === 'integrated-selling-margin-calculate') {
                 calculateIntegratedSellingMargin();
+            } else if (action === 'integrated-selling-margin-save') {
+                saveIntegratedMarginPlan();
+            } else if (action === 'integrated-selling-margin-load') {
+                loadIntegratedMarginPlan();
+            } else if (action === 'integrated-selling-margin-compare') {
+                compareIntegratedMarginPlan();
+            } else if (action === 'integrated-selling-margin-delete') {
+                deleteIntegratedMarginPlan();
             } else if (action === 'integrated-selling-margin-csv') {
                 downloadIntegratedSellingMarginCsv();
             } else if (action === 'integrated-selling-margin-print') {
@@ -2841,7 +2933,10 @@
         setValue('#ship-cost', '15000');
         calculateShippingMargin();
     }
-    if (slug === 'integrated-selling-margin') calculateIntegratedSellingMargin();
+    if (slug === 'integrated-selling-margin') {
+        refreshIntegratedMarginPlanOptions();
+        calculateIntegratedSellingMargin();
+    }
     if (slug === 'quote-amount-designer') calculateQuoteAmount();
     if (slug === 'website-scope-estimator') calculateWebsiteScope();
     if (slug === 'freelancer-cashflow-planner') {
