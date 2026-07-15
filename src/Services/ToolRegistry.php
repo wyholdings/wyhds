@@ -95,7 +95,17 @@ class ToolRegistry
 
     public function recent(int $limit = 8): array
     {
-        return array_slice(array_values(array_filter($this->active(), static fn (array $tool): bool => (bool)($tool['is_recent'] ?? false))), 0, $limit);
+        $recent = array_values(array_filter($this->active(), static fn (array $tool): bool => (bool)($tool['is_recent'] ?? false)));
+        usort($recent, static function (array $a, array $b): int {
+            $dateComparison = strcmp((string)($b['updated_at'] ?? ''), (string)($a['updated_at'] ?? ''));
+            if ($dateComparison !== 0) {
+                return $dateComparison;
+            }
+
+            return strcmp((string)$a['name'], (string)$b['name']);
+        });
+
+        return array_slice($recent, 0, $limit);
     }
 
     public function frequent(int $limit = 8): array

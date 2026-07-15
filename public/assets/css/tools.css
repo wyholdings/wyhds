@@ -966,6 +966,89 @@
     color: #fff;
 }
 
+.work-recommendation-section {
+    background: linear-gradient(180deg, rgba(0, 91, 172, 0.04), rgba(0, 183, 255, 0.02));
+}
+
+.work-recommendation-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.work-recommendation-card {
+    padding: 26px;
+    border: 1px solid var(--wy-line);
+    border-top: 4px solid var(--wy-blue);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(0, 19, 100, 0.07);
+}
+
+.work-recommendation-card:nth-child(2) {
+    border-top-color: #00a878;
+}
+
+.work-recommendation-card:nth-child(3) {
+    border-top-color: #7655d9;
+}
+
+.work-recommendation-card h3 {
+    color: var(--wy-text);
+    font-size: 22px;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+}
+
+.work-recommendation-card > p {
+    min-height: 52px;
+    margin: 10px 0 20px;
+    color: var(--wy-muted);
+    line-height: 1.65;
+}
+
+.work-recommendation-tools {
+    display: grid;
+    gap: 8px;
+}
+
+.work-recommendation-tools a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 48px;
+    padding: 10px 13px;
+    border: 1px solid var(--wy-line);
+    border-radius: 11px;
+    color: var(--wy-text);
+    font-size: 14px;
+    font-weight: 800;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.work-recommendation-tools a:hover,
+.work-recommendation-tools a:focus {
+    border-color: rgba(0, 91, 172, 0.45);
+    background: rgba(0, 91, 172, 0.05);
+    color: var(--wy-blue);
+}
+
+.work-recommendation-tools span {
+    flex: 0 0 auto;
+    color: var(--wy-blue);
+    font-size: 12px;
+}
+
+.recent-tools-section {
+    background: rgba(255, 255, 255, 0.48);
+}
+
+.wy-tools.is-dark .work-recommendation-card,
+.wy-tools.is-dark .work-recommendation-tools a {
+    background: #11182a;
+}
+
 .category-band {
     background: rgba(0, 91, 172, 0.05);
 }
@@ -1174,7 +1257,8 @@
     .wy-tool-grid,
     .wy-tool-grid.small,
     .category-grid,
-    .two-columns {
+    .two-columns,
+    .work-recommendation-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1213,8 +1297,13 @@
     .wy-tool-grid,
     .wy-tool-grid.small,
     .category-grid,
-    .two-columns {
+    .two-columns,
+    .work-recommendation-grid {
         grid-template-columns: 1fr;
+    }
+
+    .work-recommendation-card > p {
+        min-height: 0;
     }
 
     .wy-section {

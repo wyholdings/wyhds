@@ -6,7 +6,7 @@
         {% if item.view_count is defined and item.view_count > 0 %}
             <small class="tool-views">{{ item.view_count|number_format }} views</small>
         {% endif %}
-        <em>Open tool</em>
+        <em>도구 열기</em>
     </a>
     <button type="button" class="favorite-btn" data-favorite="{{ item.slug }}" aria-label="{{ item.name }} 즐겨찾기">☆</button>
 </article>

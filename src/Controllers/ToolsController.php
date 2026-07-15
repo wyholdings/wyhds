@@ -23,8 +23,29 @@ class ToolsController
     {
         $tools = $this->registry->active();
         $usage = new ToolUsageModel();
-        $popularTools = $this->registry->popularBySlugs($usage->getPopularSlugs(8, 30), 8);
+        $popularSlugs = array_values(array_unique(array_merge(
+            $usage->getPopularSlugs(8, 30),
+            ['annual-salary-net-calculator', 'withholding-3-3-calculator', 'loan-calculator', 'pyeong-calculator', 'word-counter', 'merge-pdf', 'margin-calculator', 'website-scope-estimator']
+        )));
+        $popularTools = $this->registry->popularBySlugs($popularSlugs, 8);
         $popularTools = $this->registry->withViewCounts($popularTools, $usage->getViewCounts(array_column($popularTools, 'slug')));
+        $workRecommendations = [
+            [
+                'title' => '급여·세금·생활 계산',
+                'description' => '급여 정산, 원천징수, 대출과 면적을 빠르게 확인하세요.',
+                'tools' => $this->toolsBySlugs(['annual-salary-net-calculator', 'withholding-3-3-calculator', 'loan-calculator', 'pyeong-calculator']),
+            ],
+            [
+                'title' => '판매·견적·사업 관리',
+                'description' => '판매 수익과 견적 금액, 월별 현금흐름을 업무 기준으로 정리하세요.',
+                'tools' => $this->toolsBySlugs(['integrated-selling-margin-calculator', 'quote-amount-designer', 'freelancer-cashflow-planner', 'website-scope-estimator']),
+            ],
+            [
+                'title' => '문서·파일 반복 작업',
+                'description' => 'PDF와 이미지 파일을 브라우저에서 빠르게 처리하세요.',
+                'tools' => $this->toolsBySlugs(['pdf-batch-processor', 'merge-pdf', 'compress-pdf', 'image-compress']),
+            ],
+        ];
 
         echo $this->twig->render('tools/index.html.twig', [
             'title' => 'WY Tools | 무료 온라인 도구 모음',
@@ -36,9 +57,23 @@ class ToolsController
             'popular_tools' => $popularTools,
             'recent_tools' => $this->registry->recent(),
             'frequent_tools' => $this->registry->frequent(),
+            'work_recommendations' => $workRecommendations,
             'categories' => $this->registry->categories(),
             'search_index' => $this->registry->searchIndex(),
         ]);
+    }
+
+    private function toolsBySlugs(array $slugs): array
+    {
+        $tools = [];
+        foreach ($slugs as $slug) {
+            $tool = $this->registry->find($slug);
+            if ($tool !== null && ($tool['status'] ?? 'active') === 'active') {
+                $tools[] = $tool;
+            }
+        }
+
+        return $tools;
     }
 
     public function category(string $slug): void

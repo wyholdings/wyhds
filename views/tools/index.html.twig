@@ -33,7 +33,7 @@
                 <div class="search-suggestions" data-search-suggestions></div>
             </div>
             <div class="hero-actions">
-                <button type="button" class="mode-toggle" data-theme-toggle>Dark Mode</button>
+                <button type="button" class="mode-toggle" data-theme-toggle>다크 모드</button>
                 <a href="/contact">기업 문의</a>
             </div>
         </div>
@@ -64,7 +64,7 @@
         <div class="tools-inner">
             <div class="section-head">
                 <h2>인기 도구</h2>
-                <p>가장 많이 쓰는 생산성 도구입니다.</p>
+                <p>최근 사용량과 기본 추천을 반영한 대표 도구입니다.</p>
             </div>
             <div class="wy-tool-grid" data-tool-grid>
                 {% for item in popular_tools %}
@@ -74,46 +74,55 @@
         </div>
     </section>
 
-    <section class="wy-section category-band">
+    <section class="wy-section work-recommendation-section">
         <div class="tools-inner">
             <div class="section-head">
-                <h2>카테고리</h2>
-                <p>업무 목적에 맞는 도구를 빠르게 찾으세요.</p>
+                <h2>업무별 추천</h2>
+                <p>지금 하려는 업무를 기준으로 필요한 도구를 골라보세요.</p>
             </div>
-            <div class="category-grid">
-                {% for category in categories %}
-                    <a href="{{ category.url }}">
-                        <strong>{{ category.name }}</strong>
-                        <span>{{ category.label }} · {{ category.count }} tools</span>
-                    </a>
+            <div class="work-recommendation-grid">
+                {% for group in work_recommendations %}
+                    <article class="work-recommendation-card">
+                        <h3>{{ group.title }}</h3>
+                        <p>{{ group.description }}</p>
+                        <div class="work-recommendation-tools">
+                            {% for item in group.tools %}
+                                <a href="{{ item.url }}">{{ item.name }}<span>열기</span></a>
+                            {% endfor %}
+                        </div>
+                    </article>
                 {% endfor %}
             </div>
         </div>
     </section>
 
-    <section class="wy-section">
-        <div class="tools-inner two-columns">
-            <div>
-                <div class="section-head">
-                    <h2>최근 추가된 도구</h2>
-                    <p>WY Tools에 새로 등록된 도구입니다.</p>
-                </div>
-                <div class="compact-list">
-                    {% for item in recent_tools %}
-                        <a href="{{ item.url }}"><span>{{ item.name }}</span><em>{{ item.category|replace({'-': ' '})|title }}</em></a>
-                    {% endfor %}
-                </div>
+    <section class="wy-section recent-tools-section">
+        <div class="tools-inner">
+            <div class="section-head">
+                <h2>최근 추가</h2>
+                <p>새로 추가됐거나 최근 고도화한 도구입니다.</p>
             </div>
-            <div>
-                <div class="section-head">
-                    <h2>자주 사용하는 도구</h2>
-                    <p>반복 업무에 바로 쓰기 좋은 도구입니다.</p>
-                </div>
-                <div class="compact-list">
-                    {% for item in frequent_tools %}
-                        <a href="{{ item.url }}"><span>{{ item.name }}</span><em>{{ item.category|replace({'-': ' '})|title }}</em></a>
-                    {% endfor %}
-                </div>
+            <div class="wy-tool-grid recent-tool-grid">
+                {% for item in recent_tools %}
+                    {% include 'tools/partials/_tool_card.html.twig' with { item: item } %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="wy-section category-band">
+        <div class="tools-inner">
+            <div class="section-head">
+                <h2>전체 카테고리</h2>
+                <p>더 많은 도구를 기능 종류별로 찾아보세요.</p>
+            </div>
+            <div class="category-grid">
+                {% for category in categories %}
+                    <a href="{{ category.url }}">
+                        <strong>{{ category.name }}</strong>
+                        <span>{{ category.label }} · {{ category.count }}개 도구</span>
+                    </a>
+                {% endfor %}
             </div>
         </div>
     </section>
