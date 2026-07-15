@@ -1515,6 +1515,57 @@
         document.getElementById('integrated-vat').textContent = formatNumber(Math.round(estimatedVat)) + '원';
         document.getElementById('integrated-total-fee').textContent = formatNumber(Math.round(totalFee)) + '원';
         setStatus('수수료, 배송비, 광고비와 부가세를 반영해 계산했습니다.', 'success');
+        return { price, customerShipping, cost, sellerShipping, packaging, adCost, platformFeeRate, paymentFeeRate, targetMarginRate, grossSales, totalFee, totalCosts, estimatedVat, netProfit, netMarginRate, breakEven, targetPrice };
+    }
+
+    function integratedMarginRows(result) {
+        const won = function (value) { return Math.round(value) + '원'; };
+        return [
+            ['항목', '값'],
+            ['상품 판매가', won(result.price)],
+            ['고객 부담 배송비', won(result.customerShipping)],
+            ['상품 원가', won(result.cost)],
+            ['판매자 배송비', won(result.sellerShipping)],
+            ['포장비', won(result.packaging)],
+            ['주문당 광고비', won(result.adCost)],
+            ['플랫폼 수수료율', result.platformFeeRate + '%'],
+            ['결제 수수료율', result.paymentFeeRate + '%'],
+            ['총 매출', won(result.grossSales)],
+            ['총 수수료', won(result.totalFee)],
+            ['예상 부가세', won(result.estimatedVat)],
+            ['부가세 반영 순이익', won(result.netProfit)],
+            ['순이익률', formatNumber(result.netMarginRate) + '%'],
+            ['손익분기 판매가', won(Math.max(0, Math.ceil(result.breakEven / 10) * 10))],
+            ['목표 판매가', won(Math.max(0, Math.ceil(result.targetPrice / 10) * 10))]
+        ];
+    }
+
+    function downloadIntegratedSellingMarginCsv() {
+        const rows = integratedMarginRows(calculateIntegratedSellingMargin());
+        const csv = '\uFEFF' + rows.map(function (row) {
+            return row.map(function (value) { return '"' + String(value).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\r\n');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        link.download = '통합-판매-마진-계산-' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+        setStatus('엑셀에서 열 수 있는 CSV 파일을 다운로드했습니다.', 'success');
+    }
+
+    function printIntegratedSellingMargin() {
+        const rows = integratedMarginRows(calculateIntegratedSellingMargin());
+        const escapeHtml = function (value) { const div = document.createElement('div'); div.textContent = String(value); return div.innerHTML; };
+        const popup = window.open('', '_blank');
+        if (!popup) throw new Error('팝업이 차단되었습니다. 브라우저에서 팝업을 허용한 뒤 다시 시도해 주세요.');
+        const tableRows = rows.map(function (row, index) {
+            const tag = index === 0 ? 'th' : 'td';
+            return '<tr><' + tag + '>' + escapeHtml(row[0]) + '</' + tag + '><' + tag + '>' + escapeHtml(row[1]) + '</' + tag + '></tr>';
+        }).join('');
+        popup.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>통합 판매 마진 계산 결과</title><style>body{margin:0;padding:40px;color:#172033;font:14px/1.6 Arial,sans-serif}.sheet{max-width:720px;margin:auto}h1{font-size:26px}table{width:100%;border-collapse:collapse}th,td{padding:11px;border:1px solid #dbe3ef;text-align:left}th{background:#f5f8fc}td:last-child,th:last-child{text-align:right}.note{margin-top:22px;color:#64748b;font-size:12px}@media print{body{padding:0}}</style></head><body><main class="sheet"><h1>통합 판매 마진 계산 결과</h1><table>' + tableRows + '</table><p class="note">본 결과는 가격 정책 검토용 추정치입니다. 실제 정산과 세금 신고는 플랫폼 정산서 및 관련 자료를 기준으로 확인해 주세요.</p></main><script>window.onload=function(){window.print();};<\/script></body></html>');
+        popup.document.close();
     }
 
     function quoteAmountValues() {
@@ -2623,6 +2674,10 @@
                 calculateShippingMargin();
             } else if (action === 'integrated-selling-margin-calculate') {
                 calculateIntegratedSellingMargin();
+            } else if (action === 'integrated-selling-margin-csv') {
+                downloadIntegratedSellingMarginCsv();
+            } else if (action === 'integrated-selling-margin-print') {
+                printIntegratedSellingMargin();
             } else if (action === 'quote-calculate') {
                 calculateQuoteAmount();
             } else if (action === 'quote-print') {

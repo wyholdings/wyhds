@@ -1125,34 +1125,30 @@
     display: block;
     width: calc(100% - 40px);
     max-width: 1180px;
+    margin: 0 auto;
+}
+
+.wy-ad-slot.is-ad-unfilled {
+    display: none;
+}
+
+.wy-ad-slot.is-ad-filled {
+    height: auto;
     min-height: 250px;
     margin: 26px auto;
-    border: 1px dashed rgba(0, 91, 172, 0.28);
+    border: 1px solid rgba(0, 91, 172, 0.12);
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.72);
-    color: #8a94a8;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
     padding: 12px;
-    overflow: hidden;
-}
-
-.wy-ad-top {
-    min-height: 280px;
-}
-
-.wy-ad-middle,
-.wy-ad-footer,
-.wy-ad-after-faq {
-    min-height: 280px;
 }
 
 .wy-ad-slot .adsbygoogle {
     display: block !important;
     width: 100%;
-    min-height: inherit;
+}
+
+.wy-ad-slot.is-ad-filled .adsbygoogle {
+    min-height: 250px;
 }
 
 .wy-tools.is-dark .wy-ad-slot {
@@ -1190,7 +1186,10 @@
 @media screen and (max-width: 640px) {
     .wy-ad-slot {
         width: calc(100% - 28px);
-        min-height: 280px;
+    }
+
+    .wy-ad-slot.is-ad-filled {
+        min-height: 250px;
         margin: 20px auto;
         border-radius: 12px;
         padding: 10px;

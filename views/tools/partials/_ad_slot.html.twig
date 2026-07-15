@@ -11,6 +11,27 @@
          data-ad-client="{{ ad_client }}"
          data-ad-slot="{{ ad_slot }}"></ins>
     <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
+        (function () {
+            var slot = document.currentScript.previousElementSibling;
+            var wrapper = document.currentScript.parentElement;
+
+            function updateVisibility() {
+                var status = slot.getAttribute('data-ad-status');
+                if (status === 'filled') {
+                    wrapper.classList.add('is-ad-filled');
+                    wrapper.classList.remove('is-ad-unfilled');
+                } else if (status === 'unfilled') {
+                    wrapper.classList.remove('is-ad-filled');
+                    wrapper.classList.add('is-ad-unfilled');
+                }
+            }
+
+            new MutationObserver(updateVisibility).observe(slot, {
+                attributes: true,
+                attributeFilter: ['data-ad-status']
+            });
+            updateVisibility();
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        })();
     </script>
 </div>

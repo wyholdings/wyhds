@@ -788,7 +788,11 @@
                             <h2>목표 설정</h2>
                             <label>목표 순이익률 (%)<input id="integrated-target-margin" class="tool-input" type="number" min="0" max="99" step="0.1" value="20"></label>
                         </div>
-                        <div class="tool-actions"><button type="button" class="tool-btn primary" data-action="integrated-selling-margin-calculate">통합 마진 계산</button></div>
+                        <div class="tool-actions">
+                            <button type="button" class="tool-btn primary" data-action="integrated-selling-margin-calculate">통합 마진 계산</button>
+                            <button type="button" class="tool-btn" data-action="integrated-selling-margin-csv">엑셀용 CSV 다운로드</button>
+                            <button type="button" class="tool-btn" data-action="integrated-selling-margin-print">결과 인쇄/PDF</button>
+                        </div>
                         <div class="result-grid three margin-result-grid">
                             <div><span>부가세 반영 순이익</span><strong id="integrated-net-profit">-</strong></div>
                             <div><span>순이익률</span><strong id="integrated-margin-rate">-</strong></div>
