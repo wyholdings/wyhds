@@ -1634,6 +1634,22 @@
         setStatus('웹사이트 개발 범위와 상담용 요약을 생성했습니다.', 'success');
     }
 
+    function openWebsiteScopeInquiry() {
+        const summary = getValue('#scope-output').trim();
+        if (!summary) {
+            calculateWebsiteScope();
+        }
+
+        const generatedSummary = getValue('#scope-output').trim();
+        if (!generatedSummary) {
+            throw new Error('상담 문의 요약을 먼저 생성해 주세요.');
+        }
+
+        sessionStorage.setItem('wy_website_scope_inquiry', generatedSummary);
+        trackToolEvent('business_inquiry', 'scope_summary');
+        window.location.assign('/contact?inquiry=business&tool=website-scope-estimator&source=website-scope-estimator');
+    }
+
     function calculateFreelancerCashflow() {
         const openingCash = Number(getValue('#cashflow-opening-cash')) || 0;
         const revenue = Number(getValue('#cashflow-revenue')) || 0;
@@ -2275,6 +2291,15 @@
     }
 
     document.addEventListener('click', function (event) {
+        const scopeContact = event.target.closest('[data-scope-contact]');
+        if (scopeContact) {
+            try {
+                openWebsiteScopeInquiry();
+            } catch (error) {
+                setStatus(error.message || '상담 문의 내용을 준비하지 못했습니다.', 'error');
+            }
+            return;
+        }
         const premiumCta = event.target.closest('[data-premium-cta]');
         if (premiumCta) trackToolEvent('premium_cta', premiumCta.dataset.premiumCta || 'cta');
         const businessInquiry = event.target.closest('[data-business-inquiry]');

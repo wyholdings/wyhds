@@ -7,12 +7,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const inquiryType = form.dataset.inquiryType || '';
     const source = new URLSearchParams(window.location.search).get('source') || '';
     const diagnosisSummary = source === 'automation-diagnosis' ? sessionStorage.getItem('wy_automation_diagnosis') : '';
+    const websiteScopeSummary = source === 'website-scope-estimator' ? sessionStorage.getItem('wy_website_scope_inquiry') : '';
 
     if (inquiryType === 'business' && diagnosisSummary) {
         const messageInput = form.querySelector('textarea[name="message"]');
         if (messageInput) {
             messageInput.value = diagnosisSummary + '\n\n상세 요구사항과 구축 방향을 상담하고 싶습니다.';
             sessionStorage.removeItem('wy_automation_diagnosis');
+        }
+    }
+
+    if (inquiryType === 'business' && websiteScopeSummary) {
+        const messageInput = form.querySelector('textarea[name="message"]');
+        if (messageInput) {
+            messageInput.value = websiteScopeSummary + '\n\n위 범위를 기준으로 상세 견적과 구축 방향을 상담하고 싶습니다.';
+            sessionStorage.removeItem('wy_website_scope_inquiry');
         }
     }
 

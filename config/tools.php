@@ -296,6 +296,9 @@ return [
         'meta_description' => '전체 대비 비율, 증가율과 감소율, 할인율을 빠르게 계산하는 무료 퍼센트 계산기입니다.',
         'keywords' => ['퍼센트 계산기', '비율 계산기', '증감률 계산기', '할인율 계산기'],
         'related' => ['vat-calculator', 'margin-calculator', 'loan-calculator'],
+        'how_to_use' => ['계산할 기준 금액과 비율 또는 비교할 두 금액을 입력합니다.', '비율, 증감률, 할인율 중 필요한 계산 방식을 선택합니다.', '계산 결과를 가격 비교, 할인 행사, 실적 비교에 활용합니다.'],
+        'examples' => [['title' => '20% 할인 금액', 'input' => '정가 50,000원 / 할인율 20%', 'output' => '할인 금액 10,000원과 최종 가격 40,000원을 확인합니다.']],
+        'faqs' => [['q' => '증가율은 어떻게 계산하나요?', 'a' => '기준 금액과 변경 후 금액을 입력하면 기준 금액 대비 증감 비율을 계산합니다.'], ['q' => '할인율과 할인 금액을 모두 확인할 수 있나요?', 'a' => '네. 정가와 할인율을 기준으로 할인 금액과 최종 가격을 함께 확인할 수 있습니다.']],
     ]),
     'withholding-3-3-calculator' => $tool('withholding-3-3-calculator', '3.3% 계산기', 'calculator', '프리랜서·사업소득 3.3% 원천징수액과 실수령액을 계산합니다.', [
         'widget' => 'withholding-3-3',
@@ -328,6 +331,9 @@ return [
         'meta_description' => '시급, 근무시간, 근무일을 기준으로 예상 월급과 연봉을 환산하는 무료 급여 계산기입니다.',
         'keywords' => ['시급 계산기', '월급 계산기', '연봉 계산기', '급여 환산기'],
         'related' => ['withholding-3-3-calculator', 'percent-calculator'],
+        'how_to_use' => ['시급, 하루 근무시간, 월 근무일수를 입력합니다.', '계산 버튼을 눌러 월 예상 급여와 연 환산 금액을 확인합니다.', '주휴수당이나 세금은 별도 도구로 확인해 실제 급여와 비교합니다.'],
+        'examples' => [['title' => '시급 12,000원 월급 환산', 'input' => '시급 12,000원 / 하루 8시간 / 월 20일', 'output' => '기본 근로시간 기준 월 예상 급여와 연 환산 금액을 확인합니다.']],
+        'faqs' => [['q' => '주휴수당이 포함되나요?', 'a' => '기본 근로시간 환산용 계산입니다. 주휴수당은 별도의 주휴수당 계산기에서 근무 조건에 맞춰 확인하세요.'], ['q' => '실수령액도 알 수 있나요?', 'a' => '이 도구는 세전 급여 환산용입니다. 공제 후 금액은 연봉 실수령액 계산기를 이용하세요.']],
     ]),
     'annual-salary-net-calculator' => $tool('annual-salary-net-calculator', '연봉 실수령액 계산기', 'calculator', '연봉 기준 월 예상 실수령액과 공제액을 계산합니다.', [
         'widget' => 'annual-salary-net',
@@ -420,8 +426,12 @@ return [
     'pyeong-calculator' => $tool('pyeong-calculator', '평수 계산기', 'calculator', '제곱미터와 평을 서로 변환하고 면적을 계산합니다.', [
         'widget' => 'pyeong-calculator',
         'is_frequent' => true,
+        'meta_title' => '평수 계산기 - 제곱미터㎡·평 변환 | WY Tools',
         'keywords' => ['평수 계산기', '제곱미터 평 변환', '아파트 평수 계산'],
         'related' => ['unit-converter', 'date-calculator'],
+        'how_to_use' => ['제곱미터 또는 평 중 알고 있는 면적 값을 입력합니다.', '변환 버튼을 눌러 반대 단위의 면적을 확인합니다.', '계약서·도면의 전용면적과 공급면적 표기를 구분해 비교합니다.'],
+        'examples' => [['title' => '84㎡를 평으로 변환', 'input' => '84㎡ 입력', 'output' => '약 25.4평으로 변환합니다.']],
+        'faqs' => [['q' => '1평은 몇 제곱미터인가요?', 'a' => '1평은 약 3.3058㎡입니다. 계산 결과는 소수점으로 표시될 수 있습니다.'], ['q' => '아파트 평수는 전용면적인가요?', 'a' => '매물 정보에는 전용면적과 공급면적이 함께 쓰일 수 있습니다. 어떤 면적을 변환하는지 확인해야 정확히 비교할 수 있습니다.']],
     ]),
     'loan-calculator' => $tool('loan-calculator', '대출 이자 계산기', 'calculator', '원금, 금리, 기간으로 월 상환액과 총 이자를 계산합니다.', [
         'widget' => 'loan-calculator',
@@ -447,8 +457,12 @@ return [
     ]),
     'compound-interest-calculator' => $tool('compound-interest-calculator', '복리 계산기', 'calculator', '초기 금액, 추가 납입, 수익률 기준으로 미래 가치를 계산합니다.', [
         'widget' => 'compound-interest',
+        'meta_title' => '복리 계산기 - 적립식 투자·미래가치 계산 | WY Tools',
         'keywords' => ['복리 계산기', '투자 수익률 계산기', '미래가치 계산기'],
         'related' => ['loan-calculator', 'percent-calculator'],
+        'how_to_use' => ['초기 금액, 월 추가 납입액, 예상 연 수익률, 투자 기간을 입력합니다.', '복리 계산을 눌러 예상 미래 가치와 총 납입액을 확인합니다.', '수익률과 기간을 바꿔 목표 금액 달성 가능성을 비교합니다.'],
+        'examples' => [['title' => '월 30만원 5년 적립', 'input' => '초기 금액 0원 / 월 300,000원 / 연 5% / 5년', 'output' => '총 납입액과 가정한 수익률 기준의 예상 미래 가치를 확인합니다.']],
+        'faqs' => [['q' => '수익률이 보장되나요?', 'a' => '아니요. 입력한 수익률을 가정한 계산값이며 실제 투자 수익과 손실은 시장 상황에 따라 달라집니다.'], ['q' => '세금과 수수료가 반영되나요?', 'a' => '기본 복리 계산에는 반영되지 않습니다. 실제 상품의 세금과 수수료는 별도로 확인해야 합니다.']],
     ]),
     'split-bill-calculator' => $tool('split-bill-calculator', '더치페이 계산기', 'calculator', '총액, 인원, 팁 또는 추가 비용을 기준으로 1인 부담액을 계산합니다.', [
         'widget' => 'split-bill',
@@ -603,8 +617,18 @@ return [
             ['q' => '다음 달 목표 매출은 무엇을 뜻하나요?', 'a' => '현재 입력한 지출·저축 수준을 유지하고 세금을 적립한다고 가정했을 때, 월말 현금을 줄이지 않기 위해 필요한 매출의 추정치입니다.'],
         ],
     ]),
-    'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 차이나 특정 날짜 이후의 날짜를 계산합니다.', ['widget' => 'date-calculator', 'related' => ['d-day-calculator', 'age-calculator', 'timestamp']]),
-    'd-day-calculator' => $tool('d-day-calculator', 'D-Day 계산기', 'calculator', '목표 날짜까지 남은 일수를 계산합니다.', ['widget' => 'd-day-calculator', 'related' => ['date-calculator', 'age-calculator']]),
+    'date-calculator' => $tool('date-calculator', '날짜 계산기', 'calculator', '두 날짜 사이의 기간과 기준일 전후 날짜를 계산합니다.', [
+        'widget' => 'date-calculator', 'meta_title' => '날짜 계산기 - 날짜 차이·며칠 후 날짜 계산 | WY Tools', 'keywords' => ['날짜 계산기', '날짜 차이 계산', '며칠 후 날짜 계산'], 'related' => ['d-day-calculator', 'age-calculator', 'timestamp'],
+        'how_to_use' => ['시작일과 종료일을 선택하거나 기준일과 더할 일수를 입력합니다.', '날짜 차이 또는 계산할 날짜 방식을 선택합니다.', '계약 기간, 휴가 일수, 일정 계획에 필요한 날짜를 확인합니다.'],
+        'examples' => [['title' => '계약 기간 계산', 'input' => '시작일 2026-07-01 / 종료일 2026-08-15', 'output' => '두 날짜 사이의 일수를 확인합니다.']],
+        'faqs' => [['q' => '시작일과 종료일을 모두 포함하나요?', 'a' => '표시 방식에 따라 차이가 있을 수 있으므로, 계약·법정 기한은 포함일 기준을 별도로 확인하세요.'], ['q' => '영업일도 계산되나요?', 'a' => '현재는 달력 기준 일수 계산용입니다. 공휴일과 영업일은 별도로 고려해야 합니다.']],
+    ]),
+    'd-day-calculator' => $tool('d-day-calculator', '디데이 계산기', 'calculator', '목표 날짜까지 남은 일수와 경과 일수를 계산합니다.', [
+        'widget' => 'd-day-calculator', 'meta_title' => '디데이 계산기 - D-Day·남은 날짜 계산 | WY Tools', 'keywords' => ['디데이 계산기', 'D-Day 계산기', '남은 날짜 계산'], 'related' => ['date-calculator', 'age-calculator'],
+        'how_to_use' => ['기준일과 목표일을 선택합니다.', '계산 버튼을 눌러 목표일까지 남은 날짜 또는 지난 날짜를 확인합니다.', '시험, 행사, 기념일, 프로젝트 마감 일정을 관리합니다.'],
+        'examples' => [['title' => '행사까지 남은 날짜', 'input' => '기준일 오늘 / 목표일 행사일', 'output' => '행사일까지 남은 일수를 D-Day 형식으로 표시합니다.']],
+        'faqs' => [['q' => '오늘이 목표일이면 어떻게 표시되나요?', 'a' => '목표일이 오늘이면 D-Day로 표시됩니다.'], ['q' => '지난 날짜도 계산할 수 있나요?', 'a' => '네. 목표일이 지난 경우 경과한 일수를 확인할 수 있습니다.']],
+    ]),
     'age-calculator' => $tool('age-calculator', '나이 계산기', 'calculator', '생년월일 기준 만 나이와 연령 정보를 계산합니다.', ['widget' => 'age-calculator', 'related' => ['date-calculator', 'd-day-calculator']]),
 
     'prompt-formatter' => $tool('prompt-formatter', 'Prompt Formatter', 'ai', 'AI 프롬프트를 구조화하고 읽기 좋게 정리합니다.', ['widget' => 'prompt-formatter', 'is_recent' => true, 'related' => ['prompt-optimizer', 'token-counter']]),
