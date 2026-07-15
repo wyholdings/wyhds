@@ -1552,6 +1552,31 @@
         return result;
     }
 
+    function openQuoteAmountInquiry() {
+        const result = calculateQuoteAmount();
+        const title = getValue('#quote-title').trim() || '견적서 금액 설계';
+        const client = getValue('#quote-client').trim() || '미정';
+        const won = function (value) { return formatNumber(Math.round(value)) + '원'; };
+        const summary = [
+            '[견적서 금액 설계 상담 요청]',
+            '견적명: ' + title,
+            '고객명: ' + client,
+            '공급가액: ' + won(result.supply),
+            '부가세: ' + won(result.vat) + ' (' + formatNumber(result.vatRate) + '%)',
+            '견적 합계: ' + won(result.total),
+            '원천징수 예상액: ' + won(result.withholding) + ' (' + formatNumber(result.withholdingRate) + '%)',
+            '입금 예상액: ' + won(result.receivable),
+            '직접 원가·기타 비용: ' + won(result.directCost + result.otherCost),
+            '프로젝트 이익: ' + won(result.profit),
+            '목표 마진율: ' + formatNumber(result.targetMarginRate) + '%',
+            '목표 공급가: ' + won(result.targetSupply)
+        ].join('\n');
+
+        sessionStorage.setItem('wy_quote_amount_inquiry', summary);
+        trackToolEvent('business_inquiry', 'quote_summary');
+        window.location.assign('/contact?inquiry=business&tool=quote-amount-designer&source=quote-amount-designer');
+    }
+
     function printQuoteDraft() {
         const result = calculateQuoteAmount();
         const escapeHtml = function (value) {
@@ -1687,6 +1712,44 @@
         document.getElementById('cashflow-target-revenue').textContent = won(Math.ceil(targetRevenue / 10000) * 10000);
         document.getElementById('cashflow-runway').textContent = essentialMonthlyCost > 0 ? formatNumber(runway) + '개월' : '-';
         setStatus(closingCash < 0 ? '이번 달 예상 현금이 부족합니다. 지출·세금 적립·목표 매출을 조정해 보세요.' : '세금과 저축을 반영한 이번 달 현금흐름을 계산했습니다.', closingCash < 0 ? 'error' : 'success');
+    }
+
+    const cashflowStorageKey = 'wy_cashflow_planner_draft';
+    const cashflowFieldIds = [
+        'cashflow-opening-cash', 'cashflow-revenue', 'cashflow-other-income',
+        'cashflow-fixed-cost', 'cashflow-variable-cost', 'cashflow-living-cost',
+        'cashflow-debt', 'cashflow-savings', 'cashflow-vat-rate', 'cashflow-income-tax-rate'
+    ];
+
+    function saveCashflowPlan() {
+        const values = {};
+        cashflowFieldIds.forEach(function (id) {
+            const input = document.getElementById(id);
+            if (input) values[id] = input.value;
+        });
+        if (Object.keys(values).length !== cashflowFieldIds.length) {
+            throw new Error('현금흐름 입력 항목을 찾지 못했습니다.');
+        }
+        localStorage.setItem(cashflowStorageKey, JSON.stringify({ savedAt: new Date().toISOString(), values }));
+        setStatus('이번 달 계획을 이 브라우저에 저장했습니다.', 'success');
+    }
+
+    function loadCashflowPlan() {
+        let saved;
+        try {
+            saved = JSON.parse(localStorage.getItem(cashflowStorageKey) || 'null');
+        } catch (error) {
+            throw new Error('저장한 계획을 읽지 못했습니다.');
+        }
+        if (!saved || !saved.values) {
+            throw new Error('이 브라우저에 저장된 현금흐름 계획이 없습니다.');
+        }
+        cashflowFieldIds.forEach(function (id) {
+            const input = document.getElementById(id);
+            if (input && Object.prototype.hasOwnProperty.call(saved.values, id)) input.value = saved.values[id];
+        });
+        calculateFreelancerCashflow();
+        setStatus('저장한 현금흐름 계획을 불러왔습니다.', 'success');
     }
 
     function escapeAttribute(text) {
@@ -2291,6 +2354,15 @@
     }
 
     document.addEventListener('click', function (event) {
+        const quoteContact = event.target.closest('[data-quote-contact]');
+        if (quoteContact) {
+            try {
+                openQuoteAmountInquiry();
+            } catch (error) {
+                setStatus(error.message || '상담 문의 내용을 준비하지 못했습니다.', 'error');
+            }
+            return;
+        }
         const scopeContact = event.target.closest('[data-scope-contact]');
         if (scopeContact) {
             try {
@@ -2559,6 +2631,10 @@
                 calculateWebsiteScope();
             } else if (action === 'cashflow-calculate') {
                 calculateFreelancerCashflow();
+            } else if (action === 'cashflow-save') {
+                saveCashflowPlan();
+            } else if (action === 'cashflow-load') {
+                loadCashflowPlan();
             } else if (action === 'meta-generate') {
                 generateMetaTags();
             } else if (action === 'slug-generate') {
