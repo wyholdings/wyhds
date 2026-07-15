@@ -1726,21 +1726,20 @@
         window.location.assign('/contact?inquiry=business&tool=website-scope-estimator&source=website-scope-estimator');
     }
 
-    function calculateFreelancerCashflow() {
-        const openingCash = Number(getValue('#cashflow-opening-cash')) || 0;
-        const revenue = Number(getValue('#cashflow-revenue')) || 0;
-        const otherIncome = Number(getValue('#cashflow-other-income')) || 0;
-        const fixedCost = Number(getValue('#cashflow-fixed-cost')) || 0;
-        const variableCost = Number(getValue('#cashflow-variable-cost')) || 0;
-        const livingCost = Number(getValue('#cashflow-living-cost')) || 0;
-        const debt = Number(getValue('#cashflow-debt')) || 0;
-        const savings = Number(getValue('#cashflow-savings')) || 0;
-        const vatRate = Number(getValue('#cashflow-vat-rate')) || 0;
-        const incomeTaxRate = Number(getValue('#cashflow-income-tax-rate')) || 0;
+    function cashflowMetrics(rawValues) {
+        const number = function (id) { return Number(rawValues[id]) || 0; };
+        const openingCash = number('cashflow-opening-cash');
+        const revenue = number('cashflow-revenue');
+        const otherIncome = number('cashflow-other-income');
+        const fixedCost = number('cashflow-fixed-cost');
+        const variableCost = number('cashflow-variable-cost');
+        const livingCost = number('cashflow-living-cost');
+        const debt = number('cashflow-debt');
+        const savings = number('cashflow-savings');
+        const vatRate = number('cashflow-vat-rate');
+        const incomeTaxRate = number('cashflow-income-tax-rate');
         const values = [openingCash, revenue, otherIncome, fixedCost, variableCost, livingCost, debt, savings, vatRate, incomeTaxRate];
-        if (values.some(function (value) { return !Number.isFinite(value) || value < 0; })) {
-            throw new Error('모든 금액과 적립률을 0 이상으로 입력해 주세요.');
-        }
+        if (values.some(function (value) { return !Number.isFinite(value) || value < 0; })) throw new Error('모든 금액과 적립률을 0 이상으로 입력해 주세요.');
         const reserveRate = (vatRate + incomeTaxRate) / 100;
         if (reserveRate >= 1) throw new Error('세금 적립률의 합계는 100%보다 작아야 합니다.');
 
@@ -1754,53 +1753,124 @@
         const targetRevenue = Math.max(0, (nextMonthNeed - otherIncome) / (1 - reserveRate));
         const essentialMonthlyCost = businessCost + livingCost + debt;
         const runway = essentialMonthlyCost > 0 ? availableCash / essentialMonthlyCost : 0;
-        const won = function (value) { return formatNumber(Math.round(value)) + '원'; };
-        document.getElementById('cashflow-total-income').textContent = won(totalIncome);
-        document.getElementById('cashflow-business-cost').textContent = won(businessCost);
-        document.getElementById('cashflow-tax-reserve').textContent = won(taxReserve);
-        document.getElementById('cashflow-closing-cash').textContent = won(closingCash);
-        document.getElementById('cashflow-available-cash').textContent = won(availableCash);
-        document.getElementById('cashflow-target-revenue').textContent = won(Math.ceil(targetRevenue / 10000) * 10000);
-        document.getElementById('cashflow-runway').textContent = essentialMonthlyCost > 0 ? formatNumber(runway) + '개월' : '-';
-        setStatus(closingCash < 0 ? '이번 달 예상 현금이 부족합니다. 지출·세금 적립·목표 매출을 조정해 보세요.' : '세금과 저축을 반영한 이번 달 현금흐름을 계산했습니다.', closingCash < 0 ? 'error' : 'success');
+        return { totalIncome, businessCost, taxReserve, closingCash, availableCash, targetRevenue, runway };
     }
 
-    const cashflowStorageKey = 'wy_cashflow_planner_draft';
+    function currentCashflowValues() {
+        const values = {};
+        cashflowFieldIds.forEach(function (id) { values[id] = getValue('#' + id); });
+        return values;
+    }
+
+    function calculateFreelancerCashflow() {
+        const metrics = cashflowMetrics(currentCashflowValues());
+        const won = function (value) { return formatNumber(Math.round(value)) + '원'; };
+        document.getElementById('cashflow-total-income').textContent = won(metrics.totalIncome);
+        document.getElementById('cashflow-business-cost').textContent = won(metrics.businessCost);
+        document.getElementById('cashflow-tax-reserve').textContent = won(metrics.taxReserve);
+        document.getElementById('cashflow-closing-cash').textContent = won(metrics.closingCash);
+        document.getElementById('cashflow-available-cash').textContent = won(metrics.availableCash);
+        document.getElementById('cashflow-target-revenue').textContent = won(Math.ceil(metrics.targetRevenue / 10000) * 10000);
+        document.getElementById('cashflow-runway').textContent = metrics.runway > 0 ? formatNumber(metrics.runway) + '개월' : '-';
+        setStatus(metrics.closingCash < 0 ? '이번 달 예상 현금이 부족합니다. 지출·세금 적립·목표 매출을 조정해 보세요.' : '세금과 저축을 반영한 이번 달 현금흐름을 계산했습니다.', metrics.closingCash < 0 ? 'error' : 'success');
+        return metrics;
+    }
+
+    const cashflowStorageKey = 'wy_cashflow_planner_plans';
     const cashflowFieldIds = [
         'cashflow-opening-cash', 'cashflow-revenue', 'cashflow-other-income',
         'cashflow-fixed-cost', 'cashflow-variable-cost', 'cashflow-living-cost',
         'cashflow-debt', 'cashflow-savings', 'cashflow-vat-rate', 'cashflow-income-tax-rate'
     ];
 
-    function saveCashflowPlan() {
-        const values = {};
-        cashflowFieldIds.forEach(function (id) {
-            const input = document.getElementById(id);
-            if (input) values[id] = input.value;
-        });
-        if (Object.keys(values).length !== cashflowFieldIds.length) {
-            throw new Error('현금흐름 입력 항목을 찾지 못했습니다.');
-        }
-        localStorage.setItem(cashflowStorageKey, JSON.stringify({ savedAt: new Date().toISOString(), values }));
-        setStatus('이번 달 계획을 이 브라우저에 저장했습니다.', 'success');
-    }
-
-    function loadCashflowPlan() {
-        let saved;
+    function getCashflowPlans() {
         try {
-            saved = JSON.parse(localStorage.getItem(cashflowStorageKey) || 'null');
+            const stored = localStorage.getItem(cashflowStorageKey);
+            const plans = JSON.parse(stored || '{}');
+            if (stored) return plans && typeof plans === 'object' ? plans : {};
+
+            const legacy = JSON.parse(localStorage.getItem('wy_cashflow_planner_draft') || 'null');
+            if (legacy && legacy.values) {
+                const savedAt = legacy.savedAt || new Date().toISOString();
+                const month = savedAt.slice(0, 7);
+                const migrated = {};
+                migrated[month] = { savedAt, values: legacy.values };
+                localStorage.setItem(cashflowStorageKey, JSON.stringify(migrated));
+                return migrated;
+            }
+            return {};
         } catch (error) {
             throw new Error('저장한 계획을 읽지 못했습니다.');
         }
-        if (!saved || !saved.values) {
-            throw new Error('이 브라우저에 저장된 현금흐름 계획이 없습니다.');
-        }
+    }
+
+    function refreshCashflowPlanOptions(selectedPlan) {
+        const plans = getCashflowPlans();
+        ['cashflow-saved-plan', 'cashflow-compare-plan'].forEach(function (id) {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const placeholder = id === 'cashflow-compare-plan' ? '비교할 계획 선택' : '저장된 계획 선택';
+            select.innerHTML = '<option value="">' + placeholder + '</option>';
+            Object.keys(plans).sort().reverse().forEach(function (planName) {
+                const option = document.createElement('option');
+                option.value = planName;
+                option.textContent = planName + ' 계획';
+                if (planName === selectedPlan) option.selected = true;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    function saveCashflowPlan() {
+        const planName = getValue('#cashflow-plan-name').trim();
+        if (!/^\d{4}-\d{2}$/.test(planName)) throw new Error('저장할 월을 선택해 주세요.');
+        const values = currentCashflowValues();
+        cashflowMetrics(values);
+        const plans = getCashflowPlans();
+        plans[planName] = { savedAt: new Date().toISOString(), values };
+        localStorage.setItem(cashflowStorageKey, JSON.stringify(plans));
+        refreshCashflowPlanOptions(planName);
+        setStatus(planName + ' 계획을 이 브라우저에 저장했습니다.', 'success');
+    }
+
+    function applyCashflowValues(values) {
         cashflowFieldIds.forEach(function (id) {
             const input = document.getElementById(id);
-            if (input && Object.prototype.hasOwnProperty.call(saved.values, id)) input.value = saved.values[id];
+            if (input && Object.prototype.hasOwnProperty.call(values, id)) input.value = values[id];
         });
+    }
+
+    function loadCashflowPlan() {
+        const planName = getValue('#cashflow-saved-plan');
+        const saved = getCashflowPlans()[planName];
+        if (!saved || !saved.values) throw new Error('불러올 저장 계획을 선택해 주세요.');
+        applyCashflowValues(saved.values);
+        setValue('#cashflow-plan-name', planName);
         calculateFreelancerCashflow();
-        setStatus('저장한 현금흐름 계획을 불러왔습니다.', 'success');
+        setStatus(planName + ' 계획을 불러왔습니다.', 'success');
+    }
+
+    function compareCashflowPlan() {
+        const planName = getValue('#cashflow-compare-plan');
+        const saved = getCashflowPlans()[planName];
+        if (!saved || !saved.values) throw new Error('비교할 저장 계획을 선택해 주세요.');
+        const current = calculateFreelancerCashflow();
+        const compared = cashflowMetrics(saved.values);
+        const difference = function (value) { return (value >= 0 ? '+' : '') + formatNumber(Math.round(value)) + '원'; };
+        const summary = document.getElementById('cashflow-compare-summary');
+        summary.textContent = planName + ' 대비 · 월말 예상 현금 ' + difference(current.closingCash - compared.closingCash) + ' · 다음 달 목표 매출 ' + difference(current.targetRevenue - compared.targetRevenue) + ' · 총수입 ' + difference(current.totalIncome - compared.totalIncome);
+        summary.hidden = false;
+        setStatus(planName + ' 계획과 현재 입력값을 비교했습니다.', 'success');
+    }
+
+    function deleteCashflowPlan() {
+        const planName = getValue('#cashflow-saved-plan');
+        const plans = getCashflowPlans();
+        if (!planName || !plans[planName]) throw new Error('삭제할 저장 계획을 선택해 주세요.');
+        delete plans[planName];
+        localStorage.setItem(cashflowStorageKey, JSON.stringify(plans));
+        refreshCashflowPlanOptions();
+        setStatus(planName + ' 계획을 이 브라우저에서 삭제했습니다.', 'success');
     }
 
     function escapeAttribute(text) {
@@ -2690,6 +2760,10 @@
                 saveCashflowPlan();
             } else if (action === 'cashflow-load') {
                 loadCashflowPlan();
+            } else if (action === 'cashflow-compare') {
+                compareCashflowPlan();
+            } else if (action === 'cashflow-delete') {
+                deleteCashflowPlan();
             } else if (action === 'meta-generate') {
                 generateMetaTags();
             } else if (action === 'slug-generate') {
@@ -2770,7 +2844,12 @@
     if (slug === 'integrated-selling-margin') calculateIntegratedSellingMargin();
     if (slug === 'quote-amount-designer') calculateQuoteAmount();
     if (slug === 'website-scope-estimator') calculateWebsiteScope();
-    if (slug === 'freelancer-cashflow-planner') calculateFreelancerCashflow();
+    if (slug === 'freelancer-cashflow-planner') {
+        const planName = document.getElementById('cashflow-plan-name');
+        if (planName && !planName.value) planName.value = new Date().toISOString().slice(0, 7);
+        refreshCashflowPlanOptions();
+        calculateFreelancerCashflow();
+    }
     if (slug === 'word-counter') {
         const input = document.getElementById('tool-input');
         if (input) input.addEventListener('input', countWords);

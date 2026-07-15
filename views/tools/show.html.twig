@@ -909,10 +909,20 @@
                                 <label>종합소득세 적립률 (%)<input id="cashflow-income-tax-rate" class="tool-input" type="number" min="0" max="100" step="0.1" value="10"></label>
                             </div>
                         </div>
+                        <div class="margin-calculator-section">
+                            <h2>월별 계획 저장·비교</h2>
+                            <div class="result-grid two">
+                                <label>저장할 월<input id="cashflow-plan-name" class="tool-input" type="month"></label>
+                                <label>저장된 계획<select id="cashflow-saved-plan" class="tool-input"><option value="">저장된 계획 없음</option></select></label>
+                                <label>비교할 월<select id="cashflow-compare-plan" class="tool-input"><option value="">비교할 계획 선택</option></select></label>
+                            </div>
+                        </div>
                         <div class="tool-actions">
                             <button type="button" class="tool-btn primary" data-action="cashflow-calculate">현금흐름 계산</button>
                             <button type="button" class="tool-btn" data-action="cashflow-save">이번 달 계획 저장</button>
                             <button type="button" class="tool-btn" data-action="cashflow-load">저장한 계획 불러오기</button>
+                            <button type="button" class="tool-btn" data-action="cashflow-compare">선택 월과 비교</button>
+                            <button type="button" class="tool-btn" data-action="cashflow-delete">선택 계획 삭제</button>
                         </div>
                         <div class="result-grid three margin-result-grid">
                             <div><span>이번 달 총수입</span><strong id="cashflow-total-income">-</strong></div>
@@ -923,6 +933,7 @@
                             <div><span>다음 달 목표 매출</span><strong id="cashflow-target-revenue">-</strong></div>
                             <div><span>현금 여력</span><strong id="cashflow-runway">-</strong></div>
                         </div>
+                        <p id="cashflow-compare-summary" class="tool-note" hidden></p>
                         <p class="tool-note">저장한 계획은 이 브라우저에만 보관되며 서버로 전송되지 않습니다. 세금 적립률은 현금 관리용 가정이므로 실제 세무 자료를 기준으로 조정해 주세요.</p>
                     {% elseif tool.widget == 'date-calculator' %}
                         <label for="date-start">Start date</label>
