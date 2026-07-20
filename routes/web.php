@@ -98,6 +98,10 @@ $router->get('/admin/inquiry/{id}/delete', [App\Controllers\InquiryController::c
 
 //수입/지출
 $router->get('/admin/money/list', [App\Controllers\MoneyController::class, 'list']);
+$router->get('/admin/monthly-expenses', [App\Controllers\MonthlyExpenseController::class, 'list']);
+$router->post('/admin/monthly-expenses/add', [App\Controllers\MonthlyExpenseController::class, 'add']);
+$router->post('/admin/monthly-expenses/update', [App\Controllers\MonthlyExpenseController::class, 'update']);
+$router->post('/admin/monthly-expenses/delete', [App\Controllers\MonthlyExpenseController::class, 'delete']);
 $router->post('/admin/money/add', [App\Controllers\MoneyController::class, 'add']);
 $router->post('/admin/money/update', [App\Controllers\MoneyController::class, 'update']);
 $router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'delete']);
