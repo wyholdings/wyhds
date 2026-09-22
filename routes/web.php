@@ -109,12 +109,27 @@ $router->post('/admin/money/delete', [App\Controllers\MoneyController::class, 'd
 $router->get('/admin/webhard', [App\Controllers\WebhardController::class, 'index']);
 $router->get('/admin/webhard/', [App\Controllers\WebhardController::class, 'index']);
 $router->get('/admin/webhard/download', [App\Controllers\WebhardController::class, 'download']);
+$router->get('/admin/webhard/preview', [App\Controllers\WebhardController::class, 'preview']);
+$router->get('/admin/webhard/download-folder', [App\Controllers\WebhardController::class, 'downloadFolder']);
 $router->get('/admin/webhard/logs', [App\Controllers\WebhardController::class, 'logs']);
 $router->post('/admin/webhard/folder', [App\Controllers\WebhardController::class, 'createFolder']);
+$router->post('/admin/webhard/upload', [App\Controllers\WebhardController::class, 'upload']);
 $router->post('/admin/webhard/upload-folder', [App\Controllers\WebhardController::class, 'uploadFolder']);
+$router->post('/admin/webhard/upload-chunk', [App\Controllers\WebhardController::class, 'uploadChunk']);
+$router->post('/admin/webhard/download-selected', [App\Controllers\WebhardController::class, 'downloadSelected']);
 $router->post('/admin/webhard/rename', [App\Controllers\WebhardController::class, 'rename']);
 $router->post('/admin/webhard/delete', [App\Controllers\WebhardController::class, 'delete']);
-$router->post('/admin/webhard/upload', [App\Controllers\WebhardController::class, 'upload']);
+$router->post('/admin/webhard/share', [App\Controllers\WebhardController::class, 'createShare']);
+$router->post('/admin/webhard/share/revoke', [App\Controllers\WebhardController::class, 'revokeShare']);
+
+$router->get('/share/webhard/{token}', [App\Controllers\WebhardController::class, 'share']);
+$router->post('/share/webhard/{token}/password', [App\Controllers\WebhardController::class, 'sharePassword']);
+$router->get('/share/webhard/{token}/download', [App\Controllers\WebhardController::class, 'shareDownload']);
+$router->get('/share/webhard/{token}/preview', [App\Controllers\WebhardController::class, 'sharePreview']);
+$router->get('/share/webhard/{token}/download-folder', [App\Controllers\WebhardController::class, 'shareDownloadFolder']);
+$router->post('/share/webhard/{token}/upload', [App\Controllers\WebhardController::class, 'shareUpload']);
+$router->post('/share/webhard/{token}/upload-folder', [App\Controllers\WebhardController::class, 'shareUploadFolder']);
+$router->post('/share/webhard/{token}/upload-chunk', [App\Controllers\WebhardController::class, 'shareUploadChunk']);
 
 //ebook 빌드
 $router->get('/admin/ebook/list', [App\Controllers\EbookController::class, 'list']);
