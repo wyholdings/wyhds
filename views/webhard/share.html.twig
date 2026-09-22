@@ -199,16 +199,12 @@
         return;
     }
 
-    if (folderPickerBtn && window.showDirectoryPicker) {
-        folderPickerBtn.style.display = '';
-        folderInput.style.display = 'none';
-        folderPickerBtn.addEventListener('click', function() {
-            window.showDirectoryPicker().then(function(handle) {
-                selectedFolderHandle = handle;
-                folderPickerBtn.textContent = handle.name;
-            });
-        });
+    // FileList-based folder selection is more reliable than recursively reading
+    // File System Access API handles on synced or network-backed folders.
+    if (folderPickerBtn) {
+        folderPickerBtn.style.display = 'none';
     }
+    folderInput.style.display = '';
 
     folderForm.addEventListener('submit', function(e) {
         e.preventDefault();

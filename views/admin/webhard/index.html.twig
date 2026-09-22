@@ -392,20 +392,13 @@
     var folderPickerBtn = document.getElementById('folder-picker-btn');
     var selectedFolderHandle = null;
     if (folderForm && folderInput) {
-        if (folderPickerBtn && window.showDirectoryPicker) {
-            folderPickerBtn.style.display = '';
-            folderInput.style.display = 'none';
-            folderPickerBtn.addEventListener('click', function() {
-                window.showDirectoryPicker()
-                    .then(function(handle) {
-                        selectedFolderHandle = handle;
-                        folderPickerBtn.textContent = handle.name;
-                    })
-                    .catch(function() {
-                        selectedFolderHandle = null;
-                    });
-            });
+        // Use the webkitdirectory FileList instead of showDirectoryPicker().
+        // File-system handles can become stale while recursively walking synced,
+        // network, or frequently updated folders even though direct upload works.
+        if (folderPickerBtn) {
+            folderPickerBtn.style.display = 'none';
         }
+        folderInput.style.display = '';
 
         folderForm.addEventListener('submit', function(e) {
             e.preventDefault();
