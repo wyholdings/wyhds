@@ -1101,14 +1101,13 @@ class WebhardController
 
     private function getChunkBaseDir(): string
     {
-        $dir = realpath(__DIR__ . '/../../storage');
-        if ($dir === false) {
-            $dir = __DIR__ . '/../../storage';
-        }
+        // Keep chunks under WEBHARD_PATH, which is already required to be writable.
+        // Production deployments often do not allow PHP to create a new top-level
+        // storage directory beside the application source.
+        $dir = rtrim($this->baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.webhard_chunks';
 
-        $dir .= DIRECTORY_SEPARATOR . 'webhard_chunks';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            return $dir;
         }
 
         return $dir;
