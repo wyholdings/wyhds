@@ -560,6 +560,7 @@
                         if (onProgress) {
                             onProgress(doneSteps, totalSteps);
                         }
+                        return waitForNextUploadRequest();
                     });
                 });
             })(directories.slice(d, d + directoryBatchSize));
@@ -574,6 +575,7 @@
                         if (onProgress) {
                             onProgress(doneSteps, totalSteps);
                         }
+                        return waitForNextUploadRequest();
                     });
                 });
             })(batch);
@@ -755,6 +757,12 @@
         }
 
         return run();
+    }
+
+    function waitForNextUploadRequest() {
+        return new Promise(function(resolve) {
+            setTimeout(resolve, 350);
+        });
     }
 })();
 </script>

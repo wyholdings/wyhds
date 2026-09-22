@@ -319,6 +319,7 @@
                         if (!json.success) throw new Error(json.message || 'failed');
                         createdDirs += Number(json.created_dirs || 0);
                         onProgress(++doneSteps, totalSteps);
+                        return waitForNextUploadRequest();
                     });
                 });
             })(directories.slice(d, d + 200));
@@ -329,6 +330,7 @@
                 return uploadFolderFileBatch(basePath, batch).then(function(count) {
                     uploadedFiles += count;
                     onProgress(++doneSteps, totalSteps);
+                    return waitForNextUploadRequest();
                 });
             });
         });
@@ -480,6 +482,12 @@
         }
 
         return run();
+    }
+
+    function waitForNextUploadRequest() {
+        return new Promise(function(resolve) {
+            setTimeout(resolve, 350);
+        });
     }
 })();
 </script>
