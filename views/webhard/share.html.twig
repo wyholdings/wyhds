@@ -230,8 +230,9 @@
         }).then(function(result) {
             alert(result.message);
             window.location.reload();
-        }).catch(function() {
-            alert('업로드에 실패했습니다.');
+        }).catch(function(error) {
+            console.error('폴더 업로드 실패:', error);
+            alert(formatFolderUploadError(error));
         }).finally(function() {
             submitBtn.disabled = false;
             submitBtn.textContent = '폴더 통째로 업로드';
@@ -262,15 +263,40 @@
     }
 
     async function appendFolderHandleEntries(payload, directoryHandle, relativePath) {
-        for await (var entry of directoryHandle.values()) {
-            var childPath = relativePath + '/' + entry.name;
-            if (entry.kind === 'directory') {
-                payload.directories.push(childPath);
-                await appendFolderHandleEntries(payload, entry, childPath);
-            } else if (entry.kind === 'file') {
-                payload.files.push({ file: await entry.getFile(), path: childPath });
+        try {
+            for await (var entry of directoryHandle.values()) {
+                var childPath = relativePath + '/' + entry.name;
+                if (entry.kind === 'directory') {
+                    payload.directories.push(childPath);
+                    await appendFolderHandleEntries(payload, entry, childPath);
+                } else if (entry.kind === 'file') {
+                    try {
+                        payload.files.push({ file: await entry.getFile(), path: childPath });
+                    } catch (error) {
+                        throw createFolderUploadError('파일을 읽을 수 없습니다.', childPath, error);
+                    }
+                }
             }
+        } catch (error) {
+            if (error && error.uploadPath) throw error;
+            throw createFolderUploadError('폴더를 읽을 수 없습니다.', relativePath, error);
         }
+    }
+
+    function createFolderUploadError(message, path, cause) {
+        var error = new Error(message);
+        error.uploadPath = path || '';
+        error.causeMessage = cause && cause.message ? cause.message : '';
+        return error;
+    }
+
+    function formatFolderUploadError(error) {
+        var lines = ['폴더 업로드에 실패했습니다.'];
+        if (error && error.uploadPath) lines.push('', '문제 항목:', error.uploadPath);
+        if (error && error.message) lines.push('', '원인: ' + error.message);
+        if (error && error.httpStatus) lines.push('HTTP 상태: ' + error.httpStatus);
+        if (error && error.causeMessage) lines.push('상세: ' + error.causeMessage);
+        return lines.join('\n');
     }
 
     function uploadFolderBatches(basePath, files, directories, onProgress) {
@@ -333,7 +359,31 @@
             formData.append('files[]', item.file);
             formData.append('paths[]', item.path);
         });
-        return fetch('/share/webhard/{{ token }}/upload-folder', { method: 'POST', body: formData }).then(function(res) { return res.json(); });
+        return fetch('/share/webhard/{{ token }}/upload-folder', { method: 'POST', body: formData }).then(function(res) {
+            return res.text().then(function(body) {
+                var json;
+                try {
+                    json = JSON.parse(body);
+                } catch (error) {
+                    var responseError = createFolderUploadError('서버 응답을 해석할 수 없습니다.', files.length ? files.map(function(item) { return item.path; }).join('\n') : directories.join('\n'), error);
+                    responseError.httpStatus = res.status;
+                    throw responseError;
+                }
+                if (!res.ok || !json.success) {
+                    var requestError = createFolderUploadError(json.message || '서버가 업로드를 거부했습니다.', files.length ? files.map(function(item) { return item.path; }).join('\n') : directories.join('\n'));
+                    requestError.httpStatus = res.status;
+                    throw requestError;
+                }
+                if (Number(json.failed || 0) > 0) {
+                    var failedItems = Array.isArray(json.failed_items) ? json.failed_items : [];
+                    var failedPaths = failedItems.map(function(item) {
+                        return item.path + (item.reason ? ' (' + item.reason + ')' : '');
+                    });
+                    throw createFolderUploadError('일부 항목을 업로드하지 못했습니다.', failedPaths.join('\n') || '서버 로그를 확인해 주세요.');
+                }
+                return json;
+            });
+        });
     }
 
     function uploadFolderFileBatch(basePath, files) {
@@ -354,9 +404,16 @@
 
         largeFiles.forEach(function(item) {
             chain = chain.then(function() {
-                return uploadSingleFileInChunks('/share/webhard/{{ token }}/upload-chunk', basePath, item.file, item.path).then(function() {
-                    uploaded++;
-                });
+                return uploadSingleFileInChunks('/share/webhard/{{ token }}/upload-chunk', basePath, item.file, item.path)
+                    .then(function() {
+                        uploaded++;
+                    })
+                    .catch(function(error) {
+                        if (error && !error.uploadPath) {
+                            error.uploadPath = item.path;
+                        }
+                        throw error;
+                    });
             });
         });
 

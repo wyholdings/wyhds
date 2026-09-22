@@ -887,6 +887,7 @@ class WebhardController
         $requestedCount = is_array($paths) ? count($paths) : $count;
         $success = 0;
         $failed = 0;
+        $failedItems = [];
         $createdDirs = 0;
         $processedDirs = 0;
 
@@ -904,6 +905,7 @@ class WebhardController
                 if (!$exists && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
                     $this->logAction($action, $targetRelativeDir, 'fail', 'mkdir_failed');
                     $failed++;
+                    $failedItems[] = ['path' => $targetRelativeDir, 'reason' => '폴더 생성 실패'];
                     continue;
                 }
 
@@ -920,6 +922,10 @@ class WebhardController
             if ($errorCode !== UPLOAD_ERR_OK) {
                 $this->logAction($action, $relativeBase, 'fail', 'upload_error:' . $errorCode);
                 $failed++;
+                $failedItems[] = [
+                    'path' => (string)($paths[$i] ?? $_FILES['files']['name'][$i] ?? '알 수 없는 파일'),
+                    'reason' => 'PHP 업로드 오류 코드 ' . $errorCode,
+                ];
                 continue;
             }
 
@@ -928,6 +934,7 @@ class WebhardController
             if ($relativeFile === '') {
                 $this->logAction($action, $relativeBase, 'fail', 'empty_path');
                 $failed++;
+                $failedItems[] = ['path' => (string)($paths[$i] ?? '알 수 없는 파일'), 'reason' => '잘못된 경로'];
                 continue;
             }
 
@@ -936,6 +943,7 @@ class WebhardController
             if ($fileName === '') {
                 $this->logAction($action, $relativeBase, 'fail', 'bad_name');
                 $failed++;
+                $failedItems[] = ['path' => $relativeFile, 'reason' => '잘못된 파일명'];
                 continue;
             }
 
@@ -945,6 +953,7 @@ class WebhardController
             if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
                 $this->logAction($action, $targetRelativeDir, 'fail', 'mkdir_failed');
                 $failed++;
+                $failedItems[] = ['path' => $relativeFile, 'reason' => '대상 폴더 생성 실패'];
                 continue;
             }
 
@@ -953,6 +962,7 @@ class WebhardController
             if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
                 $this->logAction($action, $this->joinRelative($targetRelativeDir, $fileName), 'fail', 'move_failed');
                 $failed++;
+                $failedItems[] = ['path' => $relativeFile, 'reason' => '파일 저장 실패'];
                 continue;
             }
 
@@ -963,6 +973,7 @@ class WebhardController
         $extra = [
             'uploaded_files' => $success,
             'failed' => $failed,
+            'failed_items' => $failedItems,
             'created_dirs' => $createdDirs,
             'processed_dirs' => $processedDirs,
             'received_files' => $count,
