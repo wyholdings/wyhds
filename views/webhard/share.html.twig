@@ -199,12 +199,21 @@
         return;
     }
 
-    // FileList-based folder selection is more reliable than recursively reading
-    // File System Access API handles on synced or network-backed folders.
+    // Keep the styled picker button while using the reliable webkitdirectory
+    // FileList instead of File System Access API handles.
     if (folderPickerBtn) {
-        folderPickerBtn.style.display = 'none';
+        folderPickerBtn.style.display = '';
+        folderPickerBtn.addEventListener('click', function() {
+            folderInput.click();
+        });
     }
-    folderInput.style.display = '';
+    folderInput.style.display = 'none';
+    folderInput.addEventListener('change', function() {
+        selectedFolderHandle = null;
+        if (!folderPickerBtn || !folderInput.files || folderInput.files.length === 0) return;
+        var firstPath = folderInput.files[0].webkitRelativePath || folderInput.files[0].name;
+        folderPickerBtn.textContent = firstPath.split('/')[0] || '폴더 선택';
+    });
 
     folderForm.addEventListener('submit', function(e) {
         e.preventDefault();

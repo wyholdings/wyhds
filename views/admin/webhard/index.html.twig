@@ -392,13 +392,23 @@
     var folderPickerBtn = document.getElementById('folder-picker-btn');
     var selectedFolderHandle = null;
     if (folderForm && folderInput) {
-        // Use the webkitdirectory FileList instead of showDirectoryPicker().
-        // File-system handles can become stale while recursively walking synced,
-        // network, or frequently updated folders even though direct upload works.
+        // Keep the styled picker button, but use the more reliable webkitdirectory
+        // FileList instead of recursively walking showDirectoryPicker() handles.
         if (folderPickerBtn) {
-            folderPickerBtn.style.display = 'none';
+            folderPickerBtn.style.display = '';
+            folderPickerBtn.addEventListener('click', function() {
+                folderInput.click();
+            });
         }
-        folderInput.style.display = '';
+        folderInput.style.display = 'none';
+        folderInput.addEventListener('change', function() {
+            selectedFolderHandle = null;
+            if (!folderPickerBtn || !folderInput.files || folderInput.files.length === 0) {
+                return;
+            }
+            var firstPath = folderInput.files[0].webkitRelativePath || folderInput.files[0].name;
+            folderPickerBtn.textContent = firstPath.split('/')[0] || '폴더 선택';
+        });
 
         folderForm.addEventListener('submit', function(e) {
             e.preventDefault();
