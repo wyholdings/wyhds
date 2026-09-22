@@ -538,8 +538,8 @@
     }
 
     function uploadFolderBatches(basePath, files, directories, onProgress) {
-        var fileBatchSize = 15;
-        var fileBatchBytes = 25 * 1024 * 1024;
+        var fileBatchSize = 10;
+        var fileBatchBytes = 8 * 1024 * 1024;
         var directoryBatchSize = 200;
         var fileBatches = makeFileBatches(files, fileBatchSize, fileBatchBytes);
         var totalSteps = Math.ceil(directories.length / directoryBatchSize) + fileBatches.length;
@@ -623,10 +623,10 @@
             formData.append('paths[]', item.path);
         });
 
-        return fetch('/admin/webhard/upload-folder', {
+        return fetchWithRetry('/admin/webhard/upload-folder', {
             method: 'POST',
             body: formData
-        }).then(function(res) {
+        }, 3).then(function(res) {
             return res.text().then(function(body) {
                 var json;
                 try {
@@ -654,7 +654,7 @@
     }
 
     function uploadFolderFileBatch(basePath, files) {
-        var chunkThreshold = 25 * 1024 * 1024;
+        var chunkThreshold = 8 * 1024 * 1024;
         var normalFiles = files.filter(function(item) { return item.file.size <= chunkThreshold; });
         var largeFiles = files.filter(function(item) { return item.file.size > chunkThreshold; });
         var uploaded = 0;
@@ -692,7 +692,7 @@
     }
 
     function uploadSingleFileInChunks(url, basePath, file, relativePath, onProgress) {
-        var chunkSize = 20 * 1024 * 1024;
+        var chunkSize = 5 * 1024 * 1024;
         var totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
         var uploadId = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
         var chain = Promise.resolve();
@@ -711,10 +711,10 @@
                     formData.append('total_chunks', totalChunks);
                     formData.append('chunk', file.slice(start, end), file.name + '.part');
 
-                    return fetch(url, {
+                    return fetchWithRetry(url, {
                         method: 'POST',
                         body: formData
-                    }).then(function(res) {
+                    }, 3).then(function(res) {
                         return res.json();
                     }).then(function(json) {
                         if (!json.success) {
@@ -729,6 +729,32 @@
         }
 
         return chain;
+    }
+
+    function fetchWithRetry(url, options, maxAttempts) {
+        var attempt = 0;
+
+        function run() {
+            attempt++;
+            return fetch(url, options).then(function(response) {
+                if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
+                    return new Promise(function(resolve) {
+                        setTimeout(resolve, 700 * attempt);
+                    }).then(run);
+                }
+                return response;
+            }).catch(function(error) {
+                if (attempt >= maxAttempts) {
+                    error.message = (error.message || 'Failed to fetch') + ' (' + attempt + '회 재시도 실패)';
+                    throw error;
+                }
+                return new Promise(function(resolve) {
+                    setTimeout(resolve, 700 * attempt);
+                }).then(run);
+            });
+        }
+
+        return run();
     }
 })();
 </script>

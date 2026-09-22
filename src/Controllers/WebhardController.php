@@ -1025,8 +1025,15 @@ class WebhardController
             $this->jsonError('파일 조각 업로드에 실패했습니다.');
         }
 
-        $chunkDir = $this->getChunkBaseDir() . DIRECTORY_SEPARATOR . $uploadId;
-        if (!is_dir($chunkDir) && !mkdir($chunkDir, 0775, true) && !is_dir($chunkDir)) {
+        $chunkBaseDir = $this->getChunkBaseDir();
+        if (!is_dir($chunkBaseDir) || !is_writable($chunkBaseDir)) {
+            $this->logAction($action, $relativeFilePath, 'fail', 'chunk_base_not_writable:' . $chunkBaseDir);
+            $this->jsonError('임시 업로드 폴더에 쓰기 권한이 없습니다.');
+        }
+
+        $chunkDir = $chunkBaseDir . DIRECTORY_SEPARATOR . $uploadId;
+        if (!is_dir($chunkDir) && !@mkdir($chunkDir, 0770, true) && !is_dir($chunkDir)) {
+            $this->logAction($action, $relativeFilePath, 'fail', 'chunk_dir_create_failed:' . $chunkDir);
             $this->jsonError('임시 업로드 폴더를 만들지 못했습니다.');
         }
 
@@ -1101,12 +1108,14 @@ class WebhardController
 
     private function getChunkBaseDir(): string
     {
-        // Keep chunks under WEBHARD_PATH, which is already required to be writable.
-        // Production deployments often do not allow PHP to create a new top-level
-        // storage directory beside the application source.
-        $dir = rtrim($this->baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.webhard_chunks';
+        // Uploaded temporary files already use this writable system location.
+        // Do not depend on write access to the deployed source or WEBHARD_PATH root.
+        $configuredDir = trim((string)($_ENV['WEBHARD_CHUNK_PATH'] ?? ''));
+        $dir = $configuredDir !== ''
+            ? rtrim($configuredDir, "\\/")
+            : rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'wyhds_webhard_chunks';
 
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !@mkdir($dir, 0770, true) && !is_dir($dir)) {
             return $dir;
         }
 
