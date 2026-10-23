@@ -296,11 +296,100 @@ class EbookController
                 #viewer-panel.is-open {
                     display: block;
                 }
-                #btn-toggle-search {
+                #btn-toggle-search,
+                #btn-thumbnails {
                     width: 100%;
                     margin: 0;
                     text-align: left;
                     background: #fff;
+                }
+                #btn-thumbnails {
+                    margin-top: 8px;
+                }
+                #thumbnail-dialog {
+                    width: calc(100% - 32px);
+                    height: calc(100% - 32px);
+                    max-width: none;
+                    max-height: none;
+                    margin: auto;
+                    padding: 0;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #292b2e;
+                    color: #fff;
+                    overflow: hidden;
+                    box-sizing: border-box;
+                }
+                #thumbnail-dialog[open] {
+                    display: flex;
+                    flex-direction: column;
+                }
+                #thumbnail-dialog::backdrop {
+                    background: rgba(0,0,0,0.72);
+                }
+                #thumbnail-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 12px 18px;
+                    border-bottom: 1px solid #484a4d;
+                }
+                #thumbnail-title {
+                    margin: 0;
+                    font-size: 1rem;
+                }
+                #thumbnail-count {
+                    margin-left: 8px;
+                    font-size: 0.85rem;
+                    font-weight: normal;
+                    color: #ccc;
+                }
+                #btn-close-thumbnails {
+                    margin: 0;
+                    flex-shrink: 0;
+                }
+                #thumbnail-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                    align-content: start;
+                    gap: 14px;
+                    padding: 18px;
+                    overflow: auto;
+                    overscroll-behavior: contain;
+                    min-height: 0;
+                }
+                .thumbnail-item {
+                    display: block;
+                    width: 100%;
+                    min-width: 0;
+                    margin: 0;
+                    padding: 4px;
+                    border: 3px solid transparent;
+                    background: #fff;
+                    color: #333;
+                }
+                .thumbnail-item:hover,
+                .thumbnail-item:focus-visible {
+                    border-color: #65b5ff;
+                    outline: 2px solid #65b5ff;
+                    outline-offset: 2px;
+                }
+                .thumbnail-item.is-current {
+                    border-color: #ffd84d;
+                    background: #fff3bc;
+                }
+                .thumbnail-item img {
+                    display: block;
+                    width: 100%;
+                    aspect-ratio: 210 / 297;
+                    object-fit: contain;
+                    background: #f4f4f4;
+                }
+                .thumbnail-item span {
+                    display: block;
+                    padding: 7px 0 3px;
+                    font-size: 0.85rem;
                 }
                 #search-panel {
                     display: none;
@@ -411,6 +500,15 @@ class EbookController
                 #search-results {
                     max-height: 42vh;
                 }
+                #thumbnail-dialog {
+                    width: calc(100% - 16px);
+                    height: calc(100% - 16px);
+                }
+                #thumbnail-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 10px;
+                    padding: 12px;
+                }
                 }
 
                 #flipbook .page-canvas{
@@ -478,9 +576,10 @@ class EbookController
     <body>
     <div id='flipbook-wrapper'>
     <div id='viewer-overlay'>
-    <button type='button' id='menu-toggle' aria-expanded='false' aria-controls='viewer-panel'>☰</button>
+    <button type='button' id='menu-toggle' aria-label='뷰어 메뉴' aria-expanded='false' aria-controls='viewer-panel'>☰</button>
     <div id='viewer-panel'>
     <button type='button' id='btn-toggle-search'>검색창 열기</button>
+    <button type='button' id='btn-thumbnails' aria-haspopup='dialog' aria-controls='thumbnail-dialog'>썸네일</button>
     <div id='search-panel'>
     <div id='search-form'>
     <input id='search-query' type='search' placeholder='내용 검색' aria-label='내용 검색'>
@@ -519,6 +618,14 @@ class EbookController
         <button id="btn-save-links">DB 저장</button>
     </div>
     </div>
+
+    <dialog id='thumbnail-dialog' aria-labelledby='thumbnail-title'>
+        <div id='thumbnail-header'>
+            <h2 id='thumbnail-title'>전체 페이지<span id='thumbnail-count'></span></h2>
+            <button type='button' id='btn-close-thumbnails' aria-label='썸네일 닫기'>닫기 ✕</button>
+        </div>
+        <div id='thumbnail-grid' aria-label='페이지 썸네일 목록'></div>
+    </dialog>
 
     <script>
         const EBOOK_ID = (function(){
@@ -996,6 +1103,8 @@ class EbookController
         }
 
         $(function () {
+            // Capture the original page images before turn.js rearranges the DOM.
+            const pageImages = Array.from(document.querySelectorAll('#flipbook .page img'));
             $('#flipbook .page').each(function(){
                 if (!this.querySelector('.page-canvas')) {
                     const canvas = document.createElement('div');
@@ -1044,6 +1153,71 @@ class EbookController
             const searchInput = document.getElementById('search-query');
             const menuToggle = document.getElementById('menu-toggle');
             const btnToggleSearch = document.getElementById('btn-toggle-search');
+            const btnThumbnails = document.getElementById('btn-thumbnails');
+            const thumbnailDialog = document.getElementById('thumbnail-dialog');
+            const thumbnailGrid = document.getElementById('thumbnail-grid');
+            const btnCloseThumbnails = document.getElementById('btn-close-thumbnails');
+
+            function openThumbnails() {
+                if (!thumbnailGrid.children.length) {
+                    const fragment = document.createDocumentFragment();
+                    pageImages.forEach((pageImage, index) => {
+                        const page = index + 1;
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'thumbnail-item';
+                        button.dataset.page = page;
+                        button.setAttribute('aria-label', page + '페이지로 이동');
+
+                        const image = document.createElement('img');
+                        image.src = pageImage.getAttribute('src');
+                        image.alt = '';
+                        image.loading = 'lazy';
+                        image.decoding = 'async';
+                        const caption = document.createElement('span');
+                        caption.textContent = page + '페이지';
+                        button.append(image, caption);
+                        fragment.appendChild(button);
+                    });
+                    thumbnailGrid.appendChild(fragment);
+                    document.getElementById('thumbnail-count').textContent = '총 ' + totalPages + '페이지';
+                }
+
+                const currentPage = $('#flipbook').turn('page');
+                const visiblePages = ($('#flipbook').turn('view') || []).filter(Boolean);
+                Array.from(thumbnailGrid.children).forEach((button) => {
+                    const page = Number(button.dataset.page);
+                    button.classList.toggle('is-current', visiblePages.includes(page));
+                    if (page === currentPage) button.setAttribute('aria-current', 'page');
+                    else button.removeAttribute('aria-current');
+                });
+
+                setMenuOpen(false);
+                thumbnailDialog.showModal();
+                const selected = thumbnailGrid.querySelector('[aria-current="page"]');
+                if (selected) {
+                    selected.scrollIntoView({ block: 'center' });
+                    selected.focus({ preventScroll: true });
+                }
+            }
+
+            btnThumbnails.addEventListener('click', openThumbnails);
+            btnCloseThumbnails.addEventListener('click', () => thumbnailDialog.close());
+            thumbnailGrid.addEventListener('click', (event) => {
+                const button = event.target.closest('.thumbnail-item');
+                if (!button) return;
+                goTo(Number(button.dataset.page));
+                thumbnailDialog.close();
+            });
+            thumbnailDialog.addEventListener('close', () => menuToggle.focus());
+            thumbnailDialog.addEventListener('click', (event) => {
+                if (event.target !== thumbnailDialog) return;
+                const rect = thumbnailDialog.getBoundingClientRect();
+                if (event.clientX < rect.left || event.clientX > rect.right ||
+                    event.clientY < rect.top || event.clientY > rect.bottom) {
+                    thumbnailDialog.close();
+                }
+            });
 
             const syncPageUi = (viewOverride) => {
                 const view = Array.isArray(viewOverride) && viewOverride.length
