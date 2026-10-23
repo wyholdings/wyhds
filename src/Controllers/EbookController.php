@@ -273,38 +273,105 @@ class EbookController
                     gap: 8px;
                 }
                 #menu-toggle {
-                    width: 42px;
-                    height: 42px;
+                    display: grid;
+                    place-items: center;
+                    width: 44px;
+                    height: 44px;
                     padding: 0;
                     margin: 0;
-                    font-size: 20px;
-                    line-height: 1;
-                    background: rgba(34,34,34,0.92);
+                    border: 1px solid rgba(255,255,255,0.12);
+                    border-radius: 12px;
+                    background: #363a3e;
                     color: #fff;
-                    border-color: rgba(34,34,34,0.92);
-                    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+                    box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+                    transition: background 0.18s, box-shadow 0.18s;
+                }
+                #menu-toggle:hover,
+                #menu-toggle[aria-expanded='true'] {
+                    background: #50565c;
+                    box-shadow: 0 6px 18px rgba(0,0,0,0.26);
+                }
+                #menu-toggle svg {
+                    width: 23px;
+                    height: 23px;
+                }
+                #menu-toggle:focus-visible,
+                #viewer-panel button:focus-visible {
+                    outline: 2px solid #ffe18a;
+                    outline-offset: 3px;
                 }
                 #viewer-panel {
-                    width: min(360px, calc(100vw - 28px));
-                    padding: 10px;
-                    background: rgba(255,255,255,0.98);
-                    border: 1px solid #ddd;
-                    border-radius: 6px;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+                    width: min(320px, calc(100vw - 28px));
+                    max-height: calc(100dvh - 88px);
+                    overflow: auto;
+                    box-sizing: border-box;
+                    padding: 18px;
+                    background: #464b50;
+                    color: #fff;
+                    border: 1px solid rgba(255,255,255,0.12);
+                    border-radius: 18px;
+                    box-shadow: 0 18px 48px rgba(24,29,34,0.28), 0 3px 8px rgba(24,29,34,0.12);
+                    color-scheme: dark;
                     display: none;
                 }
                 #viewer-panel.is-open {
                     display: block;
                 }
-                #btn-toggle-search,
-                #btn-thumbnails {
+                .viewer-panel-title {
+                    margin: 0 0 14px;
+                    padding: 0 2px 13px;
+                    border-bottom: 1px solid rgba(255,255,255,0.14);
+                    font-size: 14px;
+                    font-weight: 600;
+                    letter-spacing: -0.3px;
+                }
+                .viewer-tools {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 10px;
+                }
+                #viewer-panel .viewer-tool {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 13px;
                     width: 100%;
                     margin: 0;
-                    text-align: left;
-                    background: #fff;
+                    padding: 14px 8px 12px;
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 12px;
+                    background: rgba(255,255,255,0.04);
+                    color: #f4f5f6;
+                    font-size: 13px;
+                    font-weight: 600;
+                    transition: background 0.18s, border-color 0.18s;
                 }
-                #btn-thumbnails {
-                    margin-top: 8px;
+                .viewer-tool-icon {
+                    display: grid;
+                    place-items: center;
+                    width: 64px;
+                    height: 64px;
+                    border-radius: 16px;
+                    background: #fff;
+                    color: #73797e;
+                    box-shadow: 0 5px 0 #b4b8bb, 0 7px 10px rgba(0,0,0,0.16);
+                    transition: transform 0.18s, background 0.18s, color 0.18s;
+                }
+                .viewer-tool-icon svg {
+                    width: 36px;
+                    height: 36px;
+                }
+                #viewer-panel .viewer-tool:hover,
+                #viewer-panel .viewer-tool.is-active {
+                    border-color: #e6ca76;
+                    background: rgba(255,225,138,0.08);
+                    color: #ffe18a;
+                }
+                .viewer-tool:hover .viewer-tool-icon,
+                .viewer-tool.is-active .viewer-tool-icon {
+                    transform: translateY(-2px);
+                    background: #fff8e3;
+                    color: #766135;
                 }
                 #thumbnail-dialog {
                     width: calc(100% - 32px);
@@ -393,7 +460,9 @@ class EbookController
                 }
                 #search-panel {
                     display: none;
-                    margin-top: 10px;
+                    margin-top: 18px;
+                    padding-top: 16px;
+                    border-top: 1px solid rgba(255,255,255,0.14);
                 }
                 #search-panel.is-open {
                     display: block;
@@ -407,22 +476,37 @@ class EbookController
                     flex: 1;
                     min-width: 0;
                     font-size: 0.9rem;
-                    padding: 8px 10px;
-                    border: 1px solid #ccc;
-                    border-radius: 5px;
+                    padding: 11px 12px;
+                    border: 1px solid #cfd3d7;
+                    border-radius: 9px;
+                    background: #fff;
+                    color: #252a30;
+                    color-scheme: light;
                     box-sizing: border-box;
+                }
+                #search-query:focus-visible {
+                    outline: 2px solid #ffe18a;
+                    outline-offset: 2px;
                 }
                 #btn-search {
                     margin: 0;
-                    background: #222;
-                    color: #fff;
-                    border-color: #222;
+                    padding: 11px 14px;
+                    flex-shrink: 0;
+                    border-radius: 9px;
+                    background: #ffe18a;
+                    color: #393126;
+                    border-color: #ffe18a;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+                #btn-search:hover {
+                    background: #ffda70;
                 }
                 #search-status {
                     display: block;
                     margin-top: 8px;
                     font-size: 0.85rem;
-                    color: #666;
+                    color: #d1d5d9;
                     text-align: left;
                 }
                 #search-results {
@@ -430,6 +514,8 @@ class EbookController
                     margin-top: 10px;
                     overflow: auto;
                     background: #fff;
+                    color: #30363c;
+                    color-scheme: light;
                     border: 1px solid #ddd;
                     border-radius: 6px;
                     box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
@@ -443,11 +529,15 @@ class EbookController
                     border: 0;
                     border-bottom: 1px solid #eee;
                     background: #fff;
+                    color: #30363c;
                     margin: 0;
                     border-radius: 0;
                 }
                 .search-result-item:last-child {
                     border-bottom: 0;
+                }
+                .search-result-item:hover {
+                    background: #fff8e3;
                 }
                 .search-result-item strong {
                     display: block;
@@ -485,7 +575,8 @@ class EbookController
                     right: 10px;
                 }
                 #viewer-panel {
-                    width: min(340px, calc(100vw - 20px));
+                    width: min(320px, calc(100vw - 20px));
+                    max-height: calc(100dvh - 78px);
                 }
                 #search-form {
                     flex-wrap: wrap;
@@ -576,10 +667,25 @@ class EbookController
     <body>
     <div id='flipbook-wrapper'>
     <div id='viewer-overlay'>
-    <button type='button' id='menu-toggle' aria-label='뷰어 메뉴' aria-expanded='false' aria-controls='viewer-panel'>☰</button>
+    <button type='button' id='menu-toggle' aria-label='뷰어 메뉴' aria-expanded='false' aria-controls='viewer-panel'>
+        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' aria-hidden='true' focusable='false'><path d='M4 6h16M4 12h16M4 18h16'/></svg>
+    </button>
     <div id='viewer-panel'>
-    <button type='button' id='btn-toggle-search'>검색창 열기</button>
-    <button type='button' id='btn-thumbnails' aria-haspopup='dialog' aria-controls='thumbnail-dialog'>썸네일</button>
+    <h2 class='viewer-panel-title'>뷰어 도구</h2>
+    <div class='viewer-tools'>
+        <button type='button' id='btn-toggle-search' class='viewer-tool' aria-label='검색창 열기' aria-expanded='false' aria-controls='search-panel'>
+            <span class='viewer-tool-icon'>
+                <svg viewBox='0 0 40 40' fill='none' stroke='currentColor' stroke-width='2.8' stroke-linecap='round' aria-hidden='true' focusable='false'><circle cx='17' cy='17' r='10.5'/><path d='m25 25 9 9'/></svg>
+            </span>
+            <span>내용 검색</span>
+        </button>
+        <button type='button' id='btn-thumbnails' class='viewer-tool' aria-haspopup='dialog' aria-controls='thumbnail-dialog'>
+            <span class='viewer-tool-icon'>
+                <svg viewBox='0 0 40 40' fill='currentColor' aria-hidden='true' focusable='false'><rect x='4' y='4' width='14' height='14' rx='4'/><rect x='22' y='4' width='14' height='14' rx='4'/><rect x='4' y='22' width='14' height='14' rx='4'/><rect x='22' y='22' width='14' height='14' rx='4'/></svg>
+            </span>
+            <span>썸네일</span>
+        </button>
+    </div>
     <div id='search-panel'>
     <div id='search-form'>
     <input id='search-query' type='search' placeholder='내용 검색' aria-label='내용 검색'>
@@ -861,7 +967,11 @@ class EbookController
             const panel = document.getElementById('search-panel');
             const button = document.getElementById('btn-toggle-search');
             if (panel) panel.classList.toggle('is-open', isOpen);
-            if (button) button.textContent = isOpen ? '검색창 닫기' : '검색창 열기';
+            if (button) {
+                button.classList.toggle('is-active', isOpen);
+                button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                button.setAttribute('aria-label', isOpen ? '검색창 닫기' : '검색창 열기');
+            }
         }
 
         function escapeHtml(value){
