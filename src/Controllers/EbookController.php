@@ -625,6 +625,10 @@ class EbookController
                     background: rgba(255,0,0,.2);
                     outline: 1px dashed red;
                 }
+                .show-link-boxes .link-area {
+                    background: rgba(255,0,0,.12);
+                    outline: 1px dashed red;
+                }
                 .picker-box{
                     position:absolute; z-index:9;
                     outline:1px dashed red;
@@ -720,7 +724,7 @@ class EbookController
     <button type='button' id='btn-last'>⏭</button>
     </div>
     <div id="admin-save-panel">
-        링크 좌표 편집 중
+        링크 편집 · 드래그로 추가 / 링크 우클릭으로 삭제
         <button id="btn-save-links">DB 저장</button>
     </div>
     </div>
@@ -756,6 +760,7 @@ class EbookController
             if (typeof window.enablePickerMode === "function") {
                 window.enablePickerMode();
             }
+            requestAnimationFrame(applyLinks);
         }
         
         // 저장 버튼 이벤트
@@ -864,6 +869,7 @@ class EbookController
 
                     canvasEl.addEventListener('mousedown', (e)=>{
                         if (e.button !== 0) return;
+                        if (e.target.closest('.link-area')) return;
                         const map = getContainMap(canvasEl, img);
                         const pt = clientToImagePx(map, e.clientX, e.clientY);
                         if (!pt.inside) return;
@@ -932,6 +938,7 @@ class EbookController
                         console.log('현재 linkMap', window.linkMap);
 
                         box.remove(); box = null; ctx = null;
+                        requestAnimationFrame(applyLinks);
                     });
                 });
             }
@@ -1163,12 +1170,26 @@ class EbookController
                 const offsetLeft = (cw - renderW) / 2;
                 const offsetTop  = (ch - renderH) / 2;
 
-                areas.forEach(({ href, goto, x, y, w, h, title }) => {
+                areas.forEach((area) => {
+                    const { href, goto, x, y, w, h, title } = area;
                     if ([x,y,w,h].some(v => v === undefined)) return;
 
                     const a = document.createElement('a');
                     a.className = 'link-area';
                     a.setAttribute('aria-label', title || '');
+                    a.title = adminMode ? '우클릭으로 링크 삭제 · 변경 후 DB 저장' : (title || '');
+                    a.addEventListener('contextmenu', (event) => {
+                        if (!adminMode) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        // Use the link object so deleting another link cannot shift its index.
+                        const currentAreas = window.linkMap[page];
+                        const index = currentAreas ? currentAreas.indexOf(area) : -1;
+                        if (index === -1) return;
+                        currentAreas.splice(index, 1);
+                        a.remove();
+                    });
 
                     Object.assign(a.style, {
                         position: 'absolute',
