@@ -44,6 +44,7 @@ class ShortsAutomationService
         }
 
         (new ShortsEnvironment())->assertReady();
+        (new PixabayVideoClient())->assertAvailable(trim((string)($payload['stock_keyword'] ?? '')));
 
         $jobId = date('Ymd_His') . '_' . $this->slugify($keyword) . '_' . bin2hex(random_bytes(4));
         $jobDir = $this->outputRoot . '/' . $jobId;

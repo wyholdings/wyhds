@@ -41,6 +41,7 @@ sudo -u www-data php scripts/check_shorts.php
 php tests/shorts_regression.php
 php tests/shorts_refresh_regression.php
 php tests/shorts_pixabay_regression.php
+php tests/pixabay_rate_regression.php
 php tests/shorts_footage_integration.php /usr/bin/ffmpeg /usr/bin/ffprobe
 ```
 
@@ -51,3 +52,21 @@ php scripts/preview_shorts_thumbnail.php background.jpg cover.png '침대 속 �
 ```
 
 공식 문서: https://pixabay.com/api/docs/ · 라이선스: https://pixabay.com/service/license-summary/
+
+## 첫 요청부터 HTTP 429가 발생할 때
+
+이전 버전은 모든 429를 요청 한도 초과로 표시했습니다. 429만으로 실제 API 사용량 제한인지, 서버 접속 제한인지 단정할 수 없습니다. 수정 버전은 API의 텍스트 오류와 HTML 응답을 구분하고 `Retry-After`, `X-RateLimit-Reset`을 읽습니다. 같은 키를 사용하는 이 배포본의 PHP 작업들이 대기 상태와 요청 수를 공유하며, 대기 중에는 캐시가 없는 검색을 다시 보내지 않습니다. 알려진 대기 상태는 유료 대본 생성 전에 확인합니다. 다른 서버나 다른 프로그램이 같은 키로 보내는 요청까지 이 로컬 제한이 통제하지는 않습니다.
+
+운영 서버에서 PHP 웹 실행 계정으로 다음 명령을 실행합니다. 이 명령은 Pixabay 검색을 최대 한 번 보내고, 캐시나 재시도 대기 상태가 있으면 네트워크 요청을 생략합니다. OpenAI 호출·영상 다운로드는 하지 않습니다.
+
+```bash
+cd /var/www/html/wyhds
+sudo -u www-data php scripts/check_pixabay.php bedroom
+```
+
+- `http_status: 200`, `kind: json_response`: 정상 API 응답입니다. `cache_hit: true`라면 저장된 결과이며 `last_response`는 이전 응답입니다.
+- `kind: api_rate_limit`: API 한도 오류 문구가 확인됐습니다. `wait_seconds` 이후 다시 시도합니다.
+- `kind: html_response`: API JSON 대신 HTML이 반환됐습니다. 서버 IP·호스팅 환경의 접속 제한 여부를 확인해야 합니다. 키나 요금제 문제로 단정하지 않습니다.
+- `other_response`: 상태 코드만으로 원인이 확인되지 않았습니다.
+
+진단 출력에는 키, 요청 URL, 원본 오류 본문을 넣지 않습니다. 키를 바꾸거나 제한을 우회하며 반복 요청하지 말고, 계속되는 접속 제한은 해당 진단 결과와 함께 호스팅 업체 또는 Pixabay 지원에 확인하세요.
