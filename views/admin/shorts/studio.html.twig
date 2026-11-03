@@ -19,7 +19,9 @@
                 <h6 class="m-0 font-weight-bold text-primary">즉시 생성</h6>
             </div>
             <div class="card-body">
-                <form method="post" enctype="multipart/form-data" action="/admin/shorts/studio">
+                <form id="shorts-generation-form" method="post" enctype="multipart/form-data" action="/admin/shorts/studio">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="request_token" value="{{ request_token }}">
                     <div class="form-group">
                         <label>키워드</label>
                         <input type="text" name="keyword" class="form-control" value="{{ form.keyword }}" placeholder="예: 조선시대 미스터리, 부업 자동화, 고양이 상식" required>
@@ -83,7 +85,7 @@
         {% if result %}
         <div class="card shadow-sm mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">방금 생성한 결과</h6>
+                <h6 class="m-0 font-weight-bold text-primary">생성 결과</h6>
             </div>
             <div class="card-body">
                 <div class="mb-3">
@@ -160,6 +162,7 @@
                                 <td><span class="badge badge-status badge-{{ render.status }}">{{ render.status }}</span></td>
                                 <td>
                                     {% if render.video_url %}
+                                    <a href="/admin/shorts/studio?render={{ render.id }}" class="btn btn-sm btn-outline-secondary">결과 보기</a>
                                     <a href="{{ render.video_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info">영상</a>
                                     {% endif %}
                                     {% if render.error_message %}
@@ -194,4 +197,27 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const form = document.getElementById('shorts-generation-form');
+    const button = form.querySelector('button[type="submit"]');
+    form.addEventListener('submit', (event) => {
+        if (form.dataset.submitting === '1') {
+            event.preventDefault();
+            return;
+        }
+        form.dataset.submitting = '1';
+        button.disabled = true;
+        button.textContent = '영상 생성 중…';
+    });
+    window.addEventListener('pageshow', () => {
+        delete form.dataset.submitting;
+        button.disabled = false;
+        button.textContent = '영상 생성 실행';
+    });
+})();
+</script>
 {% endblock %}
