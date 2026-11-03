@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\OpenAIClient;
+use App\Services\GoogleSpeechClient;
 use App\Services\ShortsEnvironment;
 use App\Models\ShortsRenderModel;
 use App\Services\ShortsAutomationService;
@@ -31,15 +32,23 @@ class ShortsStudioController
         unset($_SESSION['shorts_flash']);
         $result = null;
         $environment = ShortsEnvironment::configuration();
+        $google = GoogleSpeechClient::configuration();
         $form = array_merge([
             'keyword' => '',
             'stock_keyword' => '',
             'tone' => 'clickable',
             'duration' => 60,
-            'voice' => $models['tts_voice'],
+            'tts_provider' => $google['provider'],
+            'voice' => $google['provider'] === 'google' ? $google['voice'] : $models['tts_voice'],
             'speech_style' => 'natural',
             'speech_speed' => 1.0,
+            'bgm_mode' => 'default',
+            'bgm_volume' => 12,
         ], $_SESSION['shorts_form'] ?? []);
+        $allowedVoices = $form['tts_provider'] === 'google' ? array_keys(GoogleSpeechClient::VOICES) : OpenAIClient::VOICES;
+        if (!in_array($form['voice'], $allowedVoices, true)) {
+            $form['voice'] = $form['tts_provider'] === 'google' ? $google['voice'] : $models['tts_voice'];
+        }
 
         $selectedId = filter_var($_GET['render'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($selectedId !== false && $selectedId !== null) {
@@ -87,6 +96,8 @@ class ShortsStudioController
             'pixabay_configured' => trim((string)($_ENV['PIXABAY_API_KEY'] ?? '')) !== '',
             'pixabay_cache_root' => $environment['pixabay_cache_root'],
             'voices' => OpenAIClient::VOICES,
+            'google_voices' => GoogleSpeechClient::VOICES,
+            'google_tts_configured' => trim((string)($_ENV['GOOGLE_TTS_API_KEY'] ?? '')) !== '',
         ]);
     }
 
@@ -114,9 +125,12 @@ class ShortsStudioController
             'stock_keyword' => mb_substr(trim((string)($_POST['stock_keyword'] ?? '')), 0, 100),
             'tone' => trim((string)($_POST['tone'] ?? 'clickable')),
             'duration' => max(30, min(90, (int)($_POST['duration'] ?? 60))),
-            'voice' => trim((string)($_POST['voice'] ?? $models['tts_voice'])),
+            'tts_provider' => (string)($_POST['tts_provider'] ?? GoogleSpeechClient::configuration()['provider']),
+            'voice' => trim((string)($_POST['voice'] ?? GoogleSpeechClient::configuration()['voice'])),
             'speech_style' => in_array($_POST['speech_style'] ?? '', ['natural', 'calm', 'bright'], true) ? $_POST['speech_style'] : 'natural',
             'speech_speed' => max(0.85, min(1.15, (float)($_POST['speech_speed'] ?? 1.0))),
+            'bgm_mode' => in_array($_POST['bgm_mode'] ?? '', ['default', 'upload', 'off'], true) ? $_POST['bgm_mode'] : 'default',
+            'bgm_volume' => max(0, min(30, (int)($_POST['bgm_volume'] ?? 12))),
         ];
         $_SESSION['shorts_form'] = $form;
         $renderId = null;
@@ -136,10 +150,13 @@ class ShortsStudioController
                 }
                 $sessionReleased = true;
             }
+            $bgmPath = $form['bgm_mode'] === 'upload' ? $this->storeUploadedBgm($_FILES['bgm_file'] ?? null) : '';
             $result = (new ShortsAutomationService())->generate([
                 'keyword' => $form['keyword'], 'tone' => $form['tone'], 'duration' => $form['duration'],
                 'voice' => $form['voice'], 'speech_style' => $form['speech_style'], 'speech_speed' => $form['speech_speed'],
                 'stock_keyword' => $form['stock_keyword'],
+                'tts_provider' => $form['tts_provider'],
+                'bgm_mode' => $form['bgm_mode'], 'bgm_volume' => $form['bgm_volume'], 'bgm_path' => $bgmPath,
             ]);
             $script = $result['script'];
             $script['_scene_image_urls'] = $result['scene_image_urls'] ?? [];
@@ -183,5 +200,26 @@ class ShortsStudioController
         unset($render);
 
         return $renders;
+    }
+
+    private function storeUploadedBgm(?array $file): string
+    {
+        if (!$file || !is_scalar($file['error'] ?? null) || (int)$file['error'] !== UPLOAD_ERR_OK) {
+            throw new \RuntimeException('배경음악 파일을 업로드하세요. 실패한 경우 PHP upload_max_filesize와 post_max_size도 확인하세요.');
+        }
+        $tmp = is_string($file['tmp_name'] ?? null) ? $file['tmp_name'] : '';
+        if (!is_uploaded_file($tmp) || filesize($tmp) < 1 || filesize($tmp) > 20 * 1024 * 1024) {
+            throw new \RuntimeException('배경음악은 20MB 이하의 오디오 파일이어야 합니다.');
+        }
+        $types = ['audio/mpeg' => 'mp3', 'audio/mp3' => 'mp3', 'audio/wav' => 'wav', 'audio/x-wav' => 'wav',
+            'audio/mp4' => 'm4a', 'audio/x-m4a' => 'm4a', 'video/mp4' => 'm4a', 'audio/ogg' => 'ogg', 'application/ogg' => 'ogg',
+            'audio/flac' => 'flac', 'audio/x-flac' => 'flac'];
+        $mime = (string)mime_content_type($tmp);
+        if (!isset($types[$mime])) { throw new \RuntimeException('배경음악은 MP3, WAV, M4A, OGG, FLAC 형식으로 올려주세요.'); }
+        $dir = ShortsEnvironment::configuration()['output_root'] . '/music';
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) { throw new \RuntimeException('배경음악 업로드 폴더에 쓰기 권한이 필요합니다.'); }
+        $target = $dir . '/bgm_' . bin2hex(random_bytes(12)) . '.' . $types[$mime];
+        if (!move_uploaded_file($tmp, $target)) { throw new \RuntimeException('배경음악 파일을 저장하지 못했습니다.'); }
+        return $target;
     }
 }

@@ -52,17 +52,17 @@ try {
     footageCheck((int)$stream['nb_read_frames'] === 177 && abs((float)$data['format']['duration'] - 5.9) < 0.04, 'short clips loop to exact narration length without cumulative frame rounding drift');
     footageCommand(escapeshellarg($ffmpeg) . ' -hide_banner -loglevel error -y -i ' . escapeshellarg($clips[0]['path']) . ' -frames:v 1 ' . escapeshellarg($dir . '/background.png'));
     (new App\Services\ShortsThumbnailService($font))->render($dir . '/background.png', $dir . '/cover.png', '침대 속 진드기', '매일 쓰는 침대, 알고 계셨나요?');
-    $invoke('createOutroImage', $dir . '/outro.png');
     $invoke('renderStillClip', $dir . '/cover.png', $dir . '/intro.mp4', 0.6);
-    $invoke('renderStillClip', $dir . '/outro.png', $dir . '/outro.mp4', 0.8);
-    $invoke('concatVideoClips', [$dir . '/intro.mp4', $dir . '/scenes.mp4', $dir . '/outro.mp4'], $dir . '/timeline.txt', $dir . '/timeline.mp4');
+    $invoke('concatVideoClips', [$dir . '/intro.mp4', $dir . '/scenes.mp4'], $dir . '/timeline.txt', $dir . '/timeline.mp4');
     footageCommand(escapeshellarg($ffmpeg) . ' -hide_banner -loglevel error -y -f lavfi -i ' . escapeshellarg('sine=frequency=220:sample_rate=24000') . ' -t 5.9 ' . escapeshellarg($dir . '/voice.wav'));
-    $audio = $invoke('prepareAudioTrack', $dir . '/voice.wav', $dir . '/mix.aac', $dir . '/timed.aac', 0.6, 0.8);
+    $audio = $dir . '/timed.aac';
+    (new App\Services\ShortsAudioService())->mix($ffmpeg, $dir . '/voice.wav', $audio, 5.9, 0.6, __DIR__ . '/../public/assets/bgm/shorts-ambient.m4a');
     (new App\Services\ShortsCaptionService())->writeAss($dir . '/captions.ass', [['text' => '음성과 함께 움직이는 영상이에요.', 'start' => 0, 'end' => 5.9]], PHP_OS_FAMILY === 'Windows' ? 'Malgun Gothic' : 'NanumGothic', 0.6);
-    $invoke('renderVideo', $dir . '/timeline.mp4', $audio, $dir . '/captions.ass', $dir . '/final.mp4', 7.3);
+    $invoke('renderVideo', $dir . '/timeline.mp4', $audio, $dir . '/captions.ass', $dir . '/final.mp4', 6.5);
     $data = json_decode(footageCommand(escapeshellarg($ffprobe) . ' -v error -count_frames -show_streams -show_format -of json ' . escapeshellarg($dir . '/final.mp4')), true);
-    footageCheck(count($data['streams']) === 2 && $data['streams'][0]['codec_name'] === 'h264' && $data['streams'][1]['codec_name'] === 'aac', 'complete thumbnail/footage/outro/subtitle/voice pipeline exports H.264 and AAC');
-    footageCheck((int)$data['streams'][0]['nb_read_frames'] === 219 && abs((float)$data['format']['duration'] - 7.3) < 0.06, 'complete timeline retains the expected intro, narration and outro length');
+    footageCheck(count($data['streams']) === 2 && $data['streams'][0]['codec_name'] === 'h264' && $data['streams'][1]['codec_name'] === 'aac', 'thumbnail/footage/subtitle/voice/music pipeline exports H.264 and AAC');
+    footageCheck((int)$data['streams'][0]['nb_read_frames'] === 195 && abs((float)$data['format']['duration'] - 6.5) < 0.06, 'timeline ends with narration and has no thank-you outro or padded ending');
+    footageCheck(!$reflection->hasMethod('createOutroImage'), 'thank-you card renderer has been removed');
 } finally {
     foreach (glob($dir . '/*') as $file) { unlink($file); }
     rmdir($dir);

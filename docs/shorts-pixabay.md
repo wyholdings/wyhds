@@ -11,7 +11,7 @@ PIXABAY_API_KEY=발급받은키
 PIXABAY_CACHE_ROOT=/var/www/html/wyhds/var/cache/shorts/pixabay
 ```
 
-Pixabay API는 무료입니다. OpenAI 대본·음성 생성 비용은 별도로 발생합니다. 이 경로에서는 OpenAI 이미지 생성 요청을 보내지 않습니다.
+Pixabay API는 무료입니다. 대본에는 OpenAI 크레딧을 사용하고 음성은 선택한 서비스의 요금이 적용됩니다. [Google 한국어 음성과 브금 설정](shorts-google-tts-bgm.md)을 참고하세요. 이 경로에서는 OpenAI 이미지 생성 요청을 보내지 않습니다.
 
 ## 배포와 권한
 

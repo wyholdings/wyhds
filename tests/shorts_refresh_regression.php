@@ -94,7 +94,8 @@ namespace {
     {
         preg_match('/name="request_token" value="([a-f0-9]{64})"/', $page['html'], $match);
         if (!isset($match[1])) { throw new \RuntimeException('No request token in form.'); }
-        return ['csrf_token' => $_SESSION['csrf_token'], 'request_token' => $match[1], 'keyword' => 'test', 'duration' => 30, 'tone' => 'calm', 'voice' => 'marin', 'stock_keyword' => 'bedroom'];
+        return ['csrf_token' => $_SESSION['csrf_token'], 'request_token' => $match[1], 'keyword' => 'test', 'duration' => 30, 'tone' => 'calm',
+            'tts_provider' => 'google', 'voice' => \App\Services\GoogleSpeechClient::DEFAULT_VOICE, 'stock_keyword' => 'bedroom', 'bgm_mode' => 'default', 'bgm_volume' => 12];
     }
 
     ini_set('session.use_cookies', '0');
@@ -109,6 +110,9 @@ namespace {
     checkRefresh($response['html'] === '' && $response['headers'] === [['value' => 'Location: /admin/shorts/studio?render=1', 'status' => 303]], 'successful POST redirects with 303 and no result body');
     checkRefresh(\App\Services\ShortsAutomationService::$calls === 1 && count(\App\Models\ShortsRenderModel::$rows) === 1, 'one accepted submission generates once');
     checkRefresh(\App\Services\ShortsAutomationService::$lastPayload['stock_keyword'] === 'bedroom', 'chosen footage query reaches generation');
+    checkRefresh(\App\Services\ShortsAutomationService::$lastPayload['tts_provider'] === 'google'
+        && \App\Services\ShortsAutomationService::$lastPayload['bgm_mode'] === 'default'
+        && \App\Services\ShortsAutomationService::$lastPayload['bgm_volume'] === 12, 'Google choice and music settings reach generation');
     $savedResult = visitStudio('GET', [], ['render' => 1]);
     checkRefresh(strpos($savedResult['html'], 'https://pixabay.com/videos/id-123/') !== false
         && strpos($savedResult['html'], 'fixture creator') !== false, 'Pixabay original source and creator remain visible after redirect');

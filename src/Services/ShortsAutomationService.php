@@ -15,7 +15,6 @@ class ShortsAutomationService
     private string $ffprobePath;
     private string $bgmPath;
     private float $introDuration = 0.6;
-    private float $outroDuration = 0.8;
 
     public function __construct()
     {
@@ -38,12 +37,24 @@ class ShortsAutomationService
             throw new RuntimeException('키워드를 입력해야 합니다.');
         }
 
-        $voice = trim((string)($payload['voice'] ?? '')) ?: OpenAIClient::modelConfiguration()['tts_voice'];
-        if (!in_array($voice, OpenAIClient::VOICES, true)) {
+        $google = GoogleSpeechClient::configuration();
+        $provider = (string)($payload['tts_provider'] ?? $google['provider']);
+        $voice = trim((string)($payload['voice'] ?? '')) ?: ($provider === 'google' ? $google['voice'] : OpenAIClient::modelConfiguration()['tts_voice']);
+        $voices = $provider === 'google' ? array_keys(GoogleSpeechClient::VOICES) : OpenAIClient::VOICES;
+        if (!in_array($provider, ['google', 'openai'], true) || !in_array($voice, $voices, true)) {
             throw new RuntimeException('지원하지 않는 음성입니다. 스튜디오에서 보이스를 다시 선택하세요.');
         }
 
-        (new ShortsEnvironment())->assertReady();
+        $bgmMode = (string)($payload['bgm_mode'] ?? 'default');
+        $bgmVolume = max(0, min(30, (int)($payload['bgm_volume'] ?? 12))) / 100;
+        $config = ShortsEnvironment::configuration();
+        $music = $bgmMode === 'off' ? '' : ($bgmMode === 'upload' ? (string)($payload['bgm_path'] ?? '')
+            : (is_readable($this->bgmPath) ? $this->bgmPath : $config['default_bgm_path']));
+        if (!in_array($bgmMode, ['default', 'upload', 'off'], true) || ($music === '' && $bgmMode === 'upload')
+            || ($music !== '' && !is_readable($music))) { throw new RuntimeException('배경음악 파일을 선택하고 읽기 권한을 확인하세요.'); }
+        (new ShortsEnvironment())->assertReady($provider);
+        if ($music !== '') { $this->probeAudioDuration($music); }
+        if ($provider === 'google') { (new GoogleSpeechClient())->checkVoice($voice); }
         (new PixabayVideoClient())->assertAvailable(trim((string)($payload['stock_keyword'] ?? '')));
 
         $jobId = date('Ymd_His') . '_' . $this->slugify($keyword) . '_' . bin2hex(random_bytes(4));
@@ -64,21 +75,20 @@ class ShortsAutomationService
         }, $footage);
 
         $coverPath = $jobDir . '/cover.png';
-        $outroPath = $jobDir . '/outro.png';
         $audioPath = $jobDir . '/voice.wav';
-        $mixedAudioPath = $jobDir . '/voice_mix.aac';
         $timedAudioPath = $jobDir . '/voice_timed.aac';
         $subtitlePath = $jobDir . '/captions.ass';
         $srtPath = $jobDir . '/captions.srt';
         $introClipPath = $jobDir . '/intro.mp4';
         $sceneVideoPath = $jobDir . '/scenes.mp4';
-        $outroClipPath = $jobDir . '/outro.mp4';
         $timelineListPath = $jobDir . '/timeline.txt';
         $timelineVideoPath = $jobDir . '/timeline.mp4';
         $videoPath = $jobDir . '/final.mp4';
         $manifestPath = $jobDir . '/manifest.json';
 
-        $speech = $this->openAI->synthesizeNarration($script['narration_segments'], $audioPath, $voice, [
+        $speech = $provider === 'google'
+            ? (new GoogleSpeechClient())->synthesizeNarration($script['narration_segments'], $audioPath, $voice, (float)($payload['speech_speed'] ?? 1.0))
+            : $this->openAI->synthesizeNarration($script['narration_segments'], $audioPath, $voice, [
             'style' => $payload['speech_style'] ?? 'natural',
             'speed' => max(0.85, min(1.15, (float)($payload['speech_speed'] ?? 1.0))),
         ]);
@@ -89,11 +99,14 @@ class ShortsAutomationService
         $captionService->writeSrt($srtPath, $cues, $this->introDuration);
         $script['caption_lines'] = array_column($cues, 'text');
         $script['_speech_segments'] = $speech['segments'];
-        $script['_speech_style'] = $payload['speech_style'] ?? 'natural';
+        $script['_tts_provider'] = $provider;
+        $script['_tts_voice'] = $voice;
+        $script['_speech_style'] = $provider === 'google' ? 'voice_default' : ($payload['speech_style'] ?? 'natural');
         $script['_speech_speed'] = $payload['speech_speed'] ?? 1.0;
+        $script['_bgm'] = ['enabled' => $music !== '' && $bgmVolume > 0, 'name' => basename($music), 'volume' => $bgmVolume];
+        $script['_narration_url'] = $this->toPublicUrl($audioPath);
         (new ShortsThumbnailService($this->fontPath))->render($sceneImagePaths[0], $coverPath,
             trim((string)($script['cover_title'] ?? '')) ?: $keyword, (string)($script['cover_subtitle'] ?? ''));
-        $this->createOutroImage($outroPath);
         $this->renderStillClip($coverPath, $introClipPath, $this->introDuration);
         $sceneDurations = [];
         foreach ($speech['segments'] as $index => $segment) {
@@ -102,10 +115,10 @@ class ShortsAutomationService
             $sceneDurations[] = $end - $start;
         }
         $this->renderFootageVideo($footage, $sceneVideoPath, $sceneDurations);
-        $this->renderStillClip($outroPath, $outroClipPath, $this->outroDuration);
-        $this->concatVideoClips([$introClipPath, $sceneVideoPath, $outroClipPath], $timelineListPath, $timelineVideoPath);
-        $finalAudioPath = $this->prepareAudioTrack($audioPath, $mixedAudioPath, $timedAudioPath, $this->introDuration, $this->outroDuration);
-        $this->renderVideo($timelineVideoPath, $finalAudioPath, $subtitlePath, $videoPath, $this->introDuration + $audioDuration + $this->outroDuration);
+        $this->concatVideoClips([$introClipPath, $sceneVideoPath], $timelineListPath, $timelineVideoPath);
+        (new ShortsAudioService())->mix($this->ffmpegPath, $audioPath, $timedAudioPath, $audioDuration, $this->introDuration, $music, $bgmVolume);
+        $finalAudioPath = $timedAudioPath;
+        $this->renderVideo($timelineVideoPath, $finalAudioPath, $subtitlePath, $videoPath, $this->introDuration + $audioDuration);
 
         $manifest = [
             'keyword' => $keyword,
@@ -147,7 +160,7 @@ class ShortsAutomationService
                 $video = $client->select($client->search($fallback), $used);
             }
             if ($video === null) {
-                throw new RuntimeException('사용 가능한 Pixabay 영상을 찾지 못했습니다: ' . $selectedQuery . '. 관련된 더 넓은 영상 검색어를 입력해 새 요청을 만드세요. 음성·이미지 생성은 실행하지 않았습니다.');
+                throw new RuntimeException('사용 가능한 Pixabay 영상을 찾지 못했습니다: ' . $selectedQuery . '. 관련된 더 넓은 영상 검색어를 입력해 새 요청을 만드세요. 음성 생성은 실행하지 않았습니다.');
             }
             $id = $video['id'];
             if (!isset($downloaded[$id])) {
@@ -185,6 +198,18 @@ class ShortsAutomationService
         return ['width' => (int)$stream['width'], 'height' => (int)$stream['height'], 'duration' => $duration];
     }
 
+    private function probeAudioDuration(string $path): float
+    {
+        exec(escapeshellarg($this->ffprobePath) . ' -v error -select_streams a:0 -show_entries stream=codec_type:format=duration -of json '
+            . escapeshellarg($path) . ' 2>&1', $output, $code);
+        $data = json_decode(implode("\n", $output), true);
+        $duration = (float)($data['format']['duration'] ?? 0);
+        if ($code !== 0 || ($data['streams'][0]['codec_type'] ?? '') !== 'audio' || $duration <= 0) {
+            throw new RuntimeException('배경음악 파일에 재생 가능한 오디오가 없습니다. 다른 파일을 선택하세요.');
+        }
+        return $duration;
+    }
+
     private function renderFootageVideo(array $clips, string $targetPath, array $durations): void
     {
         if ($clips === [] || count($clips) !== count($durations) || min($durations) <= 0) {
@@ -220,37 +245,6 @@ class ShortsAutomationService
         exec($command, $output, $code);
         if ($code !== 0 || !is_file($target) || filesize($target) === 0) {
             throw new RuntimeException($label . " 실패.\n" . implode("\n", array_slice($output, -12)));
-        }
-    }
-
-    private function createOutroImage(string $targetPath): void
-    {
-        if (!extension_loaded('gd')) {
-            throw new RuntimeException('GD 확장이 필요합니다.');
-        }
-
-        if (!is_file($this->fontPath)) {
-            throw new RuntimeException('SHORTS_FONT_PATH 또는 기본 폰트 경로를 찾을 수 없습니다: ' . $this->fontPath);
-        }
-
-        $width = 1080;
-        $height = 1920;
-        $image = imagecreatetruecolor($width, $height);
-        $background = imagecolorallocate($image, 12, 18, 31);
-        $accent = imagecolorallocate($image, 255, 196, 61);
-        $white = imagecolorallocate($image, 255, 255, 255);
-
-        imagefilledrectangle($image, 0, 0, $width, $height, $background);
-        imagefilledrectangle($image, 90, 220, 990, 1640, imagecolorallocate($image, 20, 31, 52));
-        $this->drawWrappedText($image, 78, 0, 120, 820, $white, $this->fontPath, '시청해주셔서', 840, 1.2);
-        $this->drawWrappedText($image, 92, 0, 120, 980, $accent, $this->fontPath, '감사합니다.', 840, 1.2);
-
-        $result = imagepng($image, $targetPath);
-        imagedestroy($image);
-        clearstatcache(true, $targetPath);
-
-        if ($result === false || !is_file($targetPath) || filesize($targetPath) === 0) {
-            throw new RuntimeException('아웃트로 이미지 저장에 실패했습니다.');
         }
     }
 
@@ -326,102 +320,6 @@ class ShortsAutomationService
         if ($exitCode !== 0 || !is_file($outputPath)) {
             throw new RuntimeException("타임라인 결합 실패.\n" . trim(implode("\n", $output)));
         }
-    }
-
-    private function prepareAudioTrack(string $voicePath, string $mixedAudioPath, string $timedAudioPath, float $introDuration, float $outroDuration): string
-    {
-        if (!is_file($voicePath)) {
-            throw new RuntimeException('보이스 파일이 없습니다: ' . $voicePath);
-        }
-
-        $baseAudioPath = $voicePath;
-        if ($this->bgmPath !== '' && is_file($this->bgmPath)) {
-            $command = sprintf(
-                '%s -y -stream_loop -1 -i %s -i %s -filter_complex %s -map %s -c:a aac -b:a 192k -ar 48000 %s 2>&1',
-                escapeshellarg($this->ffmpegPath),
-                escapeshellarg($this->bgmPath),
-                escapeshellarg($voicePath),
-                escapeshellarg('[0:a]volume=0.06,atrim=0:3600,asetpts=PTS-STARTPTS[bgm];[1:a]asetpts=PTS-STARTPTS[voice];[bgm][voice]amix=inputs=2:duration=shortest:dropout_transition=2[aout]'),
-                escapeshellarg('[aout]'),
-                escapeshellarg($mixedAudioPath)
-            );
-
-            exec($command, $output, $exitCode);
-            if ($exitCode !== 0 || !is_file($mixedAudioPath)) {
-                throw new RuntimeException("배경음악 믹싱 실패.\n" . trim(implode("\n", $output)));
-            }
-            $baseAudioPath = $mixedAudioPath;
-        }
-
-        $delayMs = (int)round($introDuration * 1000);
-        $padDuration = number_format($outroDuration, 2, '.', '');
-        $command = sprintf(
-            '%s -y -i %s -af %s -c:a aac -b:a 192k -ar 48000 %s 2>&1',
-            escapeshellarg($this->ffmpegPath),
-            escapeshellarg($baseAudioPath),
-            escapeshellarg("loudnorm=I=-16:TP=-1.5:LRA=11,adelay={$delayMs}:all=1,apad=pad_dur={$padDuration}"),
-            escapeshellarg($timedAudioPath)
-        );
-
-        exec($command, $output, $exitCode);
-        if ($exitCode !== 0 || !is_file($timedAudioPath)) {
-            throw new RuntimeException("오디오 타이밍 보정 실패.\n" . trim(implode("\n", $output)));
-        }
-
-        return $timedAudioPath;
-    }
-
-    private function drawWrappedText($image, int $fontSize, float $angle, int $x, int $y, int $color, string $fontPath, string $text, int $maxWidth = 900, float $lineHeight = 1.35): void
-    {
-        $lines = $this->wrapText($fontSize, $fontPath, $text, $maxWidth);
-        $offsetY = 0;
-
-        foreach ($lines as $line) {
-            imagettftext($image, $fontSize, $angle, $x, $y + $offsetY, $color, $fontPath, $line);
-            $offsetY += (int)($fontSize * $lineHeight);
-        }
-    }
-
-    private function wrapText(int $fontSize, string $fontPath, string $text, int $maxWidth): array
-    {
-        $text = str_replace("\r", '', trim($text));
-        $paragraphs = explode("\n", $text);
-        $lines = [];
-
-        foreach ($paragraphs as $paragraph) {
-            $paragraph = trim($paragraph);
-            if ($paragraph === '') {
-                $lines[] = '';
-                continue;
-            }
-
-            $current = '';
-            foreach ($this->splitUtf8($paragraph) as $char) {
-                $candidate = $current . $char;
-                $box = imagettfbbox($fontSize, 0, $fontPath, $candidate);
-                $lineWidth = $box ? abs($box[2] - $box[0]) : 0;
-
-                if ($current !== '' && $lineWidth > $maxWidth) {
-                    $lines[] = $current;
-                    $current = $char;
-                    continue;
-                }
-
-                $current = $candidate;
-            }
-
-            if ($current !== '') {
-                $lines[] = $current;
-            }
-        }
-
-        return $lines === [] ? [''] : $lines;
-    }
-
-    private function splitUtf8(string $text): array
-    {
-        preg_match_all('/./us', $text, $matches);
-        return $matches[0] ?? [];
     }
 
     private function detectSubtitleFontName(): string

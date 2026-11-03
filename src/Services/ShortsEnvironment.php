@@ -19,13 +19,14 @@ class ShortsEnvironment
             'font_path' => trim((string)($_ENV['SHORTS_FONT_PATH'] ?? '')) ?: $font,
             'ffmpeg_path' => trim((string)($_ENV['FFMPEG_PATH'] ?? '')) ?: 'ffmpeg',
             'ffprobe_path' => trim((string)($_ENV['FFPROBE_PATH'] ?? '')) ?: 'ffprobe',
-            'bgm_path' => trim((string)($_ENV['SHORTS_BGM_PATH'] ?? '')),
+            'bgm_path' => trim((string)($_ENV['SHORTS_BGM_PATH'] ?? '')) ?: $publicRoot . '/assets/bgm/shorts-ambient.m4a',
+            'default_bgm_path' => $publicRoot . '/assets/bgm/shorts-ambient.m4a',
             'pixabay_cache_root' => trim((string)($_ENV['PIXABAY_CACHE_ROOT'] ?? '')) ?: __DIR__ . '/../../var/cache/shorts/pixabay',
         ];
     }
 
     /** Local checks only: no API calls, directory creation, or database writes. */
-    public function inspect(): array
+    public function inspect(string $provider = ''): array
     {
         $config = self::configuration();
         $checks = [];
@@ -42,8 +43,14 @@ class ShortsEnvironment
             $cacheAncestor = dirname($cacheAncestor);
         }
         $add('Pixabay cache', is_dir($cacheAncestor) && is_writable($cacheAncestor), '24시간 검색 캐시 폴더 쓰기 권한 필요: ' . $config['pixabay_cache_root']);
-        $add('Speech model', true, $models['tts_model'] . ' / ' . $models['tts_voice']);
-        if (strpos($models['tts_model'], 'gpt-realtime-') === 0) {
+        $google = GoogleSpeechClient::configuration();
+        $provider = $provider !== '' ? $provider : $google['provider'];
+        $add('Speech provider', in_array($provider, ['google', 'openai'], true), $provider . ' (SHORTS_TTS_PROVIDER)');
+        if ($provider === 'google') {
+            $add('Google TTS key', trim((string)($_ENV['GOOGLE_TTS_API_KEY'] ?? '')) !== '', 'GOOGLE_TTS_API_KEY 설정 필요 (Cloud Text-to-Speech API, 결제 연결 필요)');
+            $add('Google voice', isset(GoogleSpeechClient::VOICES[$google['voice']]), $google['voice'] . ' / ko-KR');
+        } elseif (strpos($models['tts_model'], 'gpt-realtime-') === 0) {
+            $add('Speech model', true, $models['tts_model'] . ' / ' . $models['tts_voice']);
             $add('PHP openssl', extension_loaded('openssl'), 'Realtime 음성 연결을 위한 TLS 지원 필요');
             $add('Realtime transport', is_callable('stream_socket_client'), 'Realtime WebSocket 연결을 위한 stream_socket_client 허용 필요');
             $add('Speech voice', in_array($models['tts_voice'], OpenAIClient::VOICES, true), 'Realtime 지원 보이스를 선택하세요: ' . implode(', ', OpenAIClient::VOICES));
@@ -67,7 +74,7 @@ class ShortsEnvironment
                     $filters = [];
                     exec(escapeshellarg($config[$key]) . ' -hide_banner -filters 2>&1', $filters, $filterCode);
                     $filterText = implode("\n", $filters);
-                    foreach (['ass', 'scale', 'crop', 'boxblur', 'overlay', 'loudnorm'] as $filter) {
+                    foreach (['ass', 'scale', 'crop', 'boxblur', 'overlay', 'loudnorm', 'sidechaincompress', 'afade', 'amix', 'alimiter'] as $filter) {
                         $add('FFmpeg ' . $filter, $filterCode === 0 && preg_match('/^\s*\S+\s+' . $filter . '\s/m', $filterText) === 1, $filter . ' 필터 지원 필요');
                     }
                     $encoders = [];
@@ -103,15 +110,15 @@ class ShortsEnvironment
         $add('Output writable', is_dir($ancestor) && is_writable($ancestor), '실행 사용자에게 출력 폴더 또는 가장 가까운 상위 폴더의 쓰기 권한 필요');
 
         if ($config['bgm_path'] !== '' && (!is_file($config['bgm_path']) || !is_readable($config['bgm_path']))) {
-            $checks[] = ['name' => 'BGM', 'status' => 'warning', 'message' => 'BGM 파일을 읽을 수 없어 배경음악 없이 생성됩니다.'];
+            $checks[] = ['name' => 'BGM', 'status' => 'warning', 'message' => 'SHORTS_BGM_PATH 파일을 읽을 수 없습니다. 기본 음악을 사용하거나 스튜디오에서 직접 업로드하세요.'];
         }
 
         return $checks;
     }
 
-    public function assertReady(): void
+    public function assertReady(string $provider = ''): void
     {
-        $errors = array_filter($this->inspect(), static fn (array $check): bool => $check['status'] === 'error');
+        $errors = array_filter($this->inspect($provider), static fn (array $check): bool => $check['status'] === 'error');
         if ($errors !== []) {
             throw new RuntimeException("영상 생성 환경을 먼저 확인하세요. API 생성 요청은 실행하지 않았습니다.\n" . implode("\n", array_map(
                 static fn (array $check): string => $check['name'] . ': ' . $check['message'],

@@ -19,7 +19,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">즉시 생성</h6>
             </div>
             <div class="card-body">
-                <form id="shorts-generation-form" method="post" action="/admin/shorts/studio">
+                <form id="shorts-generation-form" method="post" enctype="multipart/form-data" action="/admin/shorts/studio">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="request_token" value="{{ request_token }}">
                     <div class="form-group">
@@ -40,15 +40,26 @@
                         <input type="number" min="30" max="90" name="duration" class="form-control date-input" value="{{ form.duration }}">
                     </div>
                     <div class="form-group">
+                        <label>음성 서비스</label>
+                        <select name="tts_provider" id="tts-provider" class="form-control">
+                            <option value="google" {% if (form.tts_provider ?? 'google') == 'google' %}selected{% endif %}>Google · 한국어 Chirp 3 HD</option>
+                            <option value="openai" {% if form.tts_provider == 'openai' %}selected{% endif %}>OpenAI</option>
+                        </select>
+                        <small class="form-text text-muted">Google 음성은 무료 구간이 있으며 결제 연결이 필요합니다. 무료 한도 초과분은 과금됩니다.</small>
+                    </div>
+                    <div class="form-group">
                         <label>TTS 보이스</label>
                         <select name="voice" class="form-control">
+                            {% for voice, label in google_voices %}
+                            <option data-provider="google" value="{{ voice }}" {% if form.voice == voice %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
                             {% for voice in voices %}
-                            <option value="{{ voice }}" {% if form.voice == voice %}selected{% endif %}>{{ voice }}</option>
+                            <option data-provider="openai" value="{{ voice }}" {% if form.voice == voice %}selected{% endif %}>{{ voice }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-sm-7">
+                        <div class="form-group col-sm-7" id="openai-speech-style">
                             <label>음성 말투</label>
                             <select name="speech_style" class="form-control">
                                 <option value="natural" {% if (form.speech_style ?? 'natural') == 'natural' %}selected{% endif %}>자연스러운 설명</option>
@@ -67,11 +78,27 @@
                     </div>
                     <p class="small text-muted">읽는 문장을 그대로 자막으로 표시하고, 발화 문단별 길이에 맞춰 자막과 장면을 배치합니다.</p>
                     <div class="form-group">
+                        <label>배경음악</label>
+                        <select name="bgm_mode" id="bgm-mode" class="form-control">
+                            <option value="default" {% if (form.bgm_mode ?? 'default') == 'default' %}selected{% endif %}>기본 음악 · 서버 설정 또는 잔잔한 앰비언트</option>
+                            <option value="upload" {% if form.bgm_mode == 'upload' %}selected{% endif %}>내 음악 업로드</option>
+                            <option value="off" {% if form.bgm_mode == 'off' %}selected{% endif %}>음악 없음</option>
+                        </select>
+                        <div id="bgm-upload" class="mt-2">
+                            <input type="file" name="bgm_file" class="form-control-file" accept=".mp3,.wav,.m4a,.ogg,.flac">
+                            <small class="form-text text-muted">사용 권한이 있는 음악을 올려주세요. 최대 20MB · 새 요청에는 파일을 다시 선택해야 합니다.</small>
+                        </div>
+                        <label class="mt-2" for="bgm-volume">음악 크기 · <span id="bgm-volume-label">{{ form.bgm_volume ?? 12 }}</span>%</label>
+                        <input type="range" id="bgm-volume" name="bgm_volume" min="0" max="30" value="{{ form.bgm_volume ?? 12 }}" class="custom-range">
+                        <small class="form-text text-muted">말할 때 음악을 더 낮추고, 영상 끝에서 서서히 줄입니다.</small>
+                        <details class="mt-2 small"><summary>기본 앰비언트 들어보기</summary><audio controls preload="none" class="w-100 mt-2" src="/assets/bgm/shorts-ambient.m4a"></audio></details>
+                    </div>
+                    <div class="form-group">
                         <label>영상 검색어 <span class="text-muted">(선택)</span></label>
                         <input type="text" name="stock_keyword" maxlength="100" class="form-control" value="{{ form.stock_keyword ?? '' }}" placeholder="예: bedroom, coffee, cat">
                         <small class="form-text text-muted">비워 두면 대본에 맞춰 자동 검색합니다. 원하는 장면이 있다면 짧은 영어 검색어를 입력하세요.</small>
                     </div>
-                    <p class="small text-muted">영상 소스: <a href="https://pixabay.com/videos/" target="_blank" rel="noopener noreferrer">Pixabay</a> · 대본과 음성에는 OpenAI API 크레딧이 사용됩니다.</p>
+                    <p class="small text-muted">영상 소스: <a href="https://pixabay.com/videos/" target="_blank" rel="noopener noreferrer">Pixabay</a> · 대본은 OpenAI, 음성은 선택한 서비스의 요금이 적용됩니다.</p>
                     <button type="submit" class="btn btn-primary btn-block">영상 생성 실행</button>
                 </form>
             </div>
@@ -88,7 +115,8 @@
                 {% if not pixabay_configured %}
                 <div class="alert alert-warning">서버 .env에 PIXABAY_API_KEY를 설정하세요. <a href="https://pixabay.com/api/docs/#api_search_videos" target="_blank" rel="noopener noreferrer">API 문서에 로그인해 키 확인하기</a></div>
                 {% endif %}
-                <div class="mb-2"><strong>TTS 모델:</strong> {{ tts_model }}</div>
+                <div class="mb-2"><strong>Google TTS:</strong> {{ google_tts_configured ? '키 설정됨' : 'GOOGLE_TTS_API_KEY 설정 필요' }}</div>
+                <div class="mb-2"><strong>OpenAI TTS:</strong> {{ tts_model }}</div>
                 <div class="mb-2"><strong>출력 루트:</strong> {{ output_root }}</div>
                 <div class="mb-2"><strong>FFmpeg 경로:</strong> {{ ffmpeg_path ?: '미설정' }}</div>
                 <div class="mb-2"><strong>BGM 경로:</strong> {{ bgm_path ?: '미설정' }}</div>
@@ -110,8 +138,12 @@
                     </video>
                 </div>
                 <div class="mb-3">
-                    <label class="small text-muted">내레이션 듣기</label>
+                    <label class="small text-muted">최종 오디오 듣기</label>
                     <audio class="w-100" controls preload="metadata" src="{{ result.audio_url }}"></audio>
+                    {% if result.script._narration_url ?? null %}
+                    <label class="small text-muted mt-2">내레이션만 듣기 · {{ result.script._tts_voice ?? '' }}</label>
+                    <audio class="w-100" controls preload="none" src="{{ result.script._narration_url }}"></audio>
+                    {% endif %}
                 </div>
                 {% if result.subtitle_url %}
                 <a href="{{ result.subtitle_url }}" download class="btn btn-sm btn-outline-primary mb-3">자막 파일 다운로드 · SRT</a>
@@ -237,6 +269,30 @@
 (() => {
     const form = document.getElementById('shorts-generation-form');
     const button = form.querySelector('button[type="submit"]');
+    const provider = form.querySelector('[name="tts_provider"]');
+    const voice = form.querySelector('[name="voice"]');
+    const music = form.querySelector('[name="bgm_mode"]');
+    const updateOptions = () => {
+        for (const option of voice.options) {
+            option.disabled = option.dataset.provider !== provider.value;
+            option.hidden = option.disabled;
+        }
+        if (!voice.selectedOptions.length || voice.selectedOptions[0].disabled) {
+            voice.value = Array.from(voice.options).find(option => !option.disabled)?.value ?? '';
+        }
+        document.getElementById('openai-speech-style').hidden = provider.value !== 'openai';
+        form.querySelector('[name="speech_style"]').disabled = provider.value !== 'openai';
+        document.getElementById('bgm-upload').hidden = music.value !== 'upload';
+        form.querySelector('[name="bgm_file"]').required = music.value === 'upload';
+        form.querySelector('[name="bgm_file"]').disabled = music.value !== 'upload';
+        document.getElementById('bgm-volume').disabled = music.value === 'off';
+    };
+    provider.addEventListener('change', updateOptions);
+    music.addEventListener('change', updateOptions);
+    document.getElementById('bgm-volume').addEventListener('input', event => {
+        document.getElementById('bgm-volume-label').textContent = event.target.value;
+    });
+    updateOptions();
     form.addEventListener('submit', (event) => {
         if (form.dataset.submitting === '1') {
             event.preventDefault();
