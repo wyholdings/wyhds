@@ -31,12 +31,14 @@ class ShortsStudioController
         unset($_SESSION['shorts_flash']);
         $result = null;
         $environment = ShortsEnvironment::configuration();
-        $form = $_SESSION['shorts_form'] ?? [
+        $form = array_merge([
             'keyword' => '',
             'tone' => 'clickable',
             'duration' => 60,
             'voice' => $models['tts_voice'],
-        ];
+            'speech_style' => 'natural',
+            'speech_speed' => 1.0,
+        ], $_SESSION['shorts_form'] ?? []);
 
         $selectedId = filter_var($_GET['render'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($selectedId !== false && $selectedId !== null) {
@@ -48,6 +50,7 @@ class ShortsStudioController
                     'video_url' => $render['video_url'],
                     'cover_url' => $render['cover_url'],
                     'audio_url' => $render['audio_url'],
+                    'subtitle_url' => $script['_subtitle_url'] ?? null,
                     'scene_image_urls' => $script['_scene_image_urls'] ?? [],
                     'script' => $script,
                 ];
@@ -109,6 +112,8 @@ class ShortsStudioController
             'tone' => trim((string)($_POST['tone'] ?? 'clickable')),
             'duration' => max(30, min(90, (int)($_POST['duration'] ?? 60))),
             'voice' => trim((string)($_POST['voice'] ?? $models['tts_voice'])),
+            'speech_style' => in_array($_POST['speech_style'] ?? '', ['natural', 'calm', 'bright'], true) ? $_POST['speech_style'] : 'natural',
+            'speech_speed' => max(0.85, min(1.15, (float)($_POST['speech_speed'] ?? 1.0))),
         ];
         $_SESSION['shorts_form'] = $form;
         $renderId = null;
@@ -131,10 +136,12 @@ class ShortsStudioController
             $referenceImagePaths = $this->resolveStudioReferenceImages($_FILES);
             $result = (new ShortsAutomationService())->generate([
                 'keyword' => $form['keyword'], 'tone' => $form['tone'], 'duration' => $form['duration'],
-                'voice' => $form['voice'], 'reference_image_paths' => $referenceImagePaths,
+                'voice' => $form['voice'], 'speech_style' => $form['speech_style'], 'speech_speed' => $form['speech_speed'],
+                'reference_image_paths' => $referenceImagePaths,
             ]);
             $script = $result['script'];
             $script['_scene_image_urls'] = $result['scene_image_urls'] ?? [];
+            $script['_subtitle_url'] = $result['subtitle_url'] ?? null;
             $renderModel->update($renderId, [
                 'keyword' => $form['keyword'], 'status' => 'completed', 'error_message' => null,
                 'output_dir' => $result['output_dir'], 'cover_url' => $result['cover_url'],

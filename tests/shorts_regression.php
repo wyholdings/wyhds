@@ -113,6 +113,43 @@ namespace {
         }
     }
 
+    $pcm = str_repeat("\0", 24000) . str_repeat(pack('v', 1000), 24000) . str_repeat("\0", 24000);
+    [$speech, $reflection, $stream] = speechFixture('');
+    try {
+        $trimmed = shortsMethod($reflection, 'trimSilence')->invoke($speech, $pcm);
+        verifyShorts(strlen($trimmed) > 48000 && strlen($trimmed) < 60000, 'sentence silence is trimmed with breath margins');
+        $rejected = false;
+        try { shortsMethod($reflection, 'trimSilence')->invoke($speech, str_repeat("\0", 48000)); }
+        catch (\RuntimeException $error) { $rejected = true; }
+        verifyShorts($rejected, 'silent narration is rejected');
+    } finally { fclose($stream); }
+
+    $caption = new \App\Services\ShortsCaptionService();
+    $segments = [
+        ['text' => '고양이가 골골송을 하는 이유가 궁금하셨죠?', 'start' => 0.2, 'end' => 1.4],
+        ['text' => '기분이 좋을 때도 있지만, 스스로를 진정시키려고 소리를 내기도 해요. 주변 상황과 표정을 함께 살펴보면 더 잘 알 수 있어요.', 'start' => 3.1, 'end' => 8.2],
+    ];
+    $cues = $caption->buildCues($segments);
+    verifyShorts(abs($cues[0]['start'] - 0.2) < 0.001 && abs($cues[count($cues) - 1]['end'] - 8.2) < 0.001, 'captions retain actual unequal speech boundaries');
+    $normalize = static fn (string $value): string => preg_replace('/\s+/u', '', $value);
+    verifyShorts($normalize(implode('', array_column($segments, 'text'))) === $normalize(implode('', array_column($cues, 'text'))), 'captions reproduce spoken text without summaries or omissions');
+    foreach ($cues as $cue) {
+        $lines = explode("\n", $cue['text']);
+        verifyShorts(count($lines) <= 2 && max(array_map('mb_strwidth', $lines)) <= 28, 'caption fits two short lines');
+        verifyShorts($cue['end'] <= 1.4 || $cue['start'] >= 3.1, 'caption does not span a silent gap');
+    }
+    $assFile = tempnam(sys_get_temp_dir(), 'shorts-ass-');
+    $srtFile = tempnam(sys_get_temp_dir(), 'shorts-srt-');
+    try {
+        $caption->writeAss($assFile, $cues, 'NanumGothic', 0.6);
+        $caption->writeSrt($srtFile, $cues, 0.6);
+        $ass = file_get_contents($assFile);
+        verifyShorts(strpos($ass, '\\k') === false && strpos($ass, '\\fs72') === false, 'caption display has no estimated karaoke or popping type');
+        verifyShorts(strpos(file_get_contents($srtFile), '00:00:08,800') !== false, 'SRT uses the same intro offset and final speech time');
+        $caption->writeAss($assFile, [['text' => '{\\an8}테스트', 'start' => 0, 'end' => 1]], 'NanumGothic', 0);
+        verifyShorts(strpos(file_get_contents($assFile), '{\\an8}') === false, 'subtitle text cannot inject ASS positioning');
+    } finally { unlink($assFile); unlink($srtFile); }
+
     $twig = new \Twig\Environment(new \Twig\Loader\FilesystemLoader(__DIR__ . '/../views'));
     $html = $twig->render('admin/shorts/studio.html.twig', [
         'renders' => [['id' => 1, 'keyword' => 'test', 'created_at' => '2026-11-03 12:00:00', 'status' => 'completed', 'video_url' => '/test/final.mp4']],

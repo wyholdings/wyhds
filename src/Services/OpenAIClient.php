@@ -55,9 +55,7 @@ The JSON schema is:
 {
   "video_title": "string",
   "hook": "string",
-  "narration": "string",
-  "caption_lines": ["string", "string"],
-  "caption_highlights": ["string", "string"],
+  "narration_segments": ["string", "string"],
   "scene_prompts": ["string", "string"],
   "hashtags": ["string", "string"],
   "visual_style": "string",
@@ -70,11 +68,13 @@ The JSON schema is:
   "cta": "string"
 }
 Rules:
-- narration should be long enough for the target duration, usually 350 to 650 Korean characters for 60 seconds.
-- caption_lines must contain 6 to 8 short lines when target duration is 60 seconds.
-- caption_highlights must contain the same number of items as caption_lines.
-- Each caption_highlights item should be one short keyword or phrase from the matching caption line.
-- scene_prompts must contain the same number of items as caption_lines.
+- narration_segments must contain 6 to 8 spoken paragraphs, each one or two complete, connected sentences.
+- The combined narration should contain about 5 to 6 Korean characters per target second: about 150-180 for 30 seconds, 300-360 for 60 seconds, 450-540 for 90 seconds.
+- Write natural spoken Korean with conversational endings such as 해요, 하죠, 있어요. Avoid stiff translated wording, list labels, repeated hooks, and excessive exclamation marks.
+- Use readable spoken forms for numbers and abbreviations. No emoji, markdown, stage directions, or pronunciation brackets in narration.
+- Start with a concise, specific hook. Connect each thought smoothly. End with a useful takeaway, without a generic thank-you or forced subscription request.
+- Each paragraph must be understandable when read aloud; do not split a sentence between paragraphs.
+- scene_prompts must contain exactly the same number of items as narration_segments, in the same order.
 - Each scene prompt must describe a single visual moment for an image model.
 - Scene prompts must avoid letters, captions, logos, UI, watermark, collage, split screen.
 - visual_anchor must define one consistent visual identity shared across all generated scenes.
@@ -96,7 +96,7 @@ PROMPT;
 
         $response = $this->requestJson('/responses', [
             'model' => $this->textModel,
-            'prompt_cache_key' => 'shorts-script-v4',
+            'prompt_cache_key' => 'shorts-script-v5-natural',
             'input' => [
                 [
                     'role' => 'system',
@@ -121,9 +121,7 @@ PROMPT;
                         'required' => [
                             'video_title',
                             'hook',
-                            'narration',
-                            'caption_lines',
-                            'caption_highlights',
+                            'narration_segments',
                             'scene_prompts',
                             'hashtags',
                             'visual_style',
@@ -138,14 +136,7 @@ PROMPT;
                         'properties' => [
                             'video_title' => ['type' => 'string'],
                             'hook' => ['type' => 'string'],
-                            'narration' => ['type' => 'string'],
-                            'caption_lines' => [
-                                'type' => 'array',
-                                'items' => ['type' => 'string'],
-                                'minItems' => 6,
-                                'maxItems' => 8,
-                            ],
-                            'caption_highlights' => [
+                            'narration_segments' => [
                                 'type' => 'array',
                                 'items' => ['type' => 'string'],
                                 'minItems' => 6,
@@ -180,14 +171,15 @@ PROMPT;
         $text = $this->extractResponseText($response);
         $payload = $this->decodeJsonObject($text);
 
-        $payload['caption_lines'] = array_values(array_filter((array)($payload['caption_lines'] ?? []), static fn ($line) => trim((string)$line) !== ''));
-        $payload['caption_highlights'] = array_values(array_filter((array)($payload['caption_highlights'] ?? []), static fn ($line) => trim((string)$line) !== ''));
+        $payload['narration_segments'] = array_values(array_filter(array_map(static fn ($line) => trim((string)$line), (array)($payload['narration_segments'] ?? [])), static fn ($line) => $line !== ''));
         $payload['scene_prompts'] = array_values(array_filter((array)($payload['scene_prompts'] ?? []), static fn ($line) => trim((string)$line) !== ''));
         $payload['hashtags'] = array_values(array_filter((array)($payload['hashtags'] ?? []), static fn ($tag) => trim((string)$tag) !== ''));
 
-        if (($payload['narration'] ?? '') === '' || empty($payload['caption_lines']) || empty($payload['caption_highlights']) || empty($payload['scene_prompts'])) {
-            throw new RuntimeException('스크립트 생성 결과가 비어 있습니다.');
+        if (count($payload['narration_segments']) < 6 || count($payload['narration_segments']) > 8 || count($payload['narration_segments']) !== count($payload['scene_prompts'])) {
+            throw new RuntimeException('내레이션 문단과 장면 구성이 일치하지 않습니다. 대본을 다시 생성해주세요.');
         }
+        $payload['narration'] = implode(' ', $payload['narration_segments']);
+        $payload['caption_lines'] = $payload['narration_segments'];
 
         $payload['_usage'] = $response['usage'] ?? null;
         $payload['_cached_tokens'] = (int)($response['usage']['input_tokens_details']['cached_tokens'] ?? 0);
@@ -215,6 +207,19 @@ PROMPT;
         if (file_put_contents($targetPath, $binary) === false) {
             throw new RuntimeException('음성 파일 저장에 실패했습니다.');
         }
+    }
+
+    public function synthesizeNarration(array $segments, string $targetPath, string $voice, array $options = []): array
+    {
+        if (strpos($this->ttsModel, 'gpt-realtime-') !== 0 || !in_array($voice, self::VOICES, true)) {
+            throw new RuntimeException('문장별 음성 생성에는 Realtime 모델과 지원 보이스가 필요합니다. 음성 설정을 확인해주세요.');
+        }
+        $result = (new RealtimeSpeechClient())->synthesizeNarration($this->apiKey, $this->baseUrl, $this->ttsModel, $voice, $segments, $options);
+        if (file_put_contents($targetPath, $result['audio']) === false) {
+            throw new RuntimeException('음성 파일 저장에 실패했습니다.');
+        }
+        unset($result['audio']);
+        return $result;
     }
 
     public function generateImage(string $prompt, string $targetPath): void

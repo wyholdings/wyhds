@@ -14,8 +14,8 @@ class ShortsAutomationService
     private string $ffmpegPath;
     private string $ffprobePath;
     private string $bgmPath;
-    private float $introDuration = 1.8;
-    private float $outroDuration = 2.4;
+    private float $introDuration = 0.6;
+    private float $outroDuration = 0.8;
 
     public function __construct()
     {
@@ -64,6 +64,7 @@ class ShortsAutomationService
         $mixedAudioPath = $jobDir . '/voice_mix.aac';
         $timedAudioPath = $jobDir . '/voice_timed.aac';
         $subtitlePath = $jobDir . '/captions.ass';
+        $srtPath = $jobDir . '/captions.srt';
         $introClipPath = $jobDir . '/intro.mp4';
         $sceneVideoPath = $jobDir . '/scenes.mp4';
         $outroClipPath = $jobDir . '/outro.mp4';
@@ -72,28 +73,30 @@ class ShortsAutomationService
         $videoPath = $jobDir . '/final.mp4';
         $manifestPath = $jobDir . '/manifest.json';
 
+        $speech = $this->openAI->synthesizeNarration($script['narration_segments'], $audioPath, $voice, [
+            'style' => $payload['speech_style'] ?? 'natural',
+            'speed' => max(0.85, min(1.15, (float)($payload['speech_speed'] ?? 1.0))),
+        ]);
+        $audioDuration = $speech['duration'];
+        $captionService = new ShortsCaptionService();
+        $cues = $captionService->buildCues($speech['segments']);
+        $captionService->writeAss($subtitlePath, $cues, $this->detectSubtitleFontName(), $this->introDuration);
+        $captionService->writeSrt($srtPath, $cues, $this->introDuration);
+        $script['caption_lines'] = array_column($cues, 'text');
+        $script['_speech_segments'] = $speech['segments'];
+        $script['_speech_style'] = $payload['speech_style'] ?? 'natural';
+        $script['_speech_speed'] = $payload['speech_speed'] ?? 1.0;
         $this->createCoverImage($coverPath, $keyword, $script);
         $this->createOutroImage($outroPath);
-        if (!is_file($coverPath)) {
-            throw new RuntimeException('커버 이미지 생성 후 파일을 찾을 수 없습니다: ' . $coverPath);
-        }
-
-        $this->openAI->synthesizeSpeech($script['narration'], $audioPath, $voice);
-        if (!is_file($audioPath)) {
-            throw new RuntimeException('음성 생성 후 파일을 찾을 수 없습니다: ' . $audioPath);
-        }
-
-        $audioDuration = $this->probeDuration($audioPath) ?? max(30, (int)($payload['duration'] ?? 60));
-        $this->createAssSubtitleFile(
-            $subtitlePath,
-            (array)($script['caption_lines'] ?? []),
-            (array)($script['caption_highlights'] ?? []),
-            $audioDuration,
-            $this->introDuration
-        );
         $sceneImagePaths = $this->createSceneImages($jobDir, $script, $keyword, $referenceImagePaths);
         $this->renderStillClip($coverPath, $introClipPath, $this->introDuration);
-        $this->renderSceneVideo($sceneImagePaths, $sceneVideoPath, $audioDuration);
+        $sceneDurations = [];
+        foreach ($speech['segments'] as $index => $segment) {
+            $start = $index === 0 ? 0 : $segment['start'];
+            $end = $speech['segments'][$index + 1]['start'] ?? $audioDuration;
+            $sceneDurations[] = $end - $start;
+        }
+        $this->renderSceneVideo($sceneImagePaths, $sceneVideoPath, $sceneDurations);
         $this->renderStillClip($outroPath, $outroClipPath, $this->outroDuration);
         $this->concatVideoClips([$introClipPath, $sceneVideoPath, $outroClipPath], $timelineListPath, $timelineVideoPath);
         $finalAudioPath = $this->prepareAudioTrack($audioPath, $mixedAudioPath, $timedAudioPath, $this->introDuration, $this->outroDuration);
@@ -102,6 +105,7 @@ class ShortsAutomationService
         $manifest = [
             'keyword' => $keyword,
             'script' => $script,
+            'caption_cues' => $cues,
             'scene_images' => array_map([$this, 'toPublicUrl'], $sceneImagePaths),
             'cached_tokens' => $script['_cached_tokens'] ?? 0,
             'usage' => $script['_usage'] ?? null,
@@ -113,6 +117,7 @@ class ShortsAutomationService
             'output_dir' => $jobDir,
             'cover_url' => $this->toPublicUrl($coverPath),
             'audio_url' => $this->toPublicUrl($finalAudioPath),
+            'subtitle_url' => $this->toPublicUrl($srtPath),
             'video_url' => $this->toPublicUrl($videoPath),
             'scene_image_urls' => array_map([$this, 'toPublicUrl'], $sceneImagePaths),
             'script' => $script,
@@ -131,7 +136,7 @@ class ShortsAutomationService
 
         $backgroundPath = preg_replace('/\.png$/', '_bg.png', $targetPath) ?: ($targetPath . '_bg.png');
         $this->openAI->generateImage($bgPrompt, $backgroundPath);
-        $this->renderCoverTextOverlay($backgroundPath, $targetPath, $keyword);
+        $this->renderCoverTextOverlay($backgroundPath, $targetPath, trim((string)($script['cover_title'] ?? '')) ?: $keyword);
     }
 
     private function renderCoverTextOverlay(string $backgroundPath, string $targetPath, string $keyword): void
@@ -155,7 +160,10 @@ class ShortsAutomationService
         }
 
         $canvas = imagecreatetruecolor(1080, 1920);
-        imagecopyresampled($canvas, $image, 0, 0, 0, 0, 1080, 1920, imagesx($image), imagesy($image));
+        $scale = max(1080 / imagesx($image), 1920 / imagesy($image));
+        $cropWidth = (int)round(1080 / $scale);
+        $cropHeight = (int)round(1920 / $scale);
+        imagecopyresampled($canvas, $image, 0, 0, (int)((imagesx($image) - $cropWidth) / 2), (int)((imagesy($image) - $cropHeight) / 2), 1080, 1920, $cropWidth, $cropHeight);
         imagedestroy($image);
 
         imagealphablending($canvas, true);
@@ -335,23 +343,27 @@ class ShortsAutomationService
         return $patterns[$sceneIndex % count($patterns)];
     }
 
-    private function renderSceneVideo(array $sceneImagePaths, string $sceneVideoPath, float $duration): void
+    private function renderSceneVideo(array $sceneImagePaths, string $sceneVideoPath, array $durations): void
     {
         if ($sceneImagePaths === []) {
             throw new RuntimeException('장면 이미지가 없습니다.');
         }
 
         $sceneCount = count($sceneImagePaths);
-        $transitionDuration = 0.45;
-        $baseClipDuration = max(4.5, ($duration + ($transitionDuration * max(0, $sceneCount - 1))) / $sceneCount);
+        if (count($durations) !== $sceneCount || min($durations) <= 0) {
+            throw new RuntimeException('장면 이미지와 발화 시간이 일치하지 않습니다.');
+        }
+        $transitionDuration = min(0.25, min($durations) / 3);
         $inputs = [];
         $filterParts = [];
 
         foreach ($sceneImagePaths as $index => $sceneImagePath) {
-            $inputs[] = '-loop 1 -t ' . escapeshellarg(number_format($baseClipDuration, 2, '.', '')) . ' -i ' . escapeshellarg($sceneImagePath);
-            $zoomDirection = $index % 2 === 0 ? "min(zoom+0.0011,1.14)" : "if(lte(zoom,1.0),1.12,max(1.0,zoom-0.0007))";
+            $clipDuration = $durations[$index] + ($index < $sceneCount - 1 ? $transitionDuration : 0);
+            $inputs[] = '-loop 1 -framerate 30 -t ' . escapeshellarg(number_format($clipDuration, 3, '.', '')) . ' -i ' . escapeshellarg($sceneImagePath);
+            $frames = max(1, (int)round($clipDuration * 30));
+            $zoomDirection = $index % 2 === 0 ? '1.02+0.04*on/' . $frames : '1.06-0.04*on/' . $frames;
             $filterParts[] = sprintf(
-                '[%d:v]scale=1080:1920,zoompan=z=\'%s\':x=\'iw/2-(iw/zoom/2)\':y=\'ih/2-(ih/zoom/2)\':d=1:s=1080x1920:fps=30,eq=contrast=1.05:saturation=1.1:brightness=0.01,format=yuv420p,setpts=PTS-STARTPTS[v%d]',
+                '[%d:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,zoompan=z=\'%s\':x=\'iw/2-(iw/zoom/2)\':y=\'ih/2-(ih/zoom/2)\':d=1:s=1080x1920:fps=30,format=yuv420p,settb=AVTB,setpts=PTS-STARTPTS[v%d]',
                 $index,
                 $zoomDirection,
                 $index
@@ -359,11 +371,11 @@ class ShortsAutomationService
         }
 
         $lastLabel = '[v0]';
-        $currentOffset = $baseClipDuration - $transitionDuration;
+        $currentOffset = $durations[0];
         for ($i = 1; $i < $sceneCount; $i++) {
             $nextLabel = sprintf('[v%d]', $i);
             $outLabel = sprintf('[vx%d]', $i);
-            $transitionName = $i % 2 === 0 ? 'fade' : 'smoothleft';
+            $transitionName = 'fade';
             $filterParts[] = sprintf(
                 '%s%sxfade=transition=%s:duration=%.2f:offset=%.2f%s',
                 $lastLabel,
@@ -374,16 +386,17 @@ class ShortsAutomationService
                 $outLabel
             );
             $lastLabel = $outLabel;
-            $currentOffset += $baseClipDuration - $transitionDuration;
+            $currentOffset += $durations[$i];
         }
 
         $filterComplex = implode(';', $filterParts);
         $command = sprintf(
-            '%s -y %s -filter_complex %s -map %s -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p %s 2>&1',
+            '%s -y %s -filter_complex_threads 1 -filter_complex %s -map %s -t %s -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p %s 2>&1',
             escapeshellarg($this->ffmpegPath),
             implode(' ', $inputs),
             escapeshellarg($filterComplex),
             escapeshellarg($lastLabel),
+            escapeshellarg(number_format(array_sum($durations), 3, '.', '')),
             escapeshellarg($sceneVideoPath)
         );
 
@@ -400,7 +413,7 @@ class ShortsAutomationService
             escapeshellarg($this->ffmpegPath),
             escapeshellarg(number_format($duration, 2, '.', '')),
             escapeshellarg($imagePath),
-            escapeshellarg('scale=1080:1920,format=yuv420p'),
+            escapeshellarg('scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30,format=yuv420p'),
             escapeshellarg($clipPath)
         );
 
@@ -447,7 +460,7 @@ class ShortsAutomationService
                 escapeshellarg($this->ffmpegPath),
                 escapeshellarg($this->bgmPath),
                 escapeshellarg($voicePath),
-                escapeshellarg('[0:a]volume=0.08,atrim=0:3600,asetpts=PTS-STARTPTS[bgm];[1:a]loudnorm=I=-16:TP=-1.5:LRA=11,asetpts=PTS-STARTPTS[voice];[bgm][voice]amix=inputs=2:duration=shortest:dropout_transition=2[aout]'),
+                escapeshellarg('[0:a]volume=0.06,atrim=0:3600,asetpts=PTS-STARTPTS[bgm];[1:a]asetpts=PTS-STARTPTS[voice];[bgm][voice]amix=inputs=2:duration=shortest:dropout_transition=2[aout]'),
                 escapeshellarg('[aout]'),
                 escapeshellarg($mixedAudioPath)
             );
@@ -528,127 +541,6 @@ class ShortsAutomationService
     {
         preg_match_all('/./us', $text, $matches);
         return $matches[0] ?? [];
-    }
-
-    private function createAssSubtitleFile(string $targetPath, array $captionLines, array $captionHighlights, float $duration, float $startOffset): void
-    {
-        $captionLines = array_values(array_filter(array_map(
-            static fn ($line) => trim((string)$line),
-            $captionLines
-        ), static fn ($line) => $line !== ''));
-
-        $captionHighlights = array_values(array_map(
-            static fn ($line) => trim((string)$line),
-            $captionHighlights
-        ));
-
-        if ($captionLines === []) {
-            $captionLines = [''];
-        }
-
-        $fontName = $this->detectSubtitleFontName();
-        $body = "[Script Info]\n";
-        $body .= "ScriptType: v4.00+\n";
-        $body .= "PlayResX: 1080\n";
-        $body .= "PlayResY: 1920\n";
-        $body .= "ScaledBorderAndShadow: yes\n\n";
-        $body .= "[V4+ Styles]\n";
-        $body .= "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n";
-        $body .= "Style: Main,{$fontName},58,&H00FFFFFF,&H000000FF,&H00121823,&H28000000,-1,0,0,0,100,100,0,0,1,2.8,0,2,70,70,150,1\n\n";
-        $body .= "[Events]\n";
-        $body .= "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
-
-        $chunkCount = count($captionLines);
-        $segmentDuration = $duration / $chunkCount;
-        $endTime = $startOffset + $duration;
-        $cursor = $startOffset;
-
-        foreach ($captionLines as $index => $line) {
-            $start = $cursor;
-            $end = min($endTime, $index === $chunkCount - 1 ? $endTime : $cursor + $segmentDuration);
-            $highlight = $captionHighlights[$index] ?? '';
-            $body .= 'Dialogue: 0,' . $this->formatAssTime($start) . ',' . $this->formatAssTime($end) . ',Main,,0,0,0,,' . $this->formatAssText($line, $highlight, max(0.8, $end - $start)) . "\n";
-            $cursor = $end;
-        }
-
-        if (file_put_contents($targetPath, $body) === false) {
-            throw new RuntimeException('ASS 자막 파일 저장에 실패했습니다: ' . $targetPath);
-        }
-    }
-
-    private function formatAssTime(float $seconds): string
-    {
-        $centiseconds = (int)round($seconds * 100);
-        $hours = (int)floor($centiseconds / 360000);
-        $centiseconds -= $hours * 360000;
-        $minutes = (int)floor($centiseconds / 6000);
-        $centiseconds -= $minutes * 6000;
-        $secs = (int)floor($centiseconds / 100);
-        $centiseconds -= $secs * 100;
-
-        return sprintf('%d:%02d:%02d.%02d', $hours, $minutes, $secs, $centiseconds);
-    }
-
-    private function formatAssText(string $line, string $highlight, float $segmentDuration): string
-    {
-        $cleanLine = str_replace(["\r", "\n"], ' ', trim($line));
-        $highlight = $this->escapeAss(trim($highlight));
-
-        $animatedText = $this->buildKaraokeText($cleanLine, $highlight, $segmentDuration);
-
-        if ($animatedText === '') {
-            $animatedText = $this->escapeAss($cleanLine);
-        }
-
-        return '{\an2\pos(540,1635)\fad(80,120)}' . $animatedText;
-    }
-
-    private function buildKaraokeText(string $line, string $highlight, float $segmentDuration): string
-    {
-        $tokens = $this->tokenizeCaption($line);
-        if ($tokens === []) {
-            return '';
-        }
-
-        $perTokenCentiseconds = max(12, (int)floor(($segmentDuration * 100) / count($tokens)));
-        $parts = [];
-
-        foreach ($tokens as $token) {
-            if (trim($token) === '') {
-                $parts[] = $token;
-                continue;
-            }
-
-            $escapedToken = $this->escapeAss($token);
-            if ($highlight !== '' && mb_strpos($token, $highlight) !== false) {
-                $escapedToken = '{\fs72\c&H0030D7FF&\bord3}' . $escapedToken . '{\rMain}';
-            }
-
-            $parts[] = '{\k' . $perTokenCentiseconds . '}' . $escapedToken;
-        }
-
-        return implode('', $parts);
-    }
-
-    private function tokenizeCaption(string $line): array
-    {
-        $line = trim($line);
-        if ($line === '') {
-            return [];
-        }
-
-        $tokens = preg_split('/(\s+)/u', $line, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-        if (is_array($tokens) && count(array_filter($tokens, static fn ($token) => trim($token) !== '')) >= 2) {
-            return $tokens;
-        }
-
-        preg_match_all('/./us', $line, $matches);
-        return $matches[0] ?? [];
-    }
-
-    private function escapeAss(string $text): string
-    {
-        return str_replace(['{', '}'], ['\{', '\}'], $text);
     }
 
     private function probeDuration(string $path): ?float

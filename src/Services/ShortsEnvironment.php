@@ -45,7 +45,7 @@ class ShortsEnvironment
             $add('Realtime transport', is_callable('stream_socket_client'), 'Realtime WebSocket 연결을 위한 stream_socket_client 허용 필요');
             $add('Speech voice', in_array($models['tts_voice'], OpenAIClient::VOICES, true), 'Realtime 지원 보이스를 선택하세요: ' . implode(', ', OpenAIClient::VOICES));
         } else {
-            $checks[] = ['name' => 'Speech migration', 'status' => 'warning', 'message' => '기존 Speech API 모델을 사용 중입니다. 최신 설정은 OPENAI_TTS_MODEL=' . OpenAIClient::DEFAULT_TTS_MODEL . ' 입니다.'];
+            $add('Speech timing', false, '문단별 음성·자막 동기화를 위해 OPENAI_TTS_MODEL=' . OpenAIClient::DEFAULT_TTS_MODEL . ' 로 설정하세요.');
         }
         foreach (['curl', 'gd', 'mbstring', 'fileinfo', 'pdo_mysql'] as $extension) {
             $add('PHP ' . $extension, extension_loaded($extension), $extension . ' 확장 활성화 필요');
