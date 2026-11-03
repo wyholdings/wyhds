@@ -56,13 +56,9 @@ The JSON schema is:
   "video_title": "string",
   "hook": "string",
   "narration_segments": ["string", "string"],
-  "scene_prompts": ["string", "string"],
+  "stock_queries": ["string", "string"],
+  "stock_fallback_query": "string",
   "hashtags": ["string", "string"],
-  "visual_style": "string",
-  "visual_anchor": "string",
-  "camera_language": "string",
-  "lighting_style": "string",
-  "color_palette": "string",
   "cover_title": "string",
   "cover_subtitle": "string",
   "cta": "string"
@@ -74,13 +70,8 @@ Rules:
 - Use readable spoken forms for numbers and abbreviations. No emoji, markdown, stage directions, or pronunciation brackets in narration.
 - Start with a concise, specific hook. Connect each thought smoothly. End with a useful takeaway, without a generic thank-you or forced subscription request.
 - Each paragraph must be understandable when read aloud; do not split a sentence between paragraphs.
-- scene_prompts must contain exactly the same number of items as narration_segments, in the same order.
-- Each scene prompt must describe a single visual moment for an image model.
-- Scene prompts must avoid letters, captions, logos, UI, watermark, collage, split screen.
-- visual_anchor must define one consistent visual identity shared across all generated scenes.
-- camera_language should describe framing and lens feel like close-up, medium shot, 35mm, shallow depth of field.
-- lighting_style should describe lighting like soft cinematic light, rim light, moody contrast, daylight documentary.
-- color_palette should describe a controlled color direction like teal and orange, warm neutral, muted blue and gold.
+- stock_queries must match narration_segments in number and order. Each is a simple English Pixabay footage search of 1 to 3 words, at most 100 characters. Choose concrete, commonly filmed subjects relevant to the paragraph, not abstract concepts or elaborate visual descriptions.
+- stock_fallback_query is one broad English footage search of 1 to 3 words relevant to the entire topic. For dust mites, use bedroom, bedding, washing sheets; do not assume microscopic mite footage exists. Never use unrelated generic scenery as filler.
 - hashtags must contain 3 to 6 items without # symbols.
 - cover_title must be 18 characters or less.
 - cover_subtitle must be 24 characters or less.
@@ -96,7 +87,7 @@ PROMPT;
 
         $response = $this->requestJson('/responses', [
             'model' => $this->textModel,
-            'prompt_cache_key' => 'shorts-script-v5-natural',
+            'prompt_cache_key' => 'shorts-script-v6-pixabay',
             'input' => [
                 [
                     'role' => 'system',
@@ -122,13 +113,9 @@ PROMPT;
                             'video_title',
                             'hook',
                             'narration_segments',
-                            'scene_prompts',
+                            'stock_queries',
+                            'stock_fallback_query',
                             'hashtags',
-                            'visual_style',
-                            'visual_anchor',
-                            'camera_language',
-                            'lighting_style',
-                            'color_palette',
                             'cover_title',
                             'cover_subtitle',
                             'cta',
@@ -142,23 +129,14 @@ PROMPT;
                                 'minItems' => 6,
                                 'maxItems' => 8,
                             ],
-                            'scene_prompts' => [
-                                'type' => 'array',
-                                'items' => ['type' => 'string'],
-                                'minItems' => 6,
-                                'maxItems' => 8,
-                            ],
                             'hashtags' => [
                                 'type' => 'array',
                                 'items' => ['type' => 'string'],
                                 'minItems' => 3,
                                 'maxItems' => 6,
                             ],
-                            'visual_style' => ['type' => 'string'],
-                            'visual_anchor' => ['type' => 'string'],
-                            'camera_language' => ['type' => 'string'],
-                            'lighting_style' => ['type' => 'string'],
-                            'color_palette' => ['type' => 'string'],
+                            'stock_queries' => ['type' => 'array', 'items' => ['type' => 'string'], 'minItems' => 6, 'maxItems' => 8],
+                            'stock_fallback_query' => ['type' => 'string'],
                             'cover_title' => ['type' => 'string'],
                             'cover_subtitle' => ['type' => 'string'],
                             'cta' => ['type' => 'string'],
@@ -172,13 +150,22 @@ PROMPT;
         $payload = $this->decodeJsonObject($text);
 
         $payload['narration_segments'] = array_values(array_filter(array_map(static fn ($line) => trim((string)$line), (array)($payload['narration_segments'] ?? [])), static fn ($line) => $line !== ''));
-        $payload['scene_prompts'] = array_values(array_filter((array)($payload['scene_prompts'] ?? []), static fn ($line) => trim((string)$line) !== ''));
         $payload['hashtags'] = array_values(array_filter((array)($payload['hashtags'] ?? []), static fn ($tag) => trim((string)$tag) !== ''));
 
-        if (count($payload['narration_segments']) < 6 || count($payload['narration_segments']) > 8 || count($payload['narration_segments']) !== count($payload['scene_prompts'])) {
-            throw new RuntimeException('내레이션 문단과 장면 구성이 일치하지 않습니다. 대본을 다시 생성해주세요.');
+        if (count($payload['narration_segments']) < 6 || count($payload['narration_segments']) > 8) {
+            throw new RuntimeException('내레이션 문단 구성에 문제가 있습니다. 대본을 다시 생성해주세요.');
         }
         $payload['narration'] = implode(' ', $payload['narration_segments']);
+        $queries = array_values((array)($payload['stock_queries'] ?? []));
+        if (count($queries) !== count($payload['narration_segments'])) {
+            throw new RuntimeException('내레이션과 영상 검색어 개수가 일치하지 않습니다.');
+        }
+        foreach (array_merge($queries, [$payload['stock_fallback_query'] ?? '']) as $query) {
+            if (!is_string($query) || trim($query) === '' || mb_strlen($query) > 100) {
+                throw new RuntimeException('대본의 영상 검색어가 올바르지 않습니다.');
+            }
+        }
+        $payload['stock_queries'] = $queries;
         $payload['caption_lines'] = $payload['narration_segments'];
 
         $payload['_usage'] = $response['usage'] ?? null;

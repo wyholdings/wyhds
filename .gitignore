@@ -13,3 +13,4 @@ Thumbs.db    # Windows에서 생성되는 파일
 /public/webhard/
 # 웹하드 로그 (기본 .logs 디렉터리)
 .logs/
+/var/cache/

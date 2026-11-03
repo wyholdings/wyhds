@@ -28,6 +28,7 @@ namespace App\Services {
     {
         public static int $calls = 0;
         public static bool $fail = false;
+        public static array $lastPayload = [];
         public static $duringGeneration;
         public function generate(array $payload): array
         {
@@ -35,6 +36,7 @@ namespace App\Services {
                 throw new \RuntimeException('Session must be saved and unlocked before paid work.');
             }
             self::$calls++;
+            self::$lastPayload = $payload;
             if (self::$duringGeneration !== null) {
                 $callback = self::$duringGeneration;
                 self::$duringGeneration = null;
@@ -45,7 +47,8 @@ namespace App\Services {
                 'output_dir' => '/test/output', 'cover_url' => '/test/cover.png',
                 'audio_url' => '/test/voice.wav', 'video_url' => '/test/final.mp4',
                 'scene_image_urls' => ['/test/scene_01.png'],
-                'script' => ['video_title' => 'test title', 'narration' => 'test narration', 'hashtags' => ['test']],
+                'script' => ['video_title' => 'test title', 'narration' => 'test narration', 'hashtags' => ['test'],
+                    '_media_source' => 'pixabay', '_video_sources' => [['id' => 123, 'page_url' => 'https://pixabay.com/videos/id-123/', 'user' => 'fixture creator', 'query' => 'bedroom']]],
             ];
         }
     }
@@ -91,7 +94,7 @@ namespace {
     {
         preg_match('/name="request_token" value="([a-f0-9]{64})"/', $page['html'], $match);
         if (!isset($match[1])) { throw new \RuntimeException('No request token in form.'); }
-        return ['csrf_token' => $_SESSION['csrf_token'], 'request_token' => $match[1], 'keyword' => 'test', 'duration' => 30, 'tone' => 'calm', 'voice' => 'marin'];
+        return ['csrf_token' => $_SESSION['csrf_token'], 'request_token' => $match[1], 'keyword' => 'test', 'duration' => 30, 'tone' => 'calm', 'voice' => 'marin', 'stock_keyword' => 'bedroom'];
     }
 
     ini_set('session.use_cookies', '0');
@@ -105,6 +108,10 @@ namespace {
     $response = visitStudio('POST', $post);
     checkRefresh($response['html'] === '' && $response['headers'] === [['value' => 'Location: /admin/shorts/studio?render=1', 'status' => 303]], 'successful POST redirects with 303 and no result body');
     checkRefresh(\App\Services\ShortsAutomationService::$calls === 1 && count(\App\Models\ShortsRenderModel::$rows) === 1, 'one accepted submission generates once');
+    checkRefresh(\App\Services\ShortsAutomationService::$lastPayload['stock_keyword'] === 'bedroom', 'chosen footage query reaches generation');
+    $savedResult = visitStudio('GET', [], ['render' => 1]);
+    checkRefresh(strpos($savedResult['html'], 'https://pixabay.com/videos/id-123/') !== false
+        && strpos($savedResult['html'], 'fixture creator') !== false, 'Pixabay original source and creator remain visible after redirect');
     foreach ([1, 2] as $refresh) {
         $page = visitStudio('GET', [], ['render' => 1]);
         checkRefresh(strpos($page['html'], '/test/final.mp4') !== false && strpos($page['html'], '/test/scene_01.png') !== false, 'result and scene previews survive refresh ' . $refresh);

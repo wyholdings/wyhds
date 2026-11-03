@@ -20,6 +20,7 @@ class ShortsEnvironment
             'ffmpeg_path' => trim((string)($_ENV['FFMPEG_PATH'] ?? '')) ?: 'ffmpeg',
             'ffprobe_path' => trim((string)($_ENV['FFPROBE_PATH'] ?? '')) ?: 'ffprobe',
             'bgm_path' => trim((string)($_ENV['SHORTS_BGM_PATH'] ?? '')),
+            'pixabay_cache_root' => trim((string)($_ENV['PIXABAY_CACHE_ROOT'] ?? '')) ?: __DIR__ . '/../../var/cache/shorts/pixabay',
         ];
     }
 
@@ -34,11 +35,13 @@ class ShortsEnvironment
 
         $add('API key', trim((string)($_ENV['OPENAI_API_KEY'] ?? '')) !== '', 'OPENAI_API_KEY 설정 여부 (인증·잔액은 별도 확인)');
         $models = OpenAIClient::modelConfiguration();
-        $imageModel = $models['image_model'];
         $add('Text model', true, $models['text_model'] . ' (실제 API 사용 가능 여부는 별도 확인)');
-        $add('Image model', $imageModel !== 'gpt-image-1', $imageModel === 'gpt-image-1'
-            ? 'gpt-image-1은 종료된 모델입니다. .env에서 OPENAI_IMAGE_MODEL=' . OpenAIClient::DEFAULT_IMAGE_MODEL . ' 로 변경하세요.'
-            : $imageModel . ' (실제 API 사용 가능 여부는 별도 확인)');
+        $add('Pixabay key', trim((string)($_ENV['PIXABAY_API_KEY'] ?? '')) !== '', 'PIXABAY_API_KEY 설정 필요 (인증은 실제 검색 시 확인)');
+        $cacheAncestor = $config['pixabay_cache_root'];
+        while (!file_exists($cacheAncestor) && dirname($cacheAncestor) !== $cacheAncestor) {
+            $cacheAncestor = dirname($cacheAncestor);
+        }
+        $add('Pixabay cache', is_dir($cacheAncestor) && is_writable($cacheAncestor), '24시간 검색 캐시 폴더 쓰기 권한 필요: ' . $config['pixabay_cache_root']);
         $add('Speech model', true, $models['tts_model'] . ' / ' . $models['tts_voice']);
         if (strpos($models['tts_model'], 'gpt-realtime-') === 0) {
             $add('PHP openssl', extension_loaded('openssl'), 'Realtime 음성 연결을 위한 TLS 지원 필요');
@@ -64,7 +67,7 @@ class ShortsEnvironment
                     $filters = [];
                     exec(escapeshellarg($config[$key]) . ' -hide_banner -filters 2>&1', $filters, $filterCode);
                     $filterText = implode("\n", $filters);
-                    foreach (['ass', 'zoompan', 'xfade', 'loudnorm'] as $filter) {
+                    foreach (['ass', 'scale', 'crop', 'boxblur', 'overlay', 'loudnorm'] as $filter) {
                         $add('FFmpeg ' . $filter, $filterCode === 0 && preg_match('/^\s*\S+\s+' . $filter . '\s/m', $filterText) === 1, $filter . ' 필터 지원 필요');
                     }
                     $encoders = [];

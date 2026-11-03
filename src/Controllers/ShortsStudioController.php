@@ -33,6 +33,7 @@ class ShortsStudioController
         $environment = ShortsEnvironment::configuration();
         $form = array_merge([
             'keyword' => '',
+            'stock_keyword' => '',
             'tone' => 'clickable',
             'duration' => 60,
             'voice' => $models['tts_voice'],
@@ -83,7 +84,8 @@ class ShortsStudioController
             'bgm_path' => $environment['bgm_path'],
             'openai_model' => $models['text_model'],
             'tts_model' => $models['tts_model'],
-            'image_model' => $models['image_model'],
+            'pixabay_configured' => trim((string)($_ENV['PIXABAY_API_KEY'] ?? '')) !== '',
+            'pixabay_cache_root' => $environment['pixabay_cache_root'],
             'voices' => OpenAIClient::VOICES,
         ]);
     }
@@ -109,6 +111,7 @@ class ShortsStudioController
         $_SESSION['shorts_requests'][$token]['used'] = true;
         $form = [
             'keyword' => trim((string)($_POST['keyword'] ?? '')),
+            'stock_keyword' => mb_substr(trim((string)($_POST['stock_keyword'] ?? '')), 0, 100),
             'tone' => trim((string)($_POST['tone'] ?? 'clickable')),
             'duration' => max(30, min(90, (int)($_POST['duration'] ?? 60))),
             'voice' => trim((string)($_POST['voice'] ?? $models['tts_voice'])),
@@ -133,11 +136,10 @@ class ShortsStudioController
                 }
                 $sessionReleased = true;
             }
-            $referenceImagePaths = $this->resolveStudioReferenceImages($_FILES);
             $result = (new ShortsAutomationService())->generate([
                 'keyword' => $form['keyword'], 'tone' => $form['tone'], 'duration' => $form['duration'],
                 'voice' => $form['voice'], 'speech_style' => $form['speech_style'], 'speech_speed' => $form['speech_speed'],
-                'reference_image_paths' => $referenceImagePaths,
+                'stock_keyword' => $form['stock_keyword'],
             ]);
             $script = $result['script'];
             $script['_scene_image_urls'] = $result['scene_image_urls'] ?? [];
@@ -181,82 +183,5 @@ class ShortsStudioController
         unset($render);
 
         return $renders;
-    }
-
-    private function storeUploadedReferenceImage(?array $file): ?string
-    {
-        if (!$file || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-            return null;
-        }
-
-        if ((int)$file['error'] !== UPLOAD_ERR_OK) {
-            throw new \RuntimeException('참조 이미지 업로드에 실패했습니다.');
-        }
-
-        $tmpPath = (string)($file['tmp_name'] ?? '');
-        if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
-            throw new \RuntimeException('업로드된 참조 이미지가 올바르지 않습니다.');
-        }
-
-        $mime = mime_content_type($tmpPath) ?: '';
-        $extension = null;
-        switch ($mime) {
-            case 'image/jpeg':
-                $extension = 'jpg';
-                break;
-            case 'image/png':
-                $extension = 'png';
-                break;
-            case 'image/webp':
-                $extension = 'webp';
-                break;
-        }
-
-        if ($extension === null) {
-            throw new \RuntimeException('참조 이미지는 jpg, png, webp만 가능합니다.');
-        }
-
-        $publicRoot = realpath(__DIR__ . '/../../public');
-        $uploadDir = $publicRoot . '/uploads/shorts-refs';
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
-            throw new \RuntimeException('참조 이미지 저장 폴더 생성에 실패했습니다.');
-        }
-
-        $filename = 'ref_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
-        $targetPath = $uploadDir . '/' . $filename;
-
-        if (!move_uploaded_file($tmpPath, $targetPath)) {
-            throw new \RuntimeException('참조 이미지 저장에 실패했습니다.');
-        }
-
-        return '/uploads/shorts-refs/' . $filename;
-    }
-
-    private function resolveStudioReferenceImages(array $files): array
-    {
-        $uploadedFront = $this->storeUploadedReferenceImage($files['reference_image'] ?? null);
-        $uploadedSide = $this->storeUploadedReferenceImage($files['reference_side_image'] ?? null);
-        $uploadedExpression = $this->storeUploadedReferenceImage($files['reference_expression_image'] ?? null);
-
-        $urls = [
-            $uploadedFront,
-            $uploadedSide,
-            $uploadedExpression,
-        ];
-
-        $paths = [];
-        $publicRoot = realpath(__DIR__ . '/../../public');
-        foreach ($urls as $url) {
-            if (!$url) {
-                continue;
-            }
-
-            $fullPath = $publicRoot . str_replace('/', DIRECTORY_SEPARATOR, $url);
-            if (is_file($fullPath)) {
-                $paths[] = $fullPath;
-            }
-        }
-
-        return $paths;
     }
 }

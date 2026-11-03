@@ -54,9 +54,13 @@ class ShortsAutomationService
             'tone' => trim((string)($payload['tone'] ?? 'clickable')),
             'duration' => (int)($payload['duration'] ?? 30),
         ]);
-        $referenceImagePaths = isset($payload['reference_image_paths']) && is_array($payload['reference_image_paths'])
-            ? array_values(array_filter($payload['reference_image_paths'], static fn ($path) => is_string($path) && $path !== ''))
-            : [];
+        // Resolve and verify all footage before paying for narration. At most 9 searches / 8 clips per request.
+        $footage = $this->prepareFootage($jobDir, $script, trim((string)($payload['stock_keyword'] ?? '')));
+        $sceneImagePaths = array_column($footage, 'preview_path');
+        $script['_media_source'] = 'pixabay';
+        $script['_video_sources'] = array_map(static function (array $clip): array {
+            return ['id' => $clip['id'], 'page_url' => $clip['page_url'], 'user' => $clip['user'], 'query' => $clip['query']];
+        }, $footage);
 
         $coverPath = $jobDir . '/cover.png';
         $outroPath = $jobDir . '/outro.png';
@@ -86,9 +90,9 @@ class ShortsAutomationService
         $script['_speech_segments'] = $speech['segments'];
         $script['_speech_style'] = $payload['speech_style'] ?? 'natural';
         $script['_speech_speed'] = $payload['speech_speed'] ?? 1.0;
-        $this->createCoverImage($coverPath, $keyword, $script);
+        (new ShortsThumbnailService($this->fontPath))->render($sceneImagePaths[0], $coverPath,
+            trim((string)($script['cover_title'] ?? '')) ?: $keyword, (string)($script['cover_subtitle'] ?? ''));
         $this->createOutroImage($outroPath);
-        $sceneImagePaths = $this->createSceneImages($jobDir, $script, $keyword, $referenceImagePaths);
         $this->renderStillClip($coverPath, $introClipPath, $this->introDuration);
         $sceneDurations = [];
         foreach ($speech['segments'] as $index => $segment) {
@@ -96,7 +100,7 @@ class ShortsAutomationService
             $end = $speech['segments'][$index + 1]['start'] ?? $audioDuration;
             $sceneDurations[] = $end - $start;
         }
-        $this->renderSceneVideo($sceneImagePaths, $sceneVideoPath, $sceneDurations);
+        $this->renderFootageVideo($footage, $sceneVideoPath, $sceneDurations);
         $this->renderStillClip($outroPath, $outroClipPath, $this->outroDuration);
         $this->concatVideoClips([$introClipPath, $sceneVideoPath, $outroClipPath], $timelineListPath, $timelineVideoPath);
         $finalAudioPath = $this->prepareAudioTrack($audioPath, $mixedAudioPath, $timedAudioPath, $this->introDuration, $this->outroDuration);
@@ -107,6 +111,7 @@ class ShortsAutomationService
             'script' => $script,
             'caption_cues' => $cues,
             'scene_images' => array_map([$this, 'toPublicUrl'], $sceneImagePaths),
+            'video_sources' => $script['_video_sources'],
             'cached_tokens' => $script['_cached_tokens'] ?? 0,
             'usage' => $script['_usage'] ?? null,
             'generated_at' => date('c'),
@@ -124,72 +129,96 @@ class ShortsAutomationService
         ];
     }
 
-    private function createCoverImage(string $targetPath, string $keyword, array $script): void
+    private function prepareFootage(string $jobDir, array $script, string $override): array
     {
-        $bgPrompt = trim(implode("\n", [
-            'Create a vertical 9:16 cinematic background image for a YouTube Shorts title card.',
-            'Topic keyword: ' . $keyword,
-            'Use one strong focal scene, premium editorial composition, dramatic lighting.',
-            'No text, no letters, no numbers, no logo, no watermark, no UI.',
-            'Leave a clean central area for large title overlay.',
-        ]));
-
-        $backgroundPath = preg_replace('/\.png$/', '_bg.png', $targetPath) ?: ($targetPath . '_bg.png');
-        $this->openAI->generateImage($bgPrompt, $backgroundPath);
-        $this->renderCoverTextOverlay($backgroundPath, $targetPath, trim((string)($script['cover_title'] ?? '')) ?: $keyword);
+        if (mb_strlen($override) > 100) { throw new RuntimeException('영상 검색어는 100자 이내로 입력하세요.'); }
+        $client = new PixabayVideoClient();
+        $queries = $override !== '' ? array_fill(0, count($script['narration_segments']), $override) : $script['stock_queries'];
+        $fallback = $override !== '' ? $override : $script['stock_fallback_query'];
+        $clips = [];
+        $downloaded = [];
+        $used = [];
+        foreach ($queries as $index => $query) {
+            $selectedQuery = $query;
+            $video = $client->select($client->search($query), $used);
+            if ($video === null && $query !== $fallback) {
+                $selectedQuery = $fallback;
+                $video = $client->select($client->search($fallback), $used);
+            }
+            if ($video === null) {
+                throw new RuntimeException('사용 가능한 Pixabay 영상을 찾지 못했습니다: ' . $selectedQuery . '. 관련된 더 넓은 영상 검색어를 입력해 새 요청을 만드세요. 음성·이미지 생성은 실행하지 않았습니다.');
+            }
+            $id = $video['id'];
+            if (!isset($downloaded[$id])) {
+                $path = $jobDir . '/pixabay_' . $id . '.mp4';
+                $client->download($video, $path);
+                $video['path'] = $path;
+                $video['media'] = $this->probeFootage($path);
+                $video['preview_path'] = $jobDir . '/pixabay_' . $id . '.jpg';
+                $command = escapeshellarg($this->ffmpegPath) . ' -hide_banner -loglevel error -y -ss '
+                    . escapeshellarg((string)min(1, $video['media']['duration'] / 3)) . ' -i ' . escapeshellarg($path)
+                    . ' -map 0:v:0 -frames:v 1 -q:v 2 ' . escapeshellarg($video['preview_path']) . ' 2>&1';
+                $this->runMediaCommand($command, $video['preview_path'], '영상 미리보기 추출');
+                $downloaded[$id] = $video;
+            }
+            $video = $downloaded[$id];
+            $video['query'] = $selectedQuery;
+            $clips[] = $video;
+            $used[] = $id;
+        }
+        return $clips;
     }
 
-    private function renderCoverTextOverlay(string $backgroundPath, string $targetPath, string $keyword): void
+    private function probeFootage(string $path): array
     {
-        if (!extension_loaded('gd')) {
-            throw new RuntimeException('GD 확장이 필요합니다.');
+        $output = [];
+        exec(escapeshellarg($this->ffprobePath)
+            . ' -v error -select_streams v:0 -show_entries stream=width,height:format=duration -of json '
+            . escapeshellarg($path) . ' 2>&1', $output, $code);
+        $data = json_decode(implode("\n", $output), true);
+        $stream = $data['streams'][0] ?? [];
+        $duration = (float)($data['format']['duration'] ?? 0);
+        if ($code !== 0 || (int)($stream['width'] ?? 0) < 1 || (int)($stream['height'] ?? 0) < 1 || $duration <= 0) {
+            throw new RuntimeException('다운로드한 Pixabay 영상을 읽을 수 없습니다. FFprobe 또는 영상 파일을 확인하세요.');
         }
+        return ['width' => (int)$stream['width'], 'height' => (int)$stream['height'], 'duration' => $duration];
+    }
 
-        if (!is_file($this->fontPath)) {
-            throw new RuntimeException('SHORTS_FONT_PATH 또는 기본 폰트 경로를 찾을 수 없습니다: ' . $this->fontPath);
+    private function renderFootageVideo(array $clips, string $targetPath, array $durations): void
+    {
+        if ($clips === [] || count($clips) !== count($durations) || min($durations) <= 0) {
+            throw new RuntimeException('영상 장면과 내레이션 길이가 일치하지 않습니다.');
         }
-
-        if (!is_file($backgroundPath)) {
-            throw new RuntimeException('표지 배경 이미지가 없습니다: ' . $backgroundPath);
+        $rendered = [];
+        $elapsed = 0.0;
+        $renderedFrames = 0;
+        foreach ($clips as $index => $clip) {
+            $elapsed += $durations[$index];
+            $endFrame = (int)round($elapsed * 30);
+            $frames = max(1, $endFrame - $renderedFrames);
+            $renderedFrames += $frames;
+            $path = dirname($targetPath) . sprintf('/footage_%02d.mp4', $index + 1);
+            // Landscape footage retains its subject; the blurred duplicate fills the vertical canvas.
+            $filter = $clip['media']['width'] / $clip['media']['height'] > 0.8
+                ? '[0:v:0]split=2[bg][fg];[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=24:2,setsar=1[back];[fg]scale=1080:1920:force_original_aspect_ratio=decrease,setsar=1[front];[back][front]overlay=(W-w)/2:(H-h)/2,fps=30,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[out]'
+                : '[0:v:0]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[out]';
+            $command = escapeshellarg($this->ffmpegPath) . ' -hide_banner -loglevel error -y -stream_loop -1 -i ' . escapeshellarg($clip['path'])
+                . ' -filter_complex_threads 1 -filter_complex ' . escapeshellarg($filter)
+                . ' -map ' . escapeshellarg('[out]') . ' -an -sn -dn -frames:v ' . $frames
+                . ' -c:v libx264 -preset veryfast -crf 20 -profile:v high -level 4.1 -video_track_timescale 15360 '
+                . escapeshellarg($path) . ' 2>&1';
+            $this->runMediaCommand($command, $path, 'Pixabay 장면 편집');
+            $rendered[] = $path;
         }
+        $this->concatVideoClips($rendered, dirname($targetPath) . '/footage-list.txt', $targetPath);
+    }
 
-        $imageData = file_get_contents($backgroundPath);
-        $image = $imageData !== false ? @imagecreatefromstring($imageData) : false;
-        if ($image === false) {
-            throw new RuntimeException('표지 배경 이미지를 열지 못했습니다.');
-        }
-
-        $canvas = imagecreatetruecolor(1080, 1920);
-        $scale = max(1080 / imagesx($image), 1920 / imagesy($image));
-        $cropWidth = (int)round(1080 / $scale);
-        $cropHeight = (int)round(1920 / $scale);
-        imagecopyresampled($canvas, $image, 0, 0, (int)((imagesx($image) - $cropWidth) / 2), (int)((imagesy($image) - $cropHeight) / 2), 1080, 1920, $cropWidth, $cropHeight);
-        imagedestroy($image);
-
-        imagealphablending($canvas, true);
-        imagesavealpha($canvas, true);
-
-        $overlay = imagecolorallocatealpha($canvas, 6, 10, 18, 45);
-        imagefilledrectangle($canvas, 0, 0, 1080, 1920, $overlay);
-
-        $white = imagecolorallocate($canvas, 255, 255, 255);
-        $shadow = imagecolorallocatealpha($canvas, 0, 0, 0, 55);
-
-        $lines = $this->wrapText(118, $this->fontPath, $keyword, 860);
-        $lineHeight = 138;
-        $startY = 760 - (int)(count($lines) * $lineHeight / 2);
-        foreach ($lines as $index => $line) {
-            $y = $startY + ($index * $lineHeight);
-            imagettftext($canvas, 118, 0, 92, $y + 8, $shadow, $this->fontPath, $line);
-            imagettftext($canvas, 118, 0, 84, $y, $white, $this->fontPath, $line);
-        }
-
-        $result = imagepng($canvas, $targetPath);
-        imagedestroy($canvas);
-        clearstatcache(true, $targetPath);
-
-        if ($result === false || !is_file($targetPath) || filesize($targetPath) === 0) {
-            throw new RuntimeException('커버 이미지 저장에 실패했습니다.');
+    private function runMediaCommand(string $command, string $target, string $label): void
+    {
+        $output = [];
+        exec($command, $output, $code);
+        if ($code !== 0 || !is_file($target) || filesize($target) === 0) {
+            throw new RuntimeException($label . " 실패.\n" . implode("\n", array_slice($output, -12)));
         }
     }
 
@@ -254,155 +283,6 @@ class ShortsAutomationService
         exec($command, $output, $exitCode);
         if ($exitCode !== 0 || !is_file($videoPath)) {
             throw new RuntimeException("ffmpeg 실행 실패. FFMPEG_PATH를 확인하세요.\n" . trim(implode("\n", $output)));
-        }
-    }
-
-    private function createSceneImages(string $jobDir, array $script, string $keyword, array $referenceImagePaths): array
-    {
-        $scenePrompts = array_values((array)($script['scene_prompts'] ?? []));
-        if ($scenePrompts === []) {
-            throw new RuntimeException('장면 이미지 프롬프트가 없습니다.');
-        }
-
-        $visualStyle = trim((string)($script['visual_style'] ?? ''));
-        $visualAnchor = trim((string)($script['visual_anchor'] ?? ''));
-        $cameraLanguage = trim((string)($script['camera_language'] ?? ''));
-        $lightingStyle = trim((string)($script['lighting_style'] ?? ''));
-        $colorPalette = trim((string)($script['color_palette'] ?? ''));
-        $paths = [];
-        foreach ($scenePrompts as $index => $scenePrompt) {
-            $imagePath = sprintf('%s/scene_%02d.png', $jobDir, $index + 1);
-            $prompt = $this->buildSceneImagePrompt(
-                $keyword,
-                (string)$scenePrompt,
-                $visualStyle,
-                $visualAnchor,
-                $cameraLanguage,
-                $lightingStyle,
-                $colorPalette,
-                $index
-            );
-            if ($referenceImagePaths !== []) {
-                $this->openAI->generateImageFromReference($prompt, $referenceImagePaths, $imagePath);
-            } else {
-                $this->openAI->generateImage($prompt, $imagePath);
-            }
-
-            if (!is_file($imagePath) || filesize($imagePath) === 0) {
-                throw new RuntimeException('장면 이미지 생성에 실패했습니다: ' . $imagePath);
-            }
-
-            $paths[] = $imagePath;
-        }
-
-        return $paths;
-    }
-
-    private function buildSceneImagePrompt(
-        string $keyword,
-        string $scenePrompt,
-        string $visualStyle,
-        string $visualAnchor,
-        string $cameraLanguage,
-        string $lightingStyle,
-        string $colorPalette,
-        int $sceneIndex
-    ): string
-    {
-        $style = $visualStyle !== '' ? $visualStyle : 'clean, realistic, high contrast, premium documentary still';
-        $anchor = $visualAnchor !== '' ? $visualAnchor : 'same visual identity, same subject feeling, same lens mood across all scenes';
-        $camera = $cameraLanguage !== '' ? $cameraLanguage : $this->defaultCameraLanguage($sceneIndex);
-        $lighting = $lightingStyle !== '' ? $lightingStyle : 'cinematic soft key light, subtle rim light, controlled contrast';
-        $palette = $colorPalette !== '' ? $colorPalette : 'muted navy, warm gold, controlled highlights';
-
-        return trim(implode("\n", [
-            'Create a vertical 9:16 cinematic still image for a YouTube Shorts video.',
-            'Topic keyword: ' . $keyword,
-            'Shared visual anchor: ' . $anchor,
-            'Scene: ' . $scenePrompt,
-            'Visual style: ' . $style,
-            'Camera language: ' . $camera,
-            'Lighting style: ' . $lighting,
-            'Color palette: ' . $palette,
-            'Requirements: keep the same subject identity and same visual world as previous scenes.',
-            'Compose like a premium editorial frame, with one clear focal point and cinematic depth.',
-            'No text, no letters, no numbers, no watermark, no logo, no UI, no collage, no split screen.',
-            'Strong focal subject, clear depth, dramatic lighting, social-video friendly composition.',
-        ]));
-    }
-
-    private function defaultCameraLanguage(int $sceneIndex): string
-    {
-        $patterns = [
-            'close-up portrait framing, 50mm lens feel, shallow depth of field',
-            'medium shot, 35mm documentary lens feel, layered background depth',
-            'detail close-up, macro-like emphasis, crisp subject separation',
-            'hero shot, slightly low angle, cinematic subject dominance',
-        ];
-
-        return $patterns[$sceneIndex % count($patterns)];
-    }
-
-    private function renderSceneVideo(array $sceneImagePaths, string $sceneVideoPath, array $durations): void
-    {
-        if ($sceneImagePaths === []) {
-            throw new RuntimeException('장면 이미지가 없습니다.');
-        }
-
-        $sceneCount = count($sceneImagePaths);
-        if (count($durations) !== $sceneCount || min($durations) <= 0) {
-            throw new RuntimeException('장면 이미지와 발화 시간이 일치하지 않습니다.');
-        }
-        $transitionDuration = min(0.25, min($durations) / 3);
-        $inputs = [];
-        $filterParts = [];
-
-        foreach ($sceneImagePaths as $index => $sceneImagePath) {
-            $clipDuration = $durations[$index] + ($index < $sceneCount - 1 ? $transitionDuration : 0);
-            $inputs[] = '-loop 1 -framerate 30 -t ' . escapeshellarg(number_format($clipDuration, 3, '.', '')) . ' -i ' . escapeshellarg($sceneImagePath);
-            $frames = max(1, (int)round($clipDuration * 30));
-            $zoomDirection = $index % 2 === 0 ? '1.02+0.04*on/' . $frames : '1.06-0.04*on/' . $frames;
-            $filterParts[] = sprintf(
-                '[%d:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,zoompan=z=\'%s\':x=\'iw/2-(iw/zoom/2)\':y=\'ih/2-(ih/zoom/2)\':d=1:s=1080x1920:fps=30,format=yuv420p,settb=AVTB,setpts=PTS-STARTPTS[v%d]',
-                $index,
-                $zoomDirection,
-                $index
-            );
-        }
-
-        $lastLabel = '[v0]';
-        $currentOffset = $durations[0];
-        for ($i = 1; $i < $sceneCount; $i++) {
-            $nextLabel = sprintf('[v%d]', $i);
-            $outLabel = sprintf('[vx%d]', $i);
-            $transitionName = 'fade';
-            $filterParts[] = sprintf(
-                '%s%sxfade=transition=%s:duration=%.2f:offset=%.2f%s',
-                $lastLabel,
-                $nextLabel,
-                $transitionName,
-                $transitionDuration,
-                $currentOffset,
-                $outLabel
-            );
-            $lastLabel = $outLabel;
-            $currentOffset += $durations[$i];
-        }
-
-        $filterComplex = implode(';', $filterParts);
-        $command = sprintf(
-            '%s -y %s -filter_complex_threads 1 -filter_complex %s -map %s -t %s -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p %s 2>&1',
-            escapeshellarg($this->ffmpegPath),
-            implode(' ', $inputs),
-            escapeshellarg($filterComplex),
-            escapeshellarg($lastLabel),
-            escapeshellarg(number_format(array_sum($durations), 3, '.', '')),
-            escapeshellarg($sceneVideoPath)
-        );
-
-        exec($command, $output, $exitCode);
-        if ($exitCode !== 0 || !is_file($sceneVideoPath)) {
-            throw new RuntimeException("장면 영상 생성 실패.\n" . trim(implode("\n", $output)));
         }
     }
 
@@ -541,23 +421,6 @@ class ShortsAutomationService
     {
         preg_match_all('/./us', $text, $matches);
         return $matches[0] ?? [];
-    }
-
-    private function probeDuration(string $path): ?float
-    {
-        $command = sprintf(
-            '%s -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s 2>&1',
-            escapeshellarg($this->ffprobePath),
-            escapeshellarg($path)
-        );
-
-        exec($command, $output, $exitCode);
-        if ($exitCode !== 0) {
-            return null;
-        }
-
-        $value = trim(implode("\n", $output));
-        return is_numeric($value) ? (float)$value : null;
     }
 
     private function detectSubtitleFontName(): string
