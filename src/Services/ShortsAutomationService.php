@@ -19,17 +19,16 @@ class ShortsAutomationService
 
     public function __construct()
     {
+        $config = ShortsEnvironment::configuration();
         $this->openAI = new OpenAIClient();
-        $this->fontPath = (string)($_ENV['SHORTS_FONT_PATH'] ?? 'C:/Windows/Fonts/malgun.ttf');
-        $this->publicRoot = realpath(__DIR__ . '/../../public') ?: (__DIR__ . '/../../public');
+        $this->fontPath = $config['font_path'];
+        $this->publicRoot = $config['public_root'];
         $configuredOutputRoot = trim((string)($_ENV['SHORTS_OUTPUT_ROOT'] ?? ''));
-        $this->outputRoot = $configuredOutputRoot !== ''
-            ? $this->normalizePath($configuredOutputRoot)
-            : $this->publicRoot . '/generated/shorts';
+        $this->outputRoot = $this->normalizePath($config['output_root']);
         $this->outputRootLabel = $configuredOutputRoot !== '' ? $configuredOutputRoot : $this->outputRoot;
-        $this->ffmpegPath = trim((string)($_ENV['FFMPEG_PATH'] ?? 'ffmpeg'));
-        $this->ffprobePath = trim((string)($_ENV['FFPROBE_PATH'] ?? 'ffprobe'));
-        $this->bgmPath = trim((string)($_ENV['SHORTS_BGM_PATH'] ?? ''));
+        $this->ffmpegPath = $config['ffmpeg_path'];
+        $this->ffprobePath = $config['ffprobe_path'];
+        $this->bgmPath = $config['bgm_path'];
     }
 
     public function generate(array $payload): array
@@ -39,7 +38,9 @@ class ShortsAutomationService
             throw new RuntimeException('키워드를 입력해야 합니다.');
         }
 
-        $jobId = date('Ymd_His') . '_' . $this->slugify($keyword);
+        (new ShortsEnvironment())->assertReady();
+
+        $jobId = date('Ymd_His') . '_' . $this->slugify($keyword) . '_' . bin2hex(random_bytes(4));
         $jobDir = $this->outputRoot . '/' . $jobId;
         $this->ensureDirectory($jobDir);
 
@@ -554,12 +555,13 @@ class ShortsAutomationService
         $body .= "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
 
         $chunkCount = count($captionLines);
-        $segmentDuration = max(1.2, $duration / max(1, $chunkCount));
+        $segmentDuration = $duration / $chunkCount;
+        $endTime = $startOffset + $duration;
         $cursor = $startOffset;
 
         foreach ($captionLines as $index => $line) {
             $start = $cursor;
-            $end = min($duration, $index === $chunkCount - 1 ? $duration : $cursor + $segmentDuration);
+            $end = min($endTime, $index === $chunkCount - 1 ? $endTime : $cursor + $segmentDuration);
             $highlight = $captionHighlights[$index] ?? '';
             $body .= 'Dialogue: 0,' . $this->formatAssTime($start) . ',' . $this->formatAssTime($end) . ',Main,,0,0,0,,' . $this->formatAssText($line, $highlight, max(0.8, $end - $start)) . "\n";
             $cursor = $end;

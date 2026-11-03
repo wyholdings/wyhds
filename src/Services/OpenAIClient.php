@@ -190,7 +190,7 @@ PROMPT;
             'model' => $this->ttsModel,
             'voice' => $voice ?: $this->ttsVoice,
             'input' => $text,
-            'format' => 'aac',
+            'response_format' => 'aac',
         ]);
 
         if (file_put_contents($targetPath, $binary) === false) {
