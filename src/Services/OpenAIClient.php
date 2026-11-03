@@ -6,6 +6,12 @@ use RuntimeException;
 
 class OpenAIClient
 {
+    public const DEFAULT_TEXT_MODEL = 'gpt-6-luna';
+    public const DEFAULT_IMAGE_MODEL = 'gpt-image-2.5-sunburst';
+    public const DEFAULT_TTS_MODEL = 'gpt-realtime-2.1-mini';
+    public const DEFAULT_TTS_VOICE = 'marin';
+    public const VOICES = ['marin', 'cedar', 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'];
+
     private string $apiKey;
     private string $baseUrl;
     private string $textModel;
@@ -17,14 +23,25 @@ class OpenAIClient
     {
         $this->apiKey = trim((string)($_ENV['OPENAI_API_KEY'] ?? ''));
         $this->baseUrl = rtrim((string)($_ENV['OPENAI_BASE_URL'] ?? 'https://api.openai.com/v1'), '/');
-        $this->textModel = trim((string)($_ENV['OPENAI_MODEL'] ?? 'gpt-5'));
-        $this->ttsModel = trim((string)($_ENV['OPENAI_TTS_MODEL'] ?? 'gpt-4o-mini-tts'));
-        $this->ttsVoice = trim((string)($_ENV['OPENAI_TTS_VOICE'] ?? 'alloy'));
-        $this->imageModel = trim((string)($_ENV['OPENAI_IMAGE_MODEL'] ?? 'gpt-image-1'));
+        $config = self::modelConfiguration();
+        $this->textModel = $config['text_model'];
+        $this->ttsModel = $config['tts_model'];
+        $this->ttsVoice = $config['tts_voice'];
+        $this->imageModel = $config['image_model'];
 
         if ($this->apiKey === '') {
             throw new RuntimeException('OPENAI_API_KEY가 설정되어 있지 않습니다.');
         }
+    }
+
+    public static function modelConfiguration(): array
+    {
+        return [
+            'text_model' => trim((string)($_ENV['OPENAI_MODEL'] ?? '')) ?: self::DEFAULT_TEXT_MODEL,
+            'image_model' => trim((string)($_ENV['OPENAI_IMAGE_MODEL'] ?? '')) ?: self::DEFAULT_IMAGE_MODEL,
+            'tts_model' => trim((string)($_ENV['OPENAI_TTS_MODEL'] ?? '')) ?: self::DEFAULT_TTS_MODEL,
+            'tts_voice' => trim((string)($_ENV['OPENAI_TTS_VOICE'] ?? '')) ?: self::DEFAULT_TTS_VOICE,
+        ];
     }
 
     public function generateShortsScript(array $context): array
@@ -70,22 +87,16 @@ Rules:
 - No markdown.
 PROMPT;
 
-        $projectBlock = $context['project']
-            ? json_encode($context['project'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-            : 'null';
-
         $userPrompt = <<<PROMPT
 keyword: {$context['keyword']}
 tone: {$context['tone']}
 target_duration_seconds: {$context['duration']}
-project_template: {$projectBlock}
-
 Generate one complete YouTube Shorts package optimized for a single vertical video.
 PROMPT;
 
         $response = $this->requestJson('/responses', [
             'model' => $this->textModel,
-            'prompt_cache_key' => 'shorts-script-v3',
+            'prompt_cache_key' => 'shorts-script-v4',
             'input' => [
                 [
                     'role' => 'system',
@@ -186,12 +197,20 @@ PROMPT;
 
     public function synthesizeSpeech(string $text, string $targetPath, ?string $voice = null): void
     {
-        $binary = $this->requestBinary('/audio/speech', [
-            'model' => $this->ttsModel,
-            'voice' => $voice ?: $this->ttsVoice,
-            'input' => $text,
-            'response_format' => 'aac',
-        ]);
+        $voice = $voice ?: $this->ttsVoice;
+        if (!in_array($voice, self::VOICES, true)) {
+            throw new RuntimeException('지원하지 않는 음성입니다. 스튜디오에서 보이스를 다시 선택하세요.');
+        }
+        if (strpos($this->ttsModel, 'gpt-realtime-') === 0) {
+            $binary = (new RealtimeSpeechClient())->synthesize($this->apiKey, $this->baseUrl, $this->ttsModel, $voice, $text);
+        } else {
+            $binary = $this->requestBinary('/audio/speech', [
+                'model' => $this->ttsModel,
+                'voice' => $voice,
+                'input' => $text,
+                'response_format' => 'wav',
+            ]);
+        }
 
         if (file_put_contents($targetPath, $binary) === false) {
             throw new RuntimeException('음성 파일 저장에 실패했습니다.');
@@ -228,8 +247,11 @@ PROMPT;
             'model' => $this->imageModel,
             'prompt' => $prompt,
             'size' => '1024x1536',
-            'input_fidelity' => 'high',
         ];
+        // Newer GPT Image models do not use the legacy input_fidelity option.
+        if (in_array($this->imageModel, ['gpt-image-1.5', 'gpt-image-1.5-2025-12-16'], true)) {
+            $fields['input_fidelity'] = 'high';
+        }
         foreach ($imageFiles as $index => $imageFile) {
             $fields['image[' . $index . ']'] = $imageFile;
         }

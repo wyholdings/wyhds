@@ -78,15 +78,8 @@ $router->post('/admin/portfolio/{id}/edit', [App\Controllers\PortfolioController
 $router->get('/admin/portfolio/{id}/delete', [App\Controllers\PortfolioController::class, 'delete']);
 
 //유튜브 쇼츠 자동화
-$router->get('/admin/shorts/list', [App\Controllers\ShortsProjectController::class, 'list']);
-$router->get('/admin/shorts/studio', [App\Controllers\ShortsProjectController::class, 'studio']);
-$router->post('/admin/shorts/studio', [App\Controllers\ShortsProjectController::class, 'studio']);
-$router->post('/admin/shorts/add', [App\Controllers\ShortsProjectController::class, 'add']);
-$router->get('/admin/shorts/add', [App\Controllers\ShortsProjectController::class, 'add']);
-$router->get('/admin/shorts/{id}/view', [App\Controllers\ShortsProjectController::class, 'view']);
-$router->get('/admin/shorts/{id}/edit', [App\Controllers\ShortsProjectController::class, 'edit']);
-$router->post('/admin/shorts/{id}/edit', [App\Controllers\ShortsProjectController::class, 'edit']);
-$router->get('/admin/shorts/{id}/delete', [App\Controllers\ShortsProjectController::class, 'delete']);
+$router->get('/admin/shorts/studio', [App\Controllers\ShortsStudioController::class, 'studio']);
+$router->post('/admin/shorts/studio', [App\Controllers\ShortsStudioController::class, 'studio']);
 
 
 //견적 문의 목록

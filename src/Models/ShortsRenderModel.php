@@ -19,7 +19,6 @@ class ShortsRenderModel
     {
         $stmt = $this->db->prepare("
             INSERT INTO shorts_renders (
-                project_id,
                 keyword,
                 status,
                 error_message,
@@ -31,7 +30,6 @@ class ShortsRenderModel
                 created_at,
                 updated_at
             ) VALUES (
-                :project_id,
                 :keyword,
                 :status,
                 :error_message,
@@ -46,7 +44,6 @@ class ShortsRenderModel
         ");
 
         $stmt->execute([
-            ':project_id' => $data['project_id'],
             ':keyword' => $data['keyword'],
             ':status' => $data['status'],
             ':error_message' => $data['error_message'],
@@ -64,7 +61,6 @@ class ShortsRenderModel
     {
         $stmt = $this->db->prepare("
             UPDATE shorts_renders SET
-                project_id = :project_id,
                 keyword = :keyword,
                 status = :status,
                 error_message = :error_message,
@@ -79,7 +75,6 @@ class ShortsRenderModel
 
         return $stmt->execute([
             ':id' => $id,
-            ':project_id' => $data['project_id'],
             ':keyword' => $data['keyword'],
             ':status' => $data['status'],
             ':error_message' => $data['error_message'],
@@ -94,9 +89,8 @@ class ShortsRenderModel
     public function findLatest(int $limit = 20): array
     {
         $stmt = $this->db->prepare("
-            SELECT r.*, p.channel_name
+            SELECT r.*
             FROM shorts_renders r
-            LEFT JOIN shorts_projects p ON p.id = r.project_id
             ORDER BY r.id DESC
             LIMIT :render_limit
         ");
@@ -109,9 +103,8 @@ class ShortsRenderModel
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT r.*, p.channel_name
+            SELECT r.*
             FROM shorts_renders r
-            LEFT JOIN shorts_projects p ON p.id = r.project_id
             WHERE r.id = :id
         ");
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -126,7 +119,6 @@ class ShortsRenderModel
         $this->db->exec("
             CREATE TABLE IF NOT EXISTS shorts_renders (
                 id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                project_id INT UNSIGNED DEFAULT NULL,
                 keyword VARCHAR(255) NOT NULL,
                 status VARCHAR(20) DEFAULT 'queued',
                 error_message TEXT DEFAULT NULL,
@@ -137,7 +129,6 @@ class ShortsRenderModel
                 script_json LONGTEXT DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_project_id (project_id),
                 INDEX idx_status (status)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ");

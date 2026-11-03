@@ -38,6 +38,11 @@ class ShortsAutomationService
             throw new RuntimeException('키워드를 입력해야 합니다.');
         }
 
+        $voice = trim((string)($payload['voice'] ?? '')) ?: OpenAIClient::modelConfiguration()['tts_voice'];
+        if (!in_array($voice, OpenAIClient::VOICES, true)) {
+            throw new RuntimeException('지원하지 않는 음성입니다. 스튜디오에서 보이스를 다시 선택하세요.');
+        }
+
         (new ShortsEnvironment())->assertReady();
 
         $jobId = date('Ymd_His') . '_' . $this->slugify($keyword) . '_' . bin2hex(random_bytes(4));
@@ -48,7 +53,6 @@ class ShortsAutomationService
             'keyword' => $keyword,
             'tone' => trim((string)($payload['tone'] ?? 'clickable')),
             'duration' => (int)($payload['duration'] ?? 30),
-            'project' => $payload['project'] ?? null,
         ]);
         $referenceImagePaths = isset($payload['reference_image_paths']) && is_array($payload['reference_image_paths'])
             ? array_values(array_filter($payload['reference_image_paths'], static fn ($path) => is_string($path) && $path !== ''))
@@ -56,7 +60,7 @@ class ShortsAutomationService
 
         $coverPath = $jobDir . '/cover.png';
         $outroPath = $jobDir . '/outro.png';
-        $audioPath = $jobDir . '/voice.aac';
+        $audioPath = $jobDir . '/voice.wav';
         $mixedAudioPath = $jobDir . '/voice_mix.aac';
         $timedAudioPath = $jobDir . '/voice_timed.aac';
         $subtitlePath = $jobDir . '/captions.ass';
@@ -74,7 +78,7 @@ class ShortsAutomationService
             throw new RuntimeException('커버 이미지 생성 후 파일을 찾을 수 없습니다: ' . $coverPath);
         }
 
-        $this->openAI->synthesizeSpeech($script['narration'], $audioPath, $payload['voice'] ?? null);
+        $this->openAI->synthesizeSpeech($script['narration'], $audioPath, $voice);
         if (!is_file($audioPath)) {
             throw new RuntimeException('음성 생성 후 파일을 찾을 수 없습니다: ' . $audioPath);
         }
@@ -670,6 +674,10 @@ class ShortsAutomationService
 
         if (str_contains($normalized, 'malgun')) {
             return 'Malgun Gothic';
+        }
+
+        if (str_contains($normalized, 'nanumgothic')) {
+            return 'NanumGothic';
         }
 
         if (str_contains($normalized, 'dejavusans')) {

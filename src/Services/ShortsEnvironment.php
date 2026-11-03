@@ -33,6 +33,20 @@ class ShortsEnvironment
         };
 
         $add('API key', trim((string)($_ENV['OPENAI_API_KEY'] ?? '')) !== '', 'OPENAI_API_KEY 설정 여부 (인증·잔액은 별도 확인)');
+        $models = OpenAIClient::modelConfiguration();
+        $imageModel = $models['image_model'];
+        $add('Text model', true, $models['text_model'] . ' (실제 API 사용 가능 여부는 별도 확인)');
+        $add('Image model', $imageModel !== 'gpt-image-1', $imageModel === 'gpt-image-1'
+            ? 'gpt-image-1은 종료된 모델입니다. .env에서 OPENAI_IMAGE_MODEL=' . OpenAIClient::DEFAULT_IMAGE_MODEL . ' 로 변경하세요.'
+            : $imageModel . ' (실제 API 사용 가능 여부는 별도 확인)');
+        $add('Speech model', true, $models['tts_model'] . ' / ' . $models['tts_voice']);
+        if (strpos($models['tts_model'], 'gpt-realtime-') === 0) {
+            $add('PHP openssl', extension_loaded('openssl'), 'Realtime 음성 연결을 위한 TLS 지원 필요');
+            $add('Realtime transport', is_callable('stream_socket_client'), 'Realtime WebSocket 연결을 위한 stream_socket_client 허용 필요');
+            $add('Speech voice', in_array($models['tts_voice'], OpenAIClient::VOICES, true), 'Realtime 지원 보이스를 선택하세요: ' . implode(', ', OpenAIClient::VOICES));
+        } else {
+            $checks[] = ['name' => 'Speech migration', 'status' => 'warning', 'message' => '기존 Speech API 모델을 사용 중입니다. 최신 설정은 OPENAI_TTS_MODEL=' . OpenAIClient::DEFAULT_TTS_MODEL . ' 입니다.'];
+        }
         foreach (['curl', 'gd', 'mbstring', 'fileinfo', 'pdo_mysql'] as $extension) {
             $add('PHP ' . $extension, extension_loaded($extension), $extension . ' 확장 활성화 필요');
         }
